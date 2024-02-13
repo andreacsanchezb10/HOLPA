@@ -41,17 +41,15 @@ global_form <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_indi
   mutate(list_name = str_replace_all(list_name, " ", ""))
 
 
-global_choices <- read_excel(
-  "HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",
+global_choices <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",
   sheet = "choices")%>%
-  select("list_name","name","label::English ((en))","score_agroecology_module")%>%
+  select("list_name","name","label::English ((en))","score_agroecology_module","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
   rename("name_choice" = "name")%>%
-  mutate(country="global")%>%
   #Rbind country specific choices 
   distinct(list_name,name_choice,label_choice, .keep_all = TRUE)%>%
-  left_join(global_form,by="list_name")
-  
+  right_join(global_form,by="list_name")
+
 ######Agroecology module
 agroecology_form<-  global_form%>%
   filter(str_detect(module, "agroecology"))%>%
@@ -60,59 +58,70 @@ agroecology_form<-  global_form%>%
   mutate(indicator=if_else(str_detect(indicator, "1_recycling"),"1_recycling",
                            if_else(str_detect(indicator, "2_input_reduction"),"2_input_reduction",
                                    if_else(str_detect(indicator, "3_soil_health"), "3_soil_health",
-                                           if_else(str_detect(indicator,"9_social_values"),"9_social_values",
-                                                   if_else(str_detect(indicator,"10_fairness"),"10_fairness",
-                                                           if_else(str_detect(indicator,"11_connectivity"),"11_connectivity",
+                                           if_else(str_detect(indicator, "4_animal_health"), "4_animal_health",
+                                                   if_else(str_detect(indicator, "5_biodiversity"), "5_biodiversity",
+                                                           if_else(str_detect(indicator, "7_economic_diversification"), "7_economic_diversification",
+                                                                   if_else(str_detect(indicator, "8_knowledge"), "8_knowledge",
+                                                                           if_else(str_detect(indicator,"9_social_values"),"9_social_values",
+                                                                                   if_else(str_detect(indicator,"10_fairness"),"10_fairness",
+                                                                                           if_else(str_detect(indicator,"11_connectivity"),"11_connectivity",
                                                                    if_else(str_detect(indicator, "12_governance"), "12_governance",
                                                                            if_else(str_detect(indicator, "13_participation"), "13_participation",
-                                                                                   indicator)))))))))%>%
-  mutate(type_question =if_else(name_question == "_2_9_1_1", "count",type_question))
+                                                                                   indicator)))))))))))))%>%
 
+
+  mutate(type_question = case_when(
+    name_question %in% c("_2_9_1_1","_2_4_1","_2_10_1_2") ~ "count",
+    TRUE ~ type_question))
 
 agroecology_options <- global_choices%>%
   select(-subindicator)%>%
-  rbind(read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",sheet = "agroecology_look_up"))%>%
+  #rbind(read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",sheet = "agroecology_look_up"))%>%
   mutate(module= "agroecology")%>%
   mutate(indicator=if_else(str_detect(indicator, "1_recycling"),"1_recycling",
                            if_else(str_detect(indicator, "2_input_reduction"),"2_input_reduction",
                                    if_else(str_detect(indicator, "3_soil_health"), "3_soil_health",
-                                           if_else(str_detect(indicator,"9_social_values"),"9_social_values",
+                                           if_else(str_detect(indicator, "4_animal_health"), "4_animal_health",
+                                                   if_else(str_detect(indicator, "5_biodiversity"), "5_biodiversity",
+                                                           
+                                                   if_else(str_detect(indicator, "7_economic_diversification"), "7_economic_diversification",
+                                                   if_else(str_detect(indicator, "8_knowledge"), "8_knowledge",
+                                                   if_else(str_detect(indicator,"9_social_values"),"9_social_values",
                                                    if_else(str_detect(indicator,"10_fairness"),"10_fairness",
                                                            if_else(str_detect(indicator,"11_connectivity"),"11_connectivity",
                                                                    if_else(str_detect(indicator, "12_governance"), "12_governance",
                                                                            if_else(str_detect(indicator, "13_participation"), "13_participation",
                                                                                    
-                                                                           indicator)))))))))%>%
+                                                                           indicator)))))))))))))%>%
   mutate(name_question_choice= if_else(type_question=="select_multiple",
-                                paste(name_question,"/",name_choice, sep=""),
-                                name_question))
-  
+                                       paste(name_question,"/",name_choice, sep=""),
+                                        name_question))%>%
+  mutate(type_question = case_when(
+    name_question %in% c("_2_9_1_1","_2_4_1","_2_10_1_2") ~ "count",
+    TRUE ~ type_question))
 
+  
+names(agrocology_choices)
 
 agrocology_choices<-agroecology_options%>%
-  filter(str_detect(module, "agroecology"))%>%
-  #select(-subindicator)%>%
-  #mutate(module= "agroecology")%>%
-  mutate(indicator=if_else(str_detect(indicator, "1_recycling"),"1_recycling",
-                           if_else(str_detect(indicator, "2_input_reduction"),"2_input_reduction",
-                                   if_else(str_detect(indicator, "3_soil_health"), "3_soil_health",
-                                           if_else(str_detect(indicator,"9_social_values"),"9_social_values",
-                                                   if_else(str_detect(indicator,"10_fairness"),"10_fairness",
-                                                           if_else(str_detect(indicator,"11_connectivity"),"11_connectivity",
-                                                                   if_else(str_detect(indicator, "12_governance"), "12_governance",
-                                                   indicator))))))))%>%
-  mutate(name_question= if_else(type_question=="select_multiple",
-                                paste(name_question,"/",name_choice, sep=""),
-                                name_question))
+  filter(type_question!="count")%>%
+  select(-name_question_choice)%>%
+  rbind(read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",sheet = "agroecology_look_up"))
+  
+
   
 names(agrocology_choices)
 
 ## Principles structure
 recycling<- agroecology_options%>%
-  filter()%>%
   filter(indicator== "1_recycling"|
            indicator=="2_input_reduction"|
            indicator== "3_soil_health"|
+           indicator==  "4_animal_health"|
+           indicator=="5_biodiversity"|
+           
+           indicator== "7_economic_diversification"|
+           indicator=="8_knowledge"|
            indicator=="9_social_values"|
            indicator== "10_fairness"|
            indicator=="11_connectivity"|
@@ -120,7 +129,7 @@ recycling<- agroecology_options%>%
            indicator== "13_participation"
          )%>%
   select(label_question, name_question_choice)%>%
-  distinct(., .keep_all = TRUE)%>%
+  dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
   spread(key = name_question_choice, value = label_question)%>%
   mutate("kobo_id"="kobo_farmer_id",
          "country"="country_name")
@@ -147,6 +156,11 @@ select_multiple<- agroecology_form%>%
   filter(indicator == "1_recycling"|
            indicator == "2_input_reduction"|
            indicator== "3_soil_health"|
+           indicator==  "4_animal_health"|
+           indicator=="5_biodiversity"|
+           
+           indicator== "7_economic_diversification"|
+           indicator=="8_knowledge"|
            indicator == "9_social_values"|
            indicator== "10_fairness"|
            indicator=="11_connectivity"|
@@ -155,6 +169,7 @@ select_multiple<- agroecology_form%>%
   )%>%
   filter(type_question == "select_multiple")%>%
   select(name_question,type_question)%>%
+  #mutate(name_question= paste(name_question,"/",sep = ""))%>%
   spread(key = name_question, value = type_question)
 
 select_multiple<- colnames(select_multiple)
@@ -177,6 +192,11 @@ count<- agroecology_form%>%
   filter(indicator == "1_recycling"|
            indicator == "2_input_reduction"|
            indicator== "3_soil_health"|
+           indicator==  "4_animal_health"|
+           indicator=="5_biodiversity"|
+           
+           indicator== "7_economic_diversification"|
+           indicator=="8_knowledge"|
            indicator == "9_social_values"|
            indicator== "10_fairness"|
            indicator=="11_connectivity"|
@@ -185,66 +205,44 @@ count<- agroecology_form%>%
   )%>%
   filter(type_question == "count")%>%
   select(name_question,type_question)%>%
+  mutate(name_question= paste(name_question,"/",sep = ""))%>%
   spread(key = name_question, value = type_question)
 
 count<- colnames(count)
 count
 
-data<-zimbabwe_survey %>%
-  select(all_of(existing_columns))%>%
-  count_columns_regex( count)%>%
-  select("_2_9_1_1")
-
-names(data)
-
-
 existing_columns <- intersect(recycling_columns, colnames(zimbabwe_survey))
+existing_columns
 
 names(agroecology_zimbabwe)
+
 agroecology_zimbabwe <- zimbabwe_survey %>%
   select(all_of(existing_columns))%>%
   mutate_all(as.character)%>%
   process_columns_regex(select_multiple)%>%
-  count_columns_regex(count)%>%
-  select(all_of(count))
+  count_columns_regex(count) %>%
+  rename("x_2_9_1_1"="_2_9_1_1/",
+         "x_2_4_1"="_2_4_1/",
+         "x_2_10_1_2"="_2_10_1_2/")%>%
+  mutate(across(c(x_2_9_1_1,x_2_4_1,x_2_10_1_2), ~replace_na(., 0)))%>%
+  rename("_2_9_1_1"="x_2_9_1_1",
+       "_2_4_1"="x_2_4_1",
+       "_2_10_1_2"="x_2_10_1_2")%>%
   select(-contains("/"))%>%
+  
   gather(key = "name_question", value = "name_choice",-kobo_id, -country)%>%
-  dplyr::left_join(select(agroecology_options,c(name_question,name_choice,score_agroecology_module,label_choice)), 
+  dplyr::left_join(select(agrocology_choices,c(name_question,module,indicator,name_choice,score_agroecology_module,label_choice,
+                                               label_question,type,type_question,list_name)), 
                    by= c("name_question"="name_question",
                          "name_choice"="name_choice"))%>%
-  dplyr::left_join(agroecology_form, by=c("name_question"="name_question"))%>%
   select("module", "indicator","country",
          "kobo_id","name_question", "type", "type_question"  , "list_name" , 
          "label_question","label_choice", "name_choice" ,"score_agroecology_module")%>%
-  filter(name_question=="_2_9_1_1")
-  filter(is.na(score_agroecology_module))
-  
+  filter(name_question=="_3_4_3_1_1")
+
 sort(unique(agroecology_zimbabwe$name_question))
 sort(unique(agroecology_zimbabwe$name_choice))  
 sort(unique(agroecology_zimbabwe$indicator))
-
-mutate(name_choice = if_else(is.na(name_choice)|
-                                 name_choice=="NA_NA_NA_NA"|
-                                 name_choice=="NA_NA_NA_NA_NA_NA_NA_NA","no_answer",name_choice))%>%
-  mutate(label_choice = if_else(name_choice=="no_answer", "no_answer",label_choice))
-  
-  filter(is.na(score_agroecology_module))%>%
-  filter(name_choice!= "no_answer")
-
-sort(unique(agroecology_zimbabwe$name_question))
-sort(unique(agroecology_zimbabwe$name_choice))
-
-sort(unique(agroecology_zimbabwe$type_question))
-
-
-  
-  
-  
-  
-  
-  
-  
-
 
 
 
