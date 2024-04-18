@@ -4,9 +4,11 @@ library(tidyverse)
 library(readxl)
 library(dplyr)
 
+data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
+
 ##Country databases
 # Completed surveys
-zimbabwe_survey <- read_excel("zimbabwe_household_name_2023.11.27.xlsx",
+zimbabwe_survey <- read_excel(path=paste0(data.path,"holpa_household_name_2023.11.27.xlsx"),
                               sheet = "Final HOLPA_Zimbabwe_Household") %>%
   rename("kobo_id"="_id")%>%
   rename("country"="_1_2_1_3")%>%
@@ -49,12 +51,188 @@ global_choices <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_i
   rename("name_choice" = "name")%>%
   #Rbind country specific choices 
   distinct(list_name,name_choice,label_choice, .keep_all = TRUE)%>%
-  right_join(global_form,by="list_name")
+  right_join(global_form,by="list_name",relationship="many-to-many")
 
-######Agroecology module
-agroecology_form<-  global_form%>%
+
+#### Context module ####
+unique(context_form$subindicator)
+
+context_form <-  global_form %>%
+  filter(str_detect(module, "context"))%>%
+  mutate(module= "context")%>%
+  mutate(indicator=if_else(str_detect(indicator, "respondent_characteristics"),"respondent_characteristics",
+                           if_else(str_detect(indicator, "household_characteristic"),"household_characteristics",
+                                   if_else(str_detect(indicator, "land_tenure"), "land_tenure",
+                                           if_else(str_detect(indicator, "land tenure"), "land_tenure",
+                                                   if_else(str_detect(indicator, "farm_characteristic"), "farm_characteristics",
+                                                        if_else(str_detect(indicator, "inputs"), "inputs",indicator))))))) %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "production_systems"),"production_systems",
+                              if_else(str_detect(subindicator, "inputs"),"inputs",
+                                      if_else(str_detect(subindicator, "household_labour"),"household_labour",
+                                              if_else(str_detect(subindicator, "credit_access"),"credit_access",
+                                                      if_else(str_detect(subindicator, "income"),"income",
+                                                              if_else(str_detect(subindicator, "land_tenure"),"land_tenure",
+                                                                      if_else(str_detect(subindicator, "training"),"training",
+                                                                              if_else(str_detect(subindicator, "education"),"education",
+                                                                                      if_else(str_detect(subindicator, "literacy"),"literacy",subindicator))))))))))
+
+context_options <- global_choices %>%
+  filter(str_detect(module, "context"))%>%
+  mutate(module= "context")%>%
+  mutate(indicator=if_else(str_detect(indicator, "respondent_characteristic"),"respondent_characteristics",
+                           if_else(str_detect(indicator, "household_characteristic"),"household_characteristics",
+                                   
+                                   # CORRECT: LAND TENURE SHOULD BE UNDER SOCIAL PERFORMANCE
+                                   
+                                   if_else(str_detect(indicator, "land_tenure"), "land_tenure",
+                                           if_else(str_detect(indicator, "land tenure"), "land_tenure",
+                                                   if_else(str_detect(indicator, "farm_characteristic"), "farm_characteristics",
+                                                          if_else(str_detect(indicator, "inputs"), "inputs",indicator))))))) %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "production_systems"),"production_systems",
+                              if_else(str_detect(subindicator, "inputs"),"inputs",
+                                      if_else(str_detect(subindicator, "household_labour"),"household_labour",
+                                              if_else(str_detect(subindicator, "credit_access"),"credit_access",
+                                                      if_else(str_detect(subindicator, "income"),"income",
+                                                              if_else(str_detect(subindicator, "land_tenure"),"land_tenure",
+                                                                      if_else(str_detect(subindicator, "training"),"training",
+                                                                              if_else(str_detect(subindicator, "education"),"education",
+                                                                                      if_else(str_detect(subindicator, "literacy"),"literacy",subindicator))))))))))
+                              
+                              
+
+#### Performance module ####
+unique(performance_eco_form$indicator)
+unique(performance_eco_form$subindicator)
+unique(performance_eco_options$subindicator)
+
+performance_eco_form <-  global_form %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance")%>%
+  filter(str_detect(indicator, "economic"))%>%
+  mutate(indicator="economic") %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "climate_resilience_adaptative_capacity"),"climate_resilience_adaptative_capacity",
+                              if_else(str_detect(subindicator, "climate_resilience_social_network"),"climate_resilience_social_network",
+                                      if_else(str_detect(subindicator, "climate_resilience_assets"),"climate_resilience_assets",
+                                              if_else(str_detect(subindicator, "income"),"income",
+                                                      if_else(str_detect(subindicator, "climate_resilience_food_security"),"climate_resilience_food_security",
+                                                              if_else(str_detect(subindicator, "credit_access"),"credit_access",
+                                                                      if_else(str_detect(subindicator, "climate_resilience_basic_services"),"climate_resilience_basic_services",
+                                                                              if_else(str_detect(subindicator, "labour_productivity"),"labour_productivity",subindicator)))))))))
+
+performance_eco_options <- global_choices %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance") %>% 
+  filter(str_detect(indicator, "economic"))%>%
+  mutate(indicator="economic") %>% 
+  mutate(subindicator=if_else(str_detect(subindicator, "climate_resilience_adaptative_capacity"),"climate_resilience_adaptative_capacity",
+                              if_else(str_detect(subindicator, "climate_resilience_social_network"),"climate_resilience_social_network",
+                                      if_else(str_detect(subindicator, "climate_resilience_assets"),"climate_resilience_assets",
+                                              if_else(str_detect(subindicator, "income"),"income",
+                                                      if_else(str_detect(subindicator, "climate_resilience_food_security"),"climate_resilience_food_security",
+                                                              if_else(str_detect(subindicator, "credit_access"),"credit_access",
+                                                                      if_else(str_detect(subindicator, "climate_resilience_basic_services"),"climate_resilience_basic_services",
+                                                                              if_else(str_detect(subindicator, "labour_productivity"),"labour_productivity",subindicator)))))))))
+unique(performance_soc_form$indicator)
+unique(performance_soc_form$subindicator)
+unique(performance_soc_options$subindicator)
+
+performance_soc_form <-  global_form %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance")%>%
+  filter(str_detect(indicator, "social"))%>%
+  mutate(indicator="social") %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "nutrition"),"nutrition",subindicator))
+
+performance_soc_options <- global_choices %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance") %>% 
+  filter(str_detect(indicator, "social"))%>%
+  mutate(indicator="social") %>% 
+  mutate(subindicator=if_else(str_detect(subindicator, "nutrition"),"nutrition",subindicator))
+
+unique(performance_agr_form$indicator)
+unique(performance_agr_form$subindicator)
+unique(performance_agr_options$subindicator)
+
+performance_agr_form <-  global_form %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance")%>%
+  filter(str_detect(indicator, "agricult"))%>%
+  mutate(indicator="agricultal") %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "nutrient_use"),"nutrient_use",
+                              if_else(str_detect(subindicator, "soil_health"),"nutrient_use", # CHECK THIS ONE
+                              if_else(str_detect(subindicator, "animal_health"),"animal health",
+                              if_else(str_detect(subindicator, "productivity_livestock"),"productivity_livestock",
+                                      if_else(str_detect(subindicator, "productivity_fish"),"productivity_fish",subindicator))))))
+
+performance_agr_options <- global_choices %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance") %>% 
+  filter(str_detect(indicator, "agricult"))%>%
+  mutate(indicator="agricult") %>% 
+  mutate(subindicator=if_else(str_detect(subindicator, "soil_health"),"nutrient_use",
+                              if_else(str_detect(subindicator, "animal health"),"animal health",
+                                      if_else(str_detect(subindicator, "productivity_livestock"),"productivity_livestock",
+                                              if_else(str_detect(subindicator, "productivity_fish"),"productivity_fish",subindicator))))) %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "nutrient_use"),"nutrient_use",
+                              
+                              # CHECK THE NEXT ONE - should not have soil health here !!!!
+                              
+                              if_else(str_detect(subindicator, "soil_health"),"nutrient_use", 
+                                      if_else(str_detect(subindicator, "animal_health"),"animal health",
+                                              if_else(str_detect(subindicator, "productivity_livestock"),"productivity_livestock",
+                                                      if_else(str_detect(subindicator, "productivity_fish"),"productivity_fish",subindicator))))))
+
+
+unique(performance_env_form$indicator)
+unique(performance_env_form$subindicator)
+unique(performance_env_options$subindicator)
+
+performance_env_form <-  global_form %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance")%>%
+  filter(str_detect(indicator, "environment"))%>%
+  filter(!(is.na(subindicator))) %>%
+  mutate(indicator="environmental") %>%
+  
+  # CHECK THE BIODIVERSITY ONES - should have three in total !!!!
+  
+  mutate(subindicator=if_else(str_detect(subindicator, "biodiversity_diversity"),"biodiversity_diversity",
+                            if_else(str_detect(subindicator, "biodiversity_abundance"),"biodiversity_abundance",
+                                    if_else(str_detect(subindicator, "biodiversity_climate_mitigation"),"biodiversity_practices",
+                                            if_else(str_detect(subindicator, "biodiversity_practices"),"biodiversity_practices",
+                                            if_else(str_detect(subindicator, "biodiversity_agrobiodiversity"),"biodiversity_agrobiodiversity",
+                                                    if_else(str_detect(subindicator, "energy"),"energy",
+                                                            if_else(str_detect(subindicator, "water"),"water",
+                                                                  if_else(str_detect(subindicator, "climate_mitigation"),"biodiversity_practices",subindicator)))))))))
+
+performance_env_options <- global_choices %>%
+  filter(str_detect(module, "performance"))%>%
+  mutate(module= "performance") %>% 
+  filter(str_detect(indicator, "environment"))%>%
+  mutate(indicator="environmental") %>%
+  mutate(subindicator=if_else(str_detect(subindicator, "biodiversity_diversity"),"biodiversity_diversity",
+                              if_else(str_detect(subindicator, "biodiversity_abundance"),"biodiversity_abundance",
+                                      if_else(str_detect(subindicator, "biodiversity_climate_mitigation"),"biodiversity_practices",
+                                              if_else(str_detect(subindicator, "biodiversity_practices"),"biodiversity_practices",
+                                                      if_else(str_detect(subindicator, "biodiversity_agrobiodiversity"),"biodiversity_agrobiodiversity",
+                                                              if_else(str_detect(subindicator, "energy"),"energy",
+                                                                      if_else(str_detect(subindicator, "water"),"water",
+                                                                              if_else(str_detect(subindicator, "climate_mitigation"),"biodiversity_practices",subindicator)))))))))
+
+
+performance_form <- rbind(performance_agr_form,performance_soc_form,performance_eco_form,performance_env_form) %>%
+  rename(theme = indicator,
+         indicator = subindicator)
+
+performance_options <- rbind(performance_agr_options,performance_soc_options,performance_eco_options,performance_env_options) %>%
+  rename(theme = indicator,
+         indicator = subindicator)
+
+#### Agroecology module ####
+agroecology_form <-  global_form %>%
   filter(str_detect(module, "agroecology"))%>%
-  select(-subindicator)%>%
+  #select(-subindicator)%>%
   mutate(module= "agroecology")%>%
   mutate(indicator=if_else(str_detect(indicator, "1_recycling"),"1_recycling",
                            if_else(str_detect(indicator, "2_input_reduction"),"2_input_reduction",
@@ -68,8 +246,8 @@ agroecology_form<-  global_form%>%
                                                                                            if_else(str_detect(indicator,"10_fairness"),"10_fairness",
                                                                                                    if_else(str_detect(indicator,"11_connectivity"),"11_connectivity",
                                                                                                            if_else(str_detect(indicator, "12_governance"), "12_governance",
-                                                                                                                   if_else(str_detect(indicator, "13_participation"), "13_participation",
-                                                                                                                           indicator))))))))))))))%>%
+                                                                                                                   if_else(str_detect(indicator, "13_participation"), "13_participation",indicator)))))))))))))) %>%
+  mutate(subindicator=indicator) %>%
   mutate(type_question = case_when(
     name_question %in% c(
       "_2_9_1_1","_2_4_1","_2_10_1_2",
@@ -77,9 +255,9 @@ agroecology_form<-  global_form%>%
       "_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1") ~ "count",
     TRUE ~ type_question))
 
-agroecology_options <- global_choices%>%
+agroecology_options <- global_choices %>%
   filter(str_detect(module, "agroecology"))%>%
-  select(-subindicator)%>%
+  #select(-subindicator)%>%
   #rbind(read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",sheet = "agroecology_look_up"))%>%
   mutate(module= "agroecology")%>%
   mutate(indicator=if_else(str_detect(indicator, "1_recycling"),"1_recycling",
@@ -98,6 +276,7 @@ agroecology_options <- global_choices%>%
                                                                                                                    if_else(str_detect(indicator, "13_participation"), "13_participation",
                                                                                                                            
                                                                                                                            indicator))))))))))))))%>%
+  mutate(subindicator=indicator) %>%
   mutate(name_question_choice= if_else(type_question=="select_multiple",
                                        paste(name_question,"/",name_choice, sep=""),
                                        name_question))%>%
@@ -124,7 +303,6 @@ recycling<- agroecology_options%>%
            indicator==  "4_animal_health"|
            indicator=="5_biodiversity"|
            indicator=="6_synergy"|
-           
            indicator== "7_economic_diversification"|
            indicator=="8_knowledge"|
            indicator=="9_social_values"|
