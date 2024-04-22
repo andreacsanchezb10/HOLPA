@@ -4,28 +4,34 @@ library(tidyverse)
 library(readxl)
 library(dplyr)
 
-data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
+#### Set file paths ####
 
-##Country databases
-# Completed surveys
-zimbabwe_survey <- read_excel(path=paste0(data.path,"holpa_household_name_2023.11.27.xlsx"),
+global.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/"
+zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
+
+#### Import data ####
+# Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
+# a choices worksheet with the response options for multiple choice questions (single or multiple).
+# These need to be imported and combined.
+
+### Country databases ####
+zwe_survey <- read_excel(path=paste0(zwe.data.path,"holpa_household_name_2023.11.27.xlsx"),
                               sheet = "Final HOLPA_Zimbabwe_Household") %>%
   rename("kobo_id"="_id")%>%
   rename("country"="_1_2_1_3")%>%
   mutate("_2_6_1_4_6"= NA)%>%
   mutate("_2_7_1_6/other"= NA)
 
-
-# Country forms
-zimbabwe_choices <- read_excel("zimbabwe_household_form.xlsx",sheet = "choices")%>%
+zwe_choices <- read_excel(path=paste0(zwe.data.path,"zimbabwe_household_survey.xlsx"),
+                               sheet = "choices")%>%
   select("list_name","name","label::English ((en))","score_agroecology_module")%>%
   mutate(country="zimbabwe")%>%
   rename("label_choice" = "label::English ((en))")%>%
   rename("name_choice" = "name")
 
-names(zimbabwe_choices)
-#### Global databases
-global_form <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",
+#### Global databases ####
+
+global_survey <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx"),
                           sheet = "survey")%>%
   #select only the necessary columns
   select("module","indicator", "subindicator", 
@@ -39,10 +45,10 @@ global_form <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_indi
   #separate question type components
   mutate(type_question = ifelse(substr(type,1,10)=="select_one","select_one",
                                 ifelse(substr(type,1,10)=="select_mul","select_multiple",type)))%>%
+  #create column with list_name codes matching the choices worksheet
   mutate(list_name = if_else(type_question== "select_one"|type_question== "select_multiple", 
                              str_replace(.$type, paste0(".*", .$type_question), ""),NA))%>%
-  mutate(list_name = str_replace_all(list_name, " ", ""))
-
+  mutate(list_name = str_replace_all(list_name, " ", ""))  #%>% mutate(global_r_list_name =  sub('*_', "", name_question)) %>%mutate(global_r_list_name = ifelse(grepl("_", global_r_list_name, fixed = TRUE)==TRUE,global_r_list_name,""))
 
 global_choices <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",
                              sheet = "choices")%>%
@@ -50,14 +56,13 @@ global_choices <- read_excel("HOLPA_global_household_survey_20231204_mapped_to_i
   rename("label_choice" = "label::English ((en))")%>%
   rename("name_choice" = "name")%>%
   #Rbind country specific choices 
-  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)%>%
-  right_join(global_form,by="list_name",relationship="many-to-many")
-
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")
 
 #### Context module ####
-unique(context_form$subindicator)
+unique(context_survey$subindicator)
 
-context_form <-  global_form %>%
+context_survey <-  global__survey %>%
   filter(str_detect(module, "context"))%>%
   mutate(module= "context")%>%
   mutate(indicator=if_else(str_detect(indicator, "respondent_characteristics"),"respondent_characteristics",
@@ -76,7 +81,7 @@ context_form <-  global_form %>%
                                                                               if_else(str_detect(subindicator, "education"),"education",
                                                                                       if_else(str_detect(subindicator, "literacy"),"literacy",subindicator))))))))))
 
-context_options <- global_choices %>%
+context_choices <- global_choices %>%
   filter(str_detect(module, "context"))%>%
   mutate(module= "context")%>%
   mutate(indicator=if_else(str_detect(indicator, "respondent_characteristic"),"respondent_characteristics",
@@ -101,11 +106,11 @@ context_options <- global_choices %>%
                               
 
 #### Performance module ####
-unique(performance_eco_form$indicator)
-unique(performance_eco_form$subindicator)
-unique(performance_eco_options$subindicator)
+unique(performance_eco_survey$indicator)
+unique(performance_eco_survey$subindicator)
+unique(performance_eco_choices$subindicator)
 
-performance_eco_form <-  global_form %>%
+performance_eco_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "economic"))%>%
@@ -119,7 +124,7 @@ performance_eco_form <-  global_form %>%
                                                                       if_else(str_detect(subindicator, "climate_resilience_basic_services"),"climate_resilience_basic_services",
                                                                               if_else(str_detect(subindicator, "labour_productivity"),"labour_productivity",subindicator)))))))))
 
-performance_eco_options <- global_choices %>%
+performance_eco_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance") %>% 
   filter(str_detect(indicator, "economic"))%>%
@@ -132,29 +137,29 @@ performance_eco_options <- global_choices %>%
                                                               if_else(str_detect(subindicator, "credit_access"),"credit_access",
                                                                       if_else(str_detect(subindicator, "climate_resilience_basic_services"),"climate_resilience_basic_services",
                                                                               if_else(str_detect(subindicator, "labour_productivity"),"labour_productivity",subindicator)))))))))
-unique(performance_soc_form$indicator)
-unique(performance_soc_form$subindicator)
-unique(performance_soc_options$subindicator)
+unique(performance_soc_survey$indicator)
+unique(performance_soc_survey$subindicator)
+unique(performance_soc_choices$subindicator)
 
-performance_soc_form <-  global_form %>%
+performance_soc_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "social"))%>%
   mutate(indicator="social") %>%
   mutate(subindicator=if_else(str_detect(subindicator, "nutrition"),"nutrition",subindicator))
 
-performance_soc_options <- global_choices %>%
+performance_soc_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance") %>% 
   filter(str_detect(indicator, "social"))%>%
   mutate(indicator="social") %>% 
   mutate(subindicator=if_else(str_detect(subindicator, "nutrition"),"nutrition",subindicator))
 
-unique(performance_agr_form$indicator)
-unique(performance_agr_form$subindicator)
-unique(performance_agr_options$subindicator)
+unique(performance_agr_survey$indicator)
+unique(performance_agr_survey$subindicator)
+unique(performance_agr_choices$subindicator)
 
-performance_agr_form <-  global_form %>%
+performance_agr_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "agricult"))%>%
@@ -165,7 +170,7 @@ performance_agr_form <-  global_form %>%
                               if_else(str_detect(subindicator, "productivity_livestock"),"productivity_livestock",
                                       if_else(str_detect(subindicator, "productivity_fish"),"productivity_fish",subindicator))))))
 
-performance_agr_options <- global_choices %>%
+performance_agr_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance") %>% 
   filter(str_detect(indicator, "agricult"))%>%
@@ -184,11 +189,11 @@ performance_agr_options <- global_choices %>%
                                                       if_else(str_detect(subindicator, "productivity_fish"),"productivity_fish",subindicator))))))
 
 
-unique(performance_env_form$indicator)
-unique(performance_env_form$subindicator)
-unique(performance_env_options$subindicator)
+unique(performance_env_survey$indicator)
+unique(performance_env_survey$subindicator)
+unique(performance_env_choices$subindicator)
 
-performance_env_form <-  global_form %>%
+performance_env_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "environment"))%>%
@@ -206,7 +211,7 @@ performance_env_form <-  global_form %>%
                                                             if_else(str_detect(subindicator, "water"),"water",
                                                                   if_else(str_detect(subindicator, "climate_mitigation"),"biodiversity_practices",subindicator)))))))))
 
-performance_env_options <- global_choices %>%
+performance_env_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance") %>% 
   filter(str_detect(indicator, "environment"))%>%
@@ -221,16 +226,16 @@ performance_env_options <- global_choices %>%
                                                                               if_else(str_detect(subindicator, "climate_mitigation"),"biodiversity_practices",subindicator)))))))))
 
 
-performance_form <- rbind(performance_agr_form,performance_soc_form,performance_eco_form,performance_env_form) %>%
+performance_survey <- rbind(performance_agr_survey,performance_soc_survey,performance_eco_survey,performance_env_survey) %>%
   rename(theme = indicator,
          indicator = subindicator)
 
-performance_options <- rbind(performance_agr_options,performance_soc_options,performance_eco_options,performance_env_options) %>%
+performance_choices <- rbind(performance_agr_choices,performance_soc_choices,performance_eco_choices,performance_env_choices) %>%
   rename(theme = indicator,
          indicator = subindicator)
 
 #### Agroecology module ####
-agroecology_form <-  global_form %>%
+agroecology_survey <-  global_survey %>%
   filter(str_detect(module, "agroecology"))%>%
   #select(-subindicator)%>%
   mutate(module= "agroecology")%>%
@@ -255,7 +260,7 @@ agroecology_form <-  global_form %>%
       "_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1") ~ "count",
     TRUE ~ type_question))
 
-agroecology_options <- global_choices %>%
+agroecology_choices <- global_choices %>%
   filter(str_detect(module, "agroecology"))%>%
   #select(-subindicator)%>%
   #rbind(read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",sheet = "agroecology_look_up"))%>%
@@ -287,16 +292,16 @@ agroecology_options <- global_choices %>%
       "_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1") ~ "count",
     TRUE ~ type_question))
 
-
-agrocology_choices<-agroecology_options%>%
+#### Assign scores (1-5) to agroecology question responses using a pre-made lookup table #### 
+agrocology_choices<-agroecology_choices%>%
   filter(type_question!="count")%>%
   select(-name_question_choice)%>%
   rbind(read_excel("HOLPA_global_household_survey_20231204_mapped_to_indicators.xlsx",sheet = "agroecology_look_up"))
 
 names(agrocology_choices)
 
-## Principles structure
-recycling<- agroecology_options%>%
+#### Principles structure ####
+recycling<- agroecology_choices%>%
   filter(indicator== "1_recycling"|
            indicator=="2_input_reduction"|
            indicator== "3_soil_health"|
@@ -335,7 +340,7 @@ process_columns_regex <- function(data, prefixes) {
 }
 
 # Prefixes of select_multiple questions
-select_multiple<- agroecology_form%>%
+select_multiple<- agroecology_survey%>%
   filter(indicator == "1_recycling"|
            indicator == "2_input_reduction"|
            indicator== "3_soil_health"|
@@ -371,7 +376,7 @@ count_columns_regex <- function(data, prefixes) {
 }
 
 # Prefixes of count questions
-count<- agroecology_form%>%
+count<- agroecology_survey%>%
   filter(indicator == "1_recycling"|
            indicator == "2_input_reduction"|
            indicator== "3_soil_health"|
@@ -394,12 +399,13 @@ count<- agroecology_form%>%
 count<- colnames(count)
 count
 
-existing_columns <- intersect(recycling_columns, colnames(zimbabwe_survey))
+#### Match country datasets to global indicator structure #### 
+existing_columns <- intersect(recycling_columns, colnames(zwe_survey))
 existing_columns
 
-names(agroecology_zimbabwe)
+names(agroecology_zwe)
 
-agroecology_zimbabwe <- zimbabwe_survey %>%
+agroecology_zwe <- zwe_survey %>%
   select(all_of(existing_columns))%>%
   mutate_all(as.character)%>%
   process_columns_regex(select_multiple)%>%
@@ -545,9 +551,9 @@ agroecology_zimbabwe <- zimbabwe_survey %>%
          "kobo_id","name_question", "type", "type_question"  , "list_name" , 
          "label_question","label_choice", "name_choice" ,"score_agroecology_module")
 
-write.csv(agroecology_zimbabwe,file='agroecology_module/agroecology_zimbabwe.csv',quote=FALSE)
+write.csv(agroecology_zwe,file='agroecology_module/agroecology_zwe.csv',row.names=FALSE)
 
 
-sort(unique(agroecology_zimbabwe$name_question))
-sort(unique(agroecology_zimbabwe$name_choice))  
-sort(unique(agroecology_zimbabwe$indicator))
+sort(unique(agroecology_zwe$name_question))
+sort(unique(agroecology_zwe$name_choice))  
+sort(unique(agroecology_zwe$indicator))
