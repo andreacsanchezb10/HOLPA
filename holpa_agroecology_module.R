@@ -3,7 +3,7 @@ library(tidyr)
 library(tidyverse)
 library(readxl)
 library(dplyr)
-
+ 
 #### ZIMBABWE
 #Data
 zimbabweData <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/household_database_2024.04.18_clean.xlsx",
@@ -129,7 +129,7 @@ names(agrocologyChoicesMultiple)
 sort(unique(agroecologyChoices$indicator))
 sort(unique(agroecologyQuestionsColumns$indicator))
 
-agroecologyQuestionsColumns<- agroecologyChoices%>% 
+agroecology_questions_columns<- agroecology_choices%>% 
   filter(!str_detect(indicator, "extra"))%>%
   select(label_question, name_question_choice)%>%
   dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
@@ -137,8 +137,8 @@ agroecologyQuestionsColumns<- agroecologyChoices%>%
   mutate("kobo_farmer_id"="kobo_farmer_id",
          "country"="country_name")
 
-agroecologyQuestionsColumns <- colnames(agroecologyQuestionsColumns)
-agroecologyQuestionsColumns
+agroecology_questions_columns <- colnames(agroecology_questions_columns)
+agroecology_questions_columns
 
 
 #Function to combine the answer from all select_multiple questions  
@@ -154,15 +154,15 @@ process_columns_regex <- function(data, prefixes) {
 }
 
 # Prefixes of select_multiple questions
-agroecologySelectMultipleColumns<- agroecologySurvey%>%
+agroecology_select_multiple_columns<- agroecology_survey%>%
   filter(!str_detect(indicator, "extra"))%>%
   filter(type_question == "select_multiple")%>%
   select(name_question,type_question)%>%
   #mutate(name_question= paste(name_question,"/",sep = ""))%>%
   spread(key = name_question, value = type_question)
 
-agroecologySelectMultipleColumns<- colnames(agroecologySelectMultipleColumns)
-agroecologySelectMultipleColumns
+agroecology_select_multiple_columns<- colnames(agroecology_select_multiple_columns)
+agroecology_select_multiple_columns
 
 #Function to count number of selected answers 
 count_columns_regex <- function(data, prefixes) {
@@ -177,28 +177,28 @@ count_columns_regex <- function(data, prefixes) {
 }
 
 # Prefixes of count questions
-agroecologyCountColumns<- agroecologySurvey%>%
+agroecology_count_columns<- agroecology_survey%>%
   filter(!str_detect(indicator, "extra"))%>%
   filter(type_question == "count")%>%
   select(name_question,type_question)%>%
   mutate(name_question= paste(name_question,"/",sep = ""))%>%
   spread(key = name_question, value = type_question)
 
-agroecologyCountColumns<- colnames(agroecologyCountColumns)
-agroecologyCountColumns
+agroecology_count_columns<- colnames(agroecology_count_columns)
+agroecology_count_columns
 
 
 ## ANALYSIS BY COUNTRY
 # Zimbabwe
-agroecologyZimbabweColumns <- intersect(agroecologyQuestionsColumns, colnames(zimbabweData))
-agroecologyZimbabweColumns
+zwe_agroecology_columns <- intersect(agroecology_questions_columns, colnames(zwe_survey))
+zwe_agroecology_columns
 
-names(agroecologyZimbabwe)
-agroecologyZimbabwe <- zimbabweData %>%
-  select(all_of(agroecologyZimbabweColumns))%>%
+names(zwe_agroecology_columns)
+zwe_agroecology <- zwe_survey %>%
+  select(all_of(zwe_agroecology_columns))%>%
   mutate_all(as.character)%>%
-  process_columns_regex(agroecologySelectMultipleColumns)%>%
-  count_columns_regex(agroecologyCountColumns)%>%
+  process_columns_regex(agroecology_select_multiple_columns)%>%
+  count_columns_regex(agroecology_count_columns)%>%
   dplyr::rename_with(~ paste0("x", gsub("/", "", .)), .cols = c(
     "_2_9_1_1/","_2_4_1/","_2_10_1_2/",
     #5_biodiversity
@@ -284,7 +284,7 @@ agroecologyZimbabwe <- zimbabweData %>%
     ))%>%
   select(-contains("/"))%>%
   gather(key = "name_question", value = "name_choice",-kobo_farmer_id, -country)%>%
-  dplyr::left_join(select(agrocologyChoicesMultiple,c(name_question,module,indicator,name_choice,score_agroecology_module,label_choice,
+  dplyr::left_join(select(agrocology_choices_multiple,c(name_question,module,indicator,name_choice,score_agroecology_module,label_choice,
                                                label_question,type,type_question,list_name)), 
                    by= c("name_question"="name_question",
                          "name_choice"="name_choice"))%>%
@@ -292,7 +292,7 @@ agroecologyZimbabwe <- zimbabweData %>%
          "kobo_farmer_id","name_question", "type", "type_question"  , "list_name" , 
          "label_question","label_choice", "name_choice" ,"score_agroecology_module")
 
-names(agroecologyZimbabwe)
-write.csv(agroecologyZimbabwe,file='agroecologyZimbabwe.csv',row.names=FALSE)
+names(zwe_agroecology)
+write.csv(zwe_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/agroecologyZimbabwe2.csv',row.names=FALSE)
 
 ###############
