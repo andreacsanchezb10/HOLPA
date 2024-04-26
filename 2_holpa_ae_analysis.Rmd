@@ -1,0 +1,46 @@
+---
+title: "HOLPA farm-household data analysis"
+output: html_document
+date: "2024-04-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(magrittr) # for piping
+library(tidyverse) #for formatting data
+library(ggplot2) # for plots
+
+zwe_ae <- read.csv("zwe_agroecology.csv",header=TRUE)
+
+library(readr)
+zwe_ae <- read_csv("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/zwe/zwe_agroecology.csv")
+
+```
+
+
+## Agroecology adherence of farm-households
+
+Agroecology adherence assessed using Likert scale responses from 1 (low adherence) to 5 (high adherence).
+
+```{r, echo=FALSE}
+
+d <- zwe_ae %>% 
+  #filter(X=="") %>%
+  mutate(indicator_order = sub('_.*', "", indicator)) %>%
+  mutate(indicator_order = as.numeric(indicator_order),
+         score_final = as.numeric(score_agroecology_module)) %>%
+  mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
+
+ggplot(d, aes(x=indicator,y=score_final,fill=indicator))+
+  geom_boxplot()+
+  ggtitle(paste0("Agroecology adherence across n= ",length(unique(d$kobo_farmer_id))," farm-households"))+
+  labs(x="",y="Score\n(1 = low adherence, 5 = high adherence)")+
+  #geom_violin()+
+  #scale_fill_viridis_d(n=13)
+  theme_bw()+
+  theme(axis.text.x=element_text(angle=90,hjust=1),
+        plot.title=element_text(hjust=0.5))
+
+```
+
+
