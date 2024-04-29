@@ -124,15 +124,23 @@ performance_soc_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "social"))%>%
-  mutate(indicator="social") %>%
-  mutate(subindicator=if_else(str_detect(subindicator, "nutrition"),"nutrition",subindicator))
+  mutate(indicator="social")
+
+sort(unique(performance_soc_survey$subindicator))
+performance_soc_survey$subindicator[str_detect(performance_soc_survey$subindicator, "nutrition")]<- "nutrition"
+sort(unique(performance_soc_survey$subindicator))
+
 
 performance_soc_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance") %>% 
   filter(str_detect(indicator, "social"))%>%
-  mutate(indicator="social") %>% 
-  mutate(subindicator=if_else(str_detect(subindicator, "nutrition"),"nutrition",subindicator))
+  mutate(indicator="social")
+
+sort(unique(performance_soc_choices$subindicator))
+performance_soc_choices$subindicator[str_detect(performance_soc_choices$subindicator, "nutrition")]<- "nutrition"
+sort(unique(performance_soc_choices$subindicator))
+
 
 unique(performance_agr_survey$indicator)
 unique(performance_agr_survey$subindicator)
@@ -217,18 +225,18 @@ performance_choices <- rbind(performance_agr_choices,performance_soc_choices,per
   mutate(name_question_choice= if_else(type_question=="select_multiple",
                                        paste(name_question,"/",name_choice, sep=""),
                                        name_question))%>%
-  filter(theme=="environmental")
-  filter(indicator== "biodiversity"
-          #indicator== "biodiversity_abundance" |
-           indicator=="biodiversity_agrobiodiversity"
-         #indicator=="biodiversity_climate_mitigation"|
-           #indicator== "biodiversity_cover"|
-           #indicator=="biodiversity_diversity"|
-           #indicator=="biodiversity_practices" |
-    #indicator=="energy"|
-      #indicator=="water"
-      )
+  filter(#theme=="environmental"| #ok
+           theme=="social")
+  
+  filter(#indicator== "farmer_agency"|
+    #indicator=="land_tenure" |
+    # indicator=="land_tenure_security"|
+    #  indicator=="wellbeing"|
+          indicator=="nutrition"
+    )
 names(performance_choices)
+sort(unique(performance_choices$theme))
+
 sort(unique(performance_choices$indicator))
 
 sort(unique(performance_choices$type_question))
@@ -237,18 +245,15 @@ sort(unique(performance_choices$name_question))
 
 
 performance_questions_columns<- performance_choices%>% 
-  filter(theme=="environmental")%>%
-  #filter(#indicator== "biodiversity" #no data from zimbabwe
-         #indicator== "biodiversity_abundance"| #ok
-  #indicator=="biodiversity_agrobiodiversity"#1 questions missing  "_3_4_3_4_2" 
-    #indicator=="biodiversity_climate_mitigation"| #missing questions related to area of diversified farming systems
+  filter(#theme=="environmental"|
+           theme=="social")%>%
+  #filter(#indicator== "farmer_agency"|
+       #indicator=="land_tenure"| #ok
+    #indicator=="land_tenure_security" | #ok
+    # indicator=="wellbeing"|#ok
+  #indicator=="nutrition"
     
-      #     indicator== "biodiversity_cover"| #ok
-    #indicator=="biodiversity_diversity"| #ok
-    # indicator=="biodiversity_practices" #ok
-    #indicator=="energy"| #ok
-  # indicator=="water" #missing questions _3_3_4_1_3_begin_repeat
-#)%>%
+  #)%>%  
   dplyr::select(label_question, name_question_choice)%>%
   dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
   spread(key = name_question_choice, value = label_question)%>%
@@ -275,7 +280,8 @@ perform_left_join <- function(performance_choices, gathered_data ) {
     dplyr::left_join(select(performance_choices,
                             c(name_question, module, theme, indicator,"name_choice", label_choice, label_question,type, type_question, list_name)), 
                      by = "name_question")%>%
-    filter(type_question =="calculate"|type_question =="integer"|type_question =="note"|type_question =="text")%>%
+    filter(type_question =="calculate"|type_question =="integer"|type_question =="note"|
+             type_question =="text"|type_question =="audio"|type_question =="decimal")%>%
     select(-name_choice.y)%>%
     rename("name_choice"="name_choice.x")
   
@@ -287,10 +293,8 @@ perform_left_join <- function(performance_choices, gathered_data ) {
     filter(type_question=="select_multiple")%>%
     select(-name_choice.y,-name_question.y)%>%
     rename("name_choice"="name_choice.x")%>%
-           #"name_question"="name_question.y")%>%
     #Remove answers == "0" or NA
     filter(type_question == "select_multiple" & !is.na(name_choice) & name_choice != 0)
-    #Replace answer code by label
 
   # Left join for "select_one"
   select_one <- gathered_data  %>%
@@ -329,6 +333,7 @@ result <- zwe_performance%>%
   mutate(name_question_recla= name_question)%>%
   mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
 
+  
 ## _3_4_3_1_2_begin_repeat
 zwe_performance_columns_3_4_3_1_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_3_1_2_begin_repeat))
 zwe_performance_columns_3_4_3_1_2_begin_repeat
@@ -420,8 +425,6 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat,result_3_3_4_1_3_begin_repe
   mutate(name_question_recla = if_else(label_question == "**In the last 12 months [add country meaning], which different crop crops species (including perennial crops) were produced on your farm**",
                       "_3_4_3_1_1_2", name_question_recla))%>%
   filter(!(name_question_recla == "_3_4_3_1_1_2" & is.na(name_choice)))%>% #Remove the rows with crop_species_name == NA 
-
-  
   ##Name livestock species
   mutate(name_choice = case_when(
     type_question == "select_multiple" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
@@ -446,41 +449,56 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat,result_3_3_4_1_3_begin_repe
 
   # Indicator: energy
   mutate(label_question = case_when(name_question_recla== "_2_8_4_3_4" ~ "**What types of energy do you use for: Cleaning, processing or transporting harvested food**",TRUE ~label_question))%>%
-
+  mutate(name_question_recla = case_when(name_question_recla== "_2_8_4_3_4" ~ "_2_8_4_4",TRUE ~name_question_recla))%>%
   # Indicator: water
   mutate(name_choice = case_when(
     name_question_recla == "_3_4_1_2_7_2_2_1" ~ str_replace(name_choice, "//1$", paste0("//", label_choice)),TRUE ~ name_choice))%>%
   filter(!(str_ends(name_choice, "//0") & name_question_recla == "_3_4_1_2_7_2_2_1"))%>%
 
+  ####THEME: SOCIAL
+  # Indicator: 
+  mutate(name_question_recla = str_replace(name_question_recla, "_audio", ""))%>%
+  
+  # Indicator: land tenure
+  mutate(name_choice = case_when(name_question_recla%in% c("_1_4_4_1_1", "_1_4_4_1_2", "_1_4_4_2_1" ,"_1_4_4_2_2", "_1_4_4_3_1", "_1_4_4_3_2",
+                                                           "_1_4_4_4_1") &
+                                   is.na(name_choice)~ "0",TRUE ~name_choice))%>%
+  mutate(label_choice = case_when(name_question_recla%in% c("_1_4_4_1_1", "_1_4_4_1_2", "_1_4_4_2_1" ,"_1_4_4_2_2", "_1_4_4_3_1", "_1_4_4_3_2",
+                                                           "_1_4_4_4_1") ~ "acres",TRUE ~label_choice))%>%
+  
   #All
   #Replace ${_1_4_1_1} in label_choice by the hectares or acres
-  mutate(label_choice = gsub("\\$\\{_1_4_1_1\\}", "hectares", label_choice))%>%
+  mutate(label_choice = gsub("\\$\\{_1_4_1_1\\}", "acres", label_choice))%>%
+  mutate(label_question = gsub("\\$\\{_1_4_1_1_calculate\\}", "acres", label_question))%>%
   
-  filter(!(name_question %in% c("_3_3_1_1_9_1", "_2_9_1_1_1", "_3_3_1_7_1","_2_8_4_3_4") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
+  filter(!(name_question %in% c("_3_3_1_1_9_1", "_2_9_1_1_1", "_3_3_1_7_1","_2_8_4_3_4",
+                                "_3_1_2_2_1","_3_1_2_8") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
+  filter(!(str_detect(name_question, "audio") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
   filter(!(name_question %in% c("_3_4_3_3_1/other", "_2_9_1_1/other", "_3_3_1_7/other","_2_8_4_4/other")))
+
+
+x<-result2%>%
+  mutate(x=paste(name_question_recla,label_question,sep="_"))
+
+sort(unique(x$x))
+
+sort(unique(result2$label_question))
+view(dfSummary(result2))
 
 length(unique(result2$label_question))
 length(unique(result2$name_question_recla))
 table( result2$name_question_recla, result2$label_question)
 
-duplicated_name_question <- result2$name_question_recla[duplicated(result2$name_question_recla)]
-duplicated_name_question
-
 
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
-x<-result2[result2$name_question_recla %in% duplicated_name_question, c("name_question_recla", "label_question")]
 
 
 
-length(unique(x$label_question))
-length(unique(x$name_question_recla))
-
-
-
-
-
-
-##OBSERVATIONS
-# Zimbabwe does not have data for THEME ENVIRONMENT - indicator: biodiversity (10 questions)
-
+### OBSERVATIONS
+## Zimbabwe 
+#ENVIRONMENTAL
+#does not have data for THEME ENVIRONMENT - indicator: biodiversity (10 questions)
+# questions missing  "_3_4_3_4_2" fishing production
   
+# SOCIAL
+#missing questions: "_3_1_2_4_1_audio" "_3_1_2_5_1_audio" "_3_1_2_6_1_audio" "_3_1_2_7_1_audio" "_3_1_3_1_2"
