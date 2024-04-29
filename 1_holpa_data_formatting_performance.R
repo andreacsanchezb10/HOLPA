@@ -225,7 +225,7 @@ performance_choices <- rbind(performance_agr_choices,performance_soc_choices,per
   mutate(name_question_choice= if_else(type_question=="select_multiple",
                                        paste(name_question,"/",name_choice, sep=""),
                                        name_question))%>%
-  filter(#theme=="environmental"| #ok
+  filter(theme=="environmental"| #ok
            theme=="social")
   
   filter(#indicator== "farmer_agency"|
@@ -245,7 +245,7 @@ sort(unique(performance_choices$name_question))
 
 
 performance_questions_columns<- performance_choices%>% 
-  filter(#theme=="environmental"|
+  filter(theme=="environmental"|
            theme=="social")%>%
   #filter(#indicator== "farmer_agency"|
        #indicator=="land_tenure"| #ok
