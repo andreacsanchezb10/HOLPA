@@ -93,15 +93,19 @@ performance_eco_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "economic"))%>%
-  mutate(indicator="economic") %>%
-  mutate(subindicator=if_else(str_detect(subindicator, "climate_resilience_adaptative_capacity"),"climate_resilience_adaptative_capacity",
-                              if_else(str_detect(subindicator, "climate_resilience_social_network"),"climate_resilience_social_network",
-                                      if_else(str_detect(subindicator, "climate_resilience_assets"),"climate_resilience_assets",
-                                              if_else(str_detect(subindicator, "income"),"income",
-                                                      if_else(str_detect(subindicator, "climate_resilience_food_security"),"climate_resilience_food_security",
-                                                              if_else(str_detect(subindicator, "credit_access"),"credit_access",
-                                                                      if_else(str_detect(subindicator, "climate_resilience_basic_services"),"climate_resilience_basic_services",
-                                                                              if_else(str_detect(subindicator, "labour_productivity"),"labour_productivity",subindicator)))))))))
+  mutate(indicator="economic") 
+
+sort(unique(performance_eco_survey$subindicator))
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_social_network")]<- "climate_resilience_social_network"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_assets")]<- "climate_resilience_assets"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "income")]<- "income"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_food_security")]<- "climate_resilience_food_security"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "credit_access")]<- "credit_access"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_basic_services")]<- "climate_resilience_basic_services"
+performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "labour_productivity")]<- "labour_productivity"
+sort(unique(performance_eco_survey$subindicator))
+
 
 performance_eco_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
@@ -185,34 +189,38 @@ performance_env_survey <-  global_survey %>%
   mutate(module= "performance")%>%
   filter(str_detect(indicator, "environment"))%>%
   filter(!(is.na(subindicator))) %>%
-  mutate(indicator="environmental") %>%
+  mutate(indicator="environmental") 
   
   # CHECK THE BIODIVERSITY ONES - should have three in total !!!!
-  
-  mutate(subindicator=if_else(str_detect(subindicator, "biodiversity_diversity"),"biodiversity_diversity",
-                              if_else(str_detect(subindicator, "biodiversity_abundance"),"biodiversity_abundance",
-                                      if_else(str_detect(subindicator, "biodiversity_climate_mitigation"),"biodiversity_climate_mitigation",
-                                              if_else(str_detect(subindicator, "biodiversity_practices"),"biodiversity_practices",
-                                                      if_else(str_detect(subindicator, "biodiversity_agrobiodiversity"),"biodiversity_agrobiodiversity",
-                                                              if_else(str_detect(subindicator, "energy"),"energy",
-                                                                      if_else(str_detect(subindicator, "water"),"water",
-                                                                              if_else(str_detect(subindicator, "climate_mitigation"),"biodiversity_climate_mitigation",subindicator)))))))))
+sort(unique(performance_env_survey$subindicator))
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "energy")]<- "energy"
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "biodiversity_practices")]<- "biodiversity_practices"
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "biodiversity_abundance")]<- "biodiversity_abundance"
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "biodiversity_diversity")]<- "biodiversity_diversity"
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "biodiversity_agrobiodiversity")]<- "biodiversity_agrobiodiversity"
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "climate_mitigation")]<- "biodiversity_climate_mitigation"
+performance_env_survey$subindicator[str_detect(performance_env_survey$subindicator, "water")]<- "water"
+sort(unique(performance_env_survey$subindicator))
+ 
 
 performance_env_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance") %>% 
   filter(str_detect(indicator, "environment"))%>%
-  mutate(indicator="environmental") %>%
-  mutate(subindicator=if_else(str_detect(subindicator, "biodiversity_diversity"),"biodiversity_diversity",
-                              if_else(str_detect(subindicator, "biodiversity_abundance"),"biodiversity_abundance",
-                                      if_else(str_detect(subindicator, "biodiversity_climate_mitigation"),"biodiversity_climate_mitigation",
-                                              if_else(str_detect(subindicator, "biodiversity_practices"),"biodiversity_practices",
-                                                      if_else(str_detect(subindicator, "biodiversity_agrobiodiversity"),"biodiversity_agrobiodiversity",
-                                                              if_else(str_detect(subindicator, "energy"),"energy",
-                                                                      if_else(str_detect(subindicator, "water"),"water",
-                                                                              if_else(str_detect(subindicator, "climate_mitigation"),"biodiversity_climate_mitigation",subindicator)))))))))
+  mutate(indicator="environmental") 
 
+# CHECK THE BIODIVERSITY ONES - should have three in total !!!!
+sort(unique(performance_env_choices$subindicator))
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "energy")]<- "energy"
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_practices")]<- "biodiversity_practices"
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_abundance")]<- "biodiversity_abundance"
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_diversity")]<- "biodiversity_diversity"
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_agrobiodiversity")]<- "biodiversity_agrobiodiversity"
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "climate_mitigation")]<- "biodiversity_climate_mitigation"
+performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "water")]<- "water"
+sort(unique(performance_env_choices$subindicator))
 
+  
 performance_survey <- rbind(performance_agr_survey,performance_soc_survey,performance_eco_survey,performance_env_survey) %>%
   rename(theme = indicator,
          indicator = subindicator)%>%
@@ -225,8 +233,10 @@ performance_choices <- rbind(performance_agr_choices,performance_soc_choices,per
   mutate(name_question_choice= if_else(type_question=="select_multiple",
                                        paste(name_question,"/",name_choice, sep=""),
                                        name_question))%>%
-  filter(theme=="environmental"| #ok
-           theme=="social")
+  filter(#theme=="environmental"| #ok
+          # theme=="social"|#ok
+    theme== "economic"
+    )
   
   filter(#indicator== "farmer_agency"|
     #indicator=="land_tenure" |
@@ -401,7 +411,6 @@ result_3_3_4_1_3_begin_repeat <- zwe_performance_3_3_4_1_3_begin_repeat%>%
   perform_left_join(performance_choices,.)%>%
   mutate(name_question_recla= name_question)%>%
   mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
-
 
 result2<- rbind(result,result_3_4_3_1_2_begin_repeat,result_3_3_4_1_3_begin_repeat)%>%
   ####THEME: ENVIRONMENTAL
