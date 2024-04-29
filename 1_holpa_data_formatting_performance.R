@@ -382,7 +382,7 @@ result2<- result%>%
   filter(!(name_question %in% c("_3_3_1_1_9_1", "_2_9_1_1_1", "_3_3_1_7_1","_2_8_4_3_4") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
   filter(!(name_question %in% c("_3_4_3_3_1/other", "_2_9_1_1/other", "_3_3_1_7/other","_2_8_4_4/other")))
 
-_2_9_1_1_1
+
 view(dfSummary(result2))
   
   
