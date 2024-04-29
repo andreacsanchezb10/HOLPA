@@ -85,10 +85,6 @@ global_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_sur
   right_join(global_survey,by="list_name",relationship="many-to-many")
 
 #### Performance module ####
-unique(performance_eco_survey$indicator)
-unique(performance_eco_survey$subindicator)
-unique(performance_eco_choices$subindicator)
-
 performance_eco_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
   mutate(module= "performance")%>%
@@ -104,8 +100,10 @@ performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicat
 performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "credit_access")]<- "credit_access"
 performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_basic_services")]<- "climate_resilience_basic_services"
 performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "labour_productivity")]<- "labour_productivity"
-sort(unique(performance_eco_survey$subindicator))
 
+unique(performance_eco_survey$indicator)
+unique(performance_eco_survey$subindicator)
+unique(performance_eco_choices$subindicator)
 
 performance_eco_choices <- global_choices %>%
   filter(str_detect(module, "performance"))%>%
@@ -120,9 +118,6 @@ performance_eco_choices <- global_choices %>%
                                                               if_else(str_detect(subindicator, "credit_access"),"credit_access",
                                                                       if_else(str_detect(subindicator, "climate_resilience_basic_services"),"climate_resilience_basic_services",
                                                                               if_else(str_detect(subindicator, "labour_productivity"),"labour_productivity",subindicator)))))))))
-unique(performance_soc_survey$indicator)
-unique(performance_soc_survey$subindicator)
-unique(performance_soc_choices$subindicator)
 
 performance_soc_survey <-  global_survey %>%
   filter(str_detect(module, "performance"))%>%
@@ -130,9 +125,12 @@ performance_soc_survey <-  global_survey %>%
   filter(str_detect(indicator, "social"))%>%
   mutate(indicator="social")
 
-sort(unique(performance_soc_survey$subindicator))
+unique(performance_soc_survey$subindicator)
 performance_soc_survey$subindicator[str_detect(performance_soc_survey$subindicator, "nutrition")]<- "nutrition"
-sort(unique(performance_soc_survey$subindicator))
+
+unique(performance_soc_survey$indicator)
+unique(performance_soc_survey$subindicator)
+unique(performance_soc_choices$subindicator)
 
 
 performance_soc_choices <- global_choices %>%
