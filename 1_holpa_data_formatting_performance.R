@@ -13,7 +13,7 @@ global.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/"
 zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
 
 #Andrea 
-global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/holpa_household_form/"
+global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/"
 zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/"
 
 #### Import data ####
@@ -28,6 +28,7 @@ zwe_survey <- read_excel(path=paste0(zwe.data.path,"household_database_2024.04.1
   rename("country"="_1_2_1_3")%>%
   mutate("_2_6_1_4_6"= NA)%>%
   mutate("_2_7_1_6/other"= NA)
+zwe_survey <- zwe_survey[-1,]
 
 # Crop production section
 zwe_3_4_3_1_2_begin_repeat <- read_excel(path=paste0(zwe.data.path,"household_database_2024.04.18_clean.xlsx"),
@@ -206,11 +207,15 @@ performance_choices <- rbind(performance_agr_choices,performance_soc_choices,per
                                        paste(name_question,"/",name_choice, sep=""),
                                        name_question))%>%
   filter(theme=="environmental")
-  filter(indicator== "biodiversity_abundance" |
-    indicator=="biodiversity_agrobiodiversity"| 
-        indicator== "biodiversity_cover"|
-         indicator=="biodiversity_diversity"|
-               indicator=="biodiversity_practices" 
+  filter(indicator== "biodiversity"
+          #indicator== "biodiversity_abundance" |
+           #indicator=="biodiversity_agrobiodiversity"| 
+         #indicator=="biodiversity_climate_mitigation"|
+           #indicator== "biodiversity_cover"|
+           #indicator=="biodiversity_diversity"|
+           #indicator=="biodiversity_practices" |
+    #indicator=="energy"|
+      indicator=="water"
       )
 names(performance_choices)
 sort(unique(performance_choices$indicator))
@@ -222,12 +227,19 @@ sort(unique(performance_choices$name_question))
 
 performance_questions_columns<- performance_choices%>% 
   filter(theme=="environmental")%>%
-  filter(indicator== "biodiversity_abundance"| #ok
-    indicator=="biodiversity_agrobiodiversity"|#2 questions missing  "_3_4_3_1_3" "_3_4_3_4_2"
-         indicator== "biodiversity_cover"| #ok
-                 indicator=="biodiversity_diversity"| #ok
-          indicator=="biodiversity_practices"
-    )%>%
+ # filter(indicator== "biodiversity" #no data from zimbabwe
+         #indicator== "biodiversity_abundance"| #ok
+     #indicator=="biodiversity_agrobiodiversity"|#2 questions missing  "_3_4_3_1_3" "_3_4_3_4_2" _3_4_3_1_2_begin_repeat
+    #indicator=="biodiversity_climate_mitigation"| #missing questions related to area of diversified farming systems
+    
+      #     indicator== "biodiversity_cover"| #ok
+    #indicator=="biodiversity_diversity"| #ok
+    # indicator=="biodiversity_practices" #ok
+    #indicator=="energy"| #ok
+  # indicator=="water" #missing questions _3_3_4_1_3_begin_repeat
+
+    
+ #)%>%
   dplyr::select(label_question, name_question_choice)%>%
   dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
   spread(key = name_question_choice, value = label_question)%>%
@@ -334,32 +346,56 @@ result2<- result%>%
   mutate(name_question_recla = if_else(label_question == "**In the last 12 months [add country meaning], which different crop crops species (including perennial crops) were produced on your farm**",
                       "_3_4_3_1_1_2", name_question_recla))%>%
   filter(!(name_question_recla == "_3_4_3_1_1_2" & is.na(name_choice)))%>% #Remove the rows with crop_species_name == NA 
+
   
   ##Name livestock species
   mutate(name_choice = case_when(
     type_question == "select_multiple" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
     #name_question_recla == "_3_4_3_3_1" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
     TRUE ~ name_choice))%>%
-  mutate(name_question_recla = case_when(
-    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
-    TRUE ~ name_question_recla))%>%
+  mutate(name_question_recla = case_when(name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",TRUE ~ name_question_recla))%>%
+  mutate(label_choice = case_when(name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8",
+                                                       "_2_8_4_3_4") ~ "other",TRUE ~ label_choice))%>%
+  
   mutate(label_question = case_when(
     name_question_recla== "_3_4_3_3_1" ~  "**In the last 12 months [add country meaning], which different livestock species did you keep?**",
     TRUE ~ label_question))%>%
+  
   ## Indicator: biodiversity_diversity
   filter(!(name_question_recla == "_3_3_1_1_9_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
-  filter(!(name_question_recla == "_3_3_1_7_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
-  filter(!(name_question_recla == "_2_9_1_1_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
-  filter(name_question != "_3_3_1_7/other")%>%
-  filter(name_question != "_2_9_1_1/other")%>%
-  filter(name_question != "_3_4_3_3_1/other")
+  
+  #filter(name_question != "_3_4_3_3_1/other")%>%
+  # Indicator: biodiversity_practices
+  mutate(label_choice = case_when(name_question_recla%in% c("_2_9_1_1_1","_3_3_1_7_1") ~ "other ecological practice",TRUE ~label_choice))%>%
+  #filter(!(name_question_recla == "_2_9_1_1_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
+  #filter(name_question != "_2_9_1_1/other")%>%
+  mutate(label_question = case_when(name_question_recla== "_2_9_1_1_1" ~ "**Which ecological practices do you use on cropland to improve soil quality and health?**",TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(name_question_recla== "_2_9_1_1_1" ~ "_2_9_1_1",TRUE ~name_question_recla))%>%
+  mutate(label_question = case_when(name_question_recla== "_3_3_1_7_1" ~ "**What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?**",TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(name_question_recla== "_3_3_1_7_1" ~ "_3_3_1_7",TRUE ~name_question_recla))%>%
+  #filter(!(name_question_recla == "_3_3_1_7_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other** == NA 
+  
+  # Indicator: energy
+  mutate(label_question = case_when(name_question_recla== "_2_8_4_3_4" ~ "**What types of energy do you use for: Cleaning, processing or transporting harvested food**",TRUE ~label_question))%>%
+  #filter(!(name_question_recla == "_2_8_4_3_4" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
+  
+  filter(!(name_question %in% c("_3_3_1_1_9_1", "_2_9_1_1_1", "_3_3_1_7_1","_2_8_4_3_4") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
+  filter(!(name_question %in% c("_3_4_3_3_1/other", "_2_9_1_1/other", "_3_3_1_7/other","_2_8_4_4/other")))
+
+_2_9_1_1_1
+view(dfSummary(result2))
+  
+  
+sort(unique(result2$label_question))
+sort(unique(result2$name_question))
+sort(unique(result2$name_question_recla))
+
+
   
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
 
-view(dfSummary(result2))
 
-
-sort(unique(result2$label_question))
-
+##OBSERVATIONS
+# Zimbabwe does not have data for THEME ENVIRONMENT - indicator: biodiversity (10 questions)
 
   
