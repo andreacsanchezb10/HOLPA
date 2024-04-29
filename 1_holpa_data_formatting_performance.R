@@ -392,7 +392,7 @@ sort(unique(result2$name_question_recla))
 
 
   
-write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
 
 
 ##OBSERVATIONS
