@@ -520,7 +520,7 @@ result_3_4_1_1_7_2_begin_repeat<- zwe_performance_3_4_1_1_7_2_begin_repeat%>%
 
 result2<- result%>%
   #rbind(result_3_4_2_2_2_begin_repeat,result_3_4_3_1_2_begin_repeat,result_3_3_4_1_3_begin_repeat) 
-  rbind(result_3_4_1_1_7_1_begin_repeat)%>%
+  rbind(result_3_4_1_1_7_1_begin_repeat,result_3_4_1_1_7_2_begin_repeat)%>%
   ####THEME: ENVIRONMENTAL
   ###Sub-indicator: biodiversity_agrobiodiversity
   ##Number of crop/livestock/fish species produced
