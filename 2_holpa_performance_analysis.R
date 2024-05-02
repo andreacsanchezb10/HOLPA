@@ -1,3 +1,6 @@
+#Code to convert the long version into the short version
+#Code to combine the databases from main dataset and repeat groups
+
 # Indicator: productivity_crops 
 productivity_crops_long<- result2%>%
   filter(indicator=="productivity_crops")%>%
