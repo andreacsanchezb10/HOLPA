@@ -23,53 +23,45 @@ zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOL
 # These need to be imported and combined.
 
 ### Country databases ####
-read_and_process_survey <- function(sheet_name, column_id_rename, data_path,country_name,index) {
-  survey_data <- read_excel(path = data_path,
-                            sheet = sheet_name) %>%
+read_and_process_survey <- function(sheet_name, column_id_rename, data_path, country_name, index) {
+  survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
     mutate(country = country_name,
-           sheet_id= sheet_name) %>% #sheet name
-    rename("kobo_farmer_id" := !!column_id_rename ) %>%
-    rename("index" := !!index ) %>%
-    #mutate(farmer_sheet_id= paste(sheet_id,kobo_farmer_id,index,sep = "_" ))%>%
+           sheet_id = sheet_name) %>%
+    rename("kobo_farmer_id" := !!column_id_rename,
+           "index" := !!index) %>%
     slice(-1)
+  
+  # Automatically rename columns for begin_repeat groups
+  if (grepl("begin_repeat", tolower(sheet_name))) {
+    survey_data <- survey_data %>%
+      rename("parent_table_name" = "_parent_table_name",
+             "parent_index" = "_parent_index")
+  }
+  
   return(survey_data)
 }
+
 
 #Zimbabwe
 zwe_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.data.path,"zimbabwe","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
+zwe_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey("_3_4_3_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Crop production
+zwe_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey("_3_4_2_2_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Livestock production 1
+zwe_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey("_3_4_2_2_6_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Livestock production 2
 
-unique(zwe_survey$kobo_farmer_id)
-unique(zwe_survey$sheet_id)
-unique(zwe_survey$"_2_4_1")
-names(zwe_survey_3_4_3_1_2_begin_repeat)
+zwe_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey("_3_4_1_1_7_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section:labour household members permanent workers
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="274186917")
+zwe_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey("_3_4_1_1_7_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour household members seasonal workers 1
+zwe_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour household members seasonal workers 2
 
-zwe_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey("_3_4_3_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: Crop production
-  rename("parent_table_name"="_parent_table_name",
-         "parent_index"="_parent_index")
-  names(zwe_survey_3_4_3_1_2_begin_repeat)
+
+zwe_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey("_3_4_1_2_1_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
+zwe_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
+zwe_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
+
 zwe_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey("_3_3_4_1_3_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Irrigation
-zwe_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey("_3_4_2_2_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Livestock production
-
-zwe_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey("_3_4_1_1_7_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: household members permanent workers
-zwe_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey("_3_4_1_1_7_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: household members seasonal workers 1
-  rename("parent_table_name"="_parent_table_name",
-         "parent_index"="_parent_index")
-zwe_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: household members seasonal workers 2
-  rename("parent_table_name"="_parent_table_name",
-         "parent_index"="_parent_index")
-  mutate(farmer_repeat_group_id= paste("_3_4_1_1_7_2_begin_repeat",kobo_farmer_id,parent_index,sep = "_" ))
-
-unique(zwe_survey_3_4_1_1_7_1_begin_repeat$kobo_farmer_id)
-unique(zwe_survey_3_4_1_1_7_1_begin_repeat$group_id)
-unique(zwe_survey_3_4_1_1_7_1_begin_repeat$index)
-
-unique(zwe_survey_3_4_1_1_7_2_begin_repeat$farmer_repeat_group_id)
-unique(zwe_survey_3_4_1_2_7_2_1_begin_repeat$farmer_repeat_group_id)
-
-
-zwe_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") 
 
 
 
@@ -268,17 +260,11 @@ performance_choices <- rbind(performance_agr_choices,performance_soc_choices,per
   filter(
     #theme=="environmental"| #ok
     #      theme=="social"|#ok
-    #theme== "economic"|
-    theme=="agricultural"
+    theme== "economic"
+      #theme=="agricultural"#ok
     ) %>%
   filter(
-    #indicator=="animal_health"
-    # indicator=="crop_health"|
-       # indicator=="nutrient_use"|
-    #indicator=="soil_health"|
-    indicator=="productivity_crops"
-      #indicator== "productivity_livestock"
-    
+    indicator=="labour_productivity"
     )
 names(performance_choices)
 sort(unique(performance_choices$theme))
@@ -293,19 +279,13 @@ performance_questions_columns<- performance_choices%>%
   filter(
     #theme=="environmental"|
      # theme=="social"|
-      #theme== "economic"|
-      theme=="agricultural"
+      theme== "economic"
+        #theme=="agricultural"
     
     )%>%
   filter(
-    #indicator=="labour_productivity" #questions from  _3_4_1_2_1_2_begin_repeat _3_4_1_2_1_2_1_begin_repeat _3_4_1_1_7_2_begin_repeat
-    #indicator=="animal_health"#ok
-     # indicator=="crop_health"|#ok
-    #indicator=="nutrient_use"|#ok
-    #indicator=="soil_health"
-      indicator=="productivity_crops"
-      #indicator== "productivity_livestock"
-    
+    indicator=="labour_productivity" #questions from  _3_4_1_2_1_2_begin_repeat _3_4_1_2_1_2_1_begin_repeat _3_4_1_1_7_2_begin_repeat
+
   )%>%  
   dplyr::select(label_question, name_question_choice)%>%
   dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
@@ -386,11 +366,9 @@ result <- zwe_performance%>%
   gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
   perform_left_join(performance_choices,.)%>%
   mutate(name_question_recla= name_question)%>%
-  mutate(name_question_recla = str_remove(name_question_recla, "/.*"))%>%
+  #mutate(name_question_recla = str_remove(name_question_recla, "/.*"))%>%
   mutate(parent_table_name= NA,
          parent_index=NA)
-    
-    
 names(result)
 
 ### CHECK ALL THE BEGIN_REPEAT GROUPS PARTICULARLY LABOUR PRODUCTIVITY FROM ECONOMIC THEME
@@ -419,10 +397,10 @@ view(dfSummary(zwe_performance_3_4_3_1_2_begin_repeat))
 result_3_4_3_1_2_begin_repeat <- zwe_performance_3_4_3_1_2_begin_repeat%>%
   gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
+  mutate(name_question_recla= name_question)
   mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
 
-##_3_4_2_2_2_begin_repeat: Livestock production ----
+##_3_4_2_2_2_begin_repeat: Livestock production 1 ----
 zwe_performance_columns_3_4_2_2_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_2_2_2_begin_repeat))
 zwe_performance_columns_3_4_2_2_2_begin_repeat
 performance_questions_columns
@@ -446,10 +424,39 @@ zwe_performance_3_4_2_2_2_begin_repeat <- zwe_performance_3_4_2_2_2_begin_repeat
 view(dfSummary(zwe_performance_3_4_2_2_2_begin_repeat))
 
 result_3_4_2_2_2_begin_repeat <- zwe_performance_3_4_2_2_2_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-farmer_repeat_group_id)%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
-  mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
+  mutate(name_question_recla= name_question)
+  #mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
+
+##_3_4_2_2_6_begin_repeat: Livestock production 2 ----
+zwe_performance_columns_3_4_2_2_6_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_2_2_6_begin_repeat))
+zwe_performance_columns_3_4_2_2_6_begin_repeat
+performance_questions_columns
+mismatched_columns_3_4_2_2_6_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_2_2_6_begin_repeat)
+print(mismatched_columns_3_4_2_2_6_begin_repeat)
+
+zwe_performance_3_4_2_2_6_begin_repeat <- zwe_survey_3_4_2_2_6_begin_repeat %>%
+  select(all_of(zwe_performance_columns_3_4_2_2_6_begin_repeat))%>%
+  mutate_all(as.character)
+
+names(zwe_performance_3_4_2_2_6_begin_repeat)
+view(dfSummary(zwe_performance_3_4_2_2_6_begin_repeat))
+
+# Identify columns with only NA values
+na_columns_3_4_2_2_6_begin_repeat <- colSums(is.na(zwe_performance_3_4_2_2_6_begin_repeat)) == nrow(zwe_performance_3_4_2_2_6_begin_repeat)
+na_columns_3_4_2_2_6_begin_repeat
+
+# Remove columns with only NA values
+zwe_performance_3_4_2_2_6_begin_repeat <- zwe_performance_3_4_2_2_6_begin_repeat[, !na_columns_3_4_2_2_6_begin_repeat]
+
+view(dfSummary(zwe_performance_3_4_2_2_6_begin_repeat))
+
+result_3_4_2_2_6_begin_repeat <- zwe_performance_3_4_2_2_6_begin_repeat%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+  perform_left_join(performance_choices,.)%>%
+  mutate(name_question_recla= name_question)
+#mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
 
 ##_3_3_4_1_3_begin_repeat: Irrigation ----
 zwe_performance_columns_3_3_4_1_3_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_3_4_1_3_begin_repeat))
@@ -503,10 +510,10 @@ zwe_performance_3_4_1_1_7_1_begin_repeat <- zwe_performance_3_4_1_1_7_1_begin_re
 view(dfSummary(zwe_performance_3_4_1_1_7_1_begin_repeat))
 
 result_3_4_1_1_7_1_begin_repeat <- zwe_performance_3_4_1_1_7_1_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-farmer_repeat_group_id)%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
-  mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
+  mutate(name_question_recla= name_question)
+  #mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
 
 ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 ----
 zwe_performance_columns_3_4_1_1_7_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_1_7_2_begin_repeat))
@@ -528,23 +535,16 @@ na_columns_3_4_1_1_7_2_begin_repeat
 
 # Remove columns with only NA values
 zwe_performance_3_4_1_1_7_2_begin_repeat <- zwe_performance_3_4_1_1_7_2_begin_repeat[, !na_columns_3_4_1_1_7_2_begin_repeat]
-zwe_performance_3_4_1_1_7_2_begin_repeat$match_id <- paste(zwe_performance_3_4_1_1_7_2_begin_repeat$sheet_id,
-                                                           zwe_performance_3_4_1_1_7_2_begin_repeat$kobo_farmer_id, 
-                                                           zwe_performance_3_4_1_1_7_2_begin_repeat$index,sep = "_")
-zwe_performance_3_4_1_1_7_2_begin_repeat <- zwe_performance_3_4_1_1_7_2_begin_repeat%>%select( -index,-sheet_id)
 
-unique(zwe_performance_3_4_1_1_7_2_begin_repeat$match_id)
-
+unique(zwe_performance_3_4_1_1_7_2_begin_repeat$merge_id2)
 view(dfSummary(zwe_performance_3_4_1_1_7_2_begin_repeat))
 
 result_3_4_1_1_7_2_begin_repeat<- zwe_performance_3_4_1_1_7_2_begin_repeat%>%
-
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-farmer_repeat_group_id)%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
-  mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
+  mutate(name_question_recla= name_question)
 
-##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 2 ----
+##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 ----
 zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_7_2_1_begin_repeat))
 zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat
 performance_questions_columns
@@ -553,9 +553,7 @@ print(mismatched_columns_3_4_1_2_7_2_1_begin_repeat)
 
 zwe_performance_3_4_1_2_7_2_1_begin_repeat <- zwe_survey_3_4_1_2_7_2_1_begin_repeat %>%
   select(all_of(zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat))%>%
-  mutate_all(as.character)%>%
-  rename("x_3_4_1_2_7_2_1_calculate"="_3_4_1_2_7_2_1_calculate")%>%
-  mutate(index= paste("season", x_3_4_1_2_7_2_1_calculate,sep = "_"))
+  mutate_all(as.character)
 
 names(zwe_performance_3_4_1_2_7_2_1_begin_repeat)
 unique(zwe_performance_3_4_1_2_7_2_1_begin_repeat$index)
@@ -567,31 +565,108 @@ na_columns_3_4_1_2_7_2_1_begin_repeat
 
 # Remove columns with only NA values
 zwe_performance_3_4_1_2_7_2_1_begin_repeat <- zwe_performance_3_4_1_2_7_2_1_begin_repeat[, !na_columns_3_4_1_2_7_2_1_begin_repeat]
-zwe_performance_3_4_1_2_7_2_1_begin_repeat$match_id <- paste(zwe_performance_3_4_1_2_7_2_1_begin_repeat$parent_table_name,
-                                                             zwe_performance_3_4_1_2_7_2_1_begin_repeat$kobo_farmer_id, 
-                                                             zwe_performance_3_4_1_2_7_2_1_begin_repeat$parent_index,sep = "_")
 
 names(zwe_performance_3_4_1_2_7_2_1_begin_repeat)
-unique(zwe_performance_3_4_1_2_7_2_1_begin_repeat$match_id)
 view(dfSummary(zwe_performance_3_4_1_2_7_2_1_begin_repeat))
 
 result_3_4_1_1_7_2_1_begin_repeat<- zwe_performance_3_4_1_2_7_2_1_begin_repeat%>%
-  #select(-parent_index,-parent_table_name)%>%
-  #left_join(zwe_performance_3_4_1_1_7_2_begin_repeat, by = c("match_id","kobo_farmer_id","country"))%>%
-  select(-match_id)%>%
   gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
-  mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
+  mutate(name_question_recla= name_question)
 
 names(result_3_4_1_1_7_2_1_begin_repeat)
 unique(result_3_4_1_1_7_2_1_begin_repeat$parent_table_name)
 
+##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers ----
+zwe_performance_columns_3_4_1_2_1_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_1_1_begin_repeat))
+zwe_performance_columns_3_4_1_2_1_1_begin_repeat
+performance_questions_columns
+mismatched_columns_3_4_1_2_1_1_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_1_1_begin_repeat)
+print(mismatched_columns_3_4_1_2_1_1_begin_repeat)
 
-# Combine all----
-result2<- rbind(result,result_3_4_3_1_2_begin_repeat)%>%
-  #rbind(result_3_4_2_2_2_begin_repeat,result_3_4_3_1_2_begin_repeat,result_3_3_4_1_3_begin_repeat) 
-  #rbind(result_3_4_1_1_7_1_begin_repeat,result_3_4_1_1_7_2_begin_repeat,result_3_4_1_1_7_2_1_begin_repeat)%>%
+zwe_performance_3_4_1_2_1_1_begin_repeat <- zwe_survey_3_4_1_2_1_1_begin_repeat %>%
+  select(all_of(zwe_performance_columns_3_4_1_2_1_1_begin_repeat))%>%
+  mutate_all(as.character)
+
+view(dfSummary(zwe_performance_3_4_1_2_1_1_begin_repeat))
+
+# Identify columns with only NA values
+na_columns_3_4_1_2_1_1_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_1_1_begin_repeat)) == nrow(zwe_performance_3_4_1_2_1_1_begin_repeat)
+na_columns_3_4_1_2_1_1_begin_repeat
+
+# Remove columns with only NA values
+zwe_performance_3_4_1_2_1_1_begin_repeat <- zwe_performance_3_4_1_2_1_1_begin_repeat[, !na_columns_3_4_1_2_1_1_begin_repeat]
+
+view(dfSummary(zwe_performance_3_4_1_2_1_1_begin_repeat))
+
+result_3_4_1_2_1_1_begin_repeat<- zwe_performance_3_4_1_2_1_1_begin_repeat%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+  perform_left_join(performance_choices,.)%>%
+  mutate(name_question_recla= name_question)
+
+
+##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 ----
+zwe_performance_columns_3_4_1_2_1_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_1_2_begin_repeat))
+zwe_performance_columns_3_4_1_2_1_2_begin_repeat
+performance_questions_columns
+mismatched_columns_3_4_1_2_1_2_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_1_2_begin_repeat)
+print(mismatched_columns_3_4_1_2_1_2_begin_repeat)
+
+zwe_performance_3_4_1_2_1_2_begin_repeat <- zwe_survey_3_4_1_2_1_2_begin_repeat%>%
+  select(all_of(zwe_performance_columns_3_4_1_2_1_2_begin_repeat))%>%
+  mutate_all(as.character)
+
+view(dfSummary(zwe_performance_3_4_1_2_1_2_begin_repeat))
+
+# Identify columns with only NA values
+na_columns_3_4_1_2_1_2_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_1_2_begin_repeat)) == nrow(zwe_performance_3_4_1_2_1_2_begin_repeat)
+na_columns_3_4_1_2_1_2_begin_repeat
+
+# Remove columns with only NA values
+zwe_performance_3_4_1_2_1_2_begin_repeat <- zwe_performance_3_4_1_2_1_2_begin_repeat[, !na_columns_3_4_1_2_1_2_begin_repeat]
+
+view(dfSummary(zwe_performance_3_4_1_2_1_2_begin_repeat))
+
+result_3_4_1_2_1_2_begin_repeat<- zwe_performance_3_4_1_2_1_2_begin_repeat%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+  perform_left_join(performance_choices,.)%>%
+  mutate(name_question_recla= name_question)
+
+##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
+_3_4_1_2_1_2_1_begin_repeat
+zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_1_2_1_begin_repeat))
+zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat
+performance_questions_columns
+mismatched_columns_3_4_1_2_1_2_1_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat)
+print(mismatched_columns_3_4_1_2_1_2_1_begin_repeat)
+
+zwe_performance_3_4_1_2_1_2_1_begin_repeat <- zwe_survey_3_4_1_2_1_2_1_begin_repeat%>%
+  select(all_of(zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat))%>%
+  mutate_all(as.character)
+
+view(dfSummary(zwe_performance_3_4_1_2_1_2_1_begin_repeat))
+
+# Identify columns with only NA values
+na_columns_3_4_1_2_1_2_1_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_1_2_1_begin_repeat)) == nrow(zwe_performance_3_4_1_2_1_2_1_begin_repeat)
+na_columns_3_4_1_2_1_2_1_begin_repeat
+
+# Remove columns with only NA values
+zwe_performance_3_4_1_2_1_2_1_begin_repeat <- zwe_performance_3_4_1_2_1_2_1_begin_repeat[, !na_columns_3_4_1_2_1_2_1_begin_repeat]
+
+view(dfSummary(zwe_performance_3_4_1_2_1_2_1_begin_repeat))
+
+result_3_4_1_2_1_2_1_begin_repeat<- zwe_performance_3_4_1_2_1_2_1_begin_repeat%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+  perform_left_join(performance_choices,.)%>%
+  mutate(name_question_recla= name_question)
+
+ # Combine all----
+result2<- rbind(result,
+                #labour_productivity
+                result_3_4_1_1_7_1_begin_repeat,result_3_4_1_1_7_2_1_begin_repeat,result_3_4_1_1_7_2_begin_repeat ,
+                result_3_4_1_2_1_1_begin_repeat,result_3_4_1_2_1_2_begin_repeat,result_3_4_1_2_1_2_1_begin_repeat)%>%
+  #  rbind(result_3_4_2_2_2_begin_repeat, result_3_4_2_2_6_begin_repeat,result_3_4_3_1_2_begin_repeat,result_3_3_4_1_3_begin_repeat) 
+  #rbind(,,result_3_4_1_1_7_2_1_begin_repeat)%>%
   ####THEME: ENVIRONMENTAL
   ###Sub-indicator: biodiversity_agrobiodiversity
   ##Number of crop/livestock/fish species produced
@@ -605,10 +680,9 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat)%>%
     TRUE ~ label_choice))%>%
   mutate(name_question_recla  = case_when(
     label_question==  "**In the last 12 months [add country meaning], how many different crops species (including perennial crops) were produced on your farm**"~ "_3_4_3_1_1" ,
-    TRUE ~ name_question_recla))%>%
-  mutate(name_question_recla  = case_when(
     label_question==  "In the last 12 months [add country meaning], how many different livestock species were produced in your farm?"~ "_3_4_2_2_2_3_calculate" ,
     TRUE ~ name_question_recla))%>%
+
   ##Name crop species
   mutate(name_question_recla = if_else(label_question == "**In the last 12 months [add country meaning], which different crop crops species (including perennial crops) were produced on your farm**",
                       "_3_4_3_1_1_2", name_question_recla))%>%
@@ -635,12 +709,17 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat)%>%
   
   ## Indicator: biodiversity_diversity
   filter(!(name_question_recla == "_3_3_1_1_9_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
+  
   # Indicator: biodiversity_practices
   mutate(label_choice = case_when(name_question_recla%in% c("_2_9_1_1_1","_3_3_1_7_1") ~ "other ecological practice",TRUE ~label_choice))%>%
-  mutate(label_question = case_when(name_question_recla== "_2_9_1_1_1" ~ "**Which ecological practices do you use on cropland to improve soil quality and health?**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question_recla== "_2_9_1_1_1" ~ "_2_9_1_1",TRUE ~name_question_recla))%>%
-  mutate(label_question = case_when(name_question_recla== "_3_3_1_7_1" ~ "**What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question_recla== "_3_3_1_7_1" ~ "_3_3_1_7",TRUE ~name_question_recla))%>%
+  mutate(label_question = case_when(
+    name_question_recla== "_2_9_1_1_1" ~ "**Which ecological practices do you use on cropland to improve soil quality and health?**",
+    name_question_recla== "_3_3_1_7_1" ~ "**What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?**",
+    TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(
+    name_question_recla== "_2_9_1_1_1" ~ "_2_9_1_1",
+    name_question_recla== "_3_3_1_7_1" ~ "_3_3_1_7",
+    TRUE ~name_question_recla))%>%
 
   # Indicator: energy
   mutate(label_question = case_when(name_question_recla== "_2_8_4_3_4" ~ "**What types of energy do you use for: Cleaning, processing or transporting harvested food**",TRUE ~label_question))%>%
@@ -663,36 +742,67 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat)%>%
                                                            "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3") ~ "acres",TRUE ~label_choice))%>%
   ####THEME: ECONOMIC
   # Indicator: "climate_mitigation"
-  mutate(label_question = case_when(name_question == "_4_1_1_5_2_1" ~ "**Credit for what types of investment**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question == "_4_1_1_5_2_1" ~ "_4_1_1_5_2",TRUE ~name_question_recla))%>%
-  mutate(label_question = case_when(name_question == "_4_1_1_5_1_1" ~"**Please indicate the source of the credit you obtained for your farming business**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question =="_4_1_1_5_1_1" ~ "_4_1_1_5_1",TRUE ~name_question_recla))%>%
-  
+  mutate(label_question = case_when(
+    name_question == "_4_1_1_5_2_1" ~ "**Credit for what types of investment**",
+    name_question == "_4_1_1_5_1_1" ~"**Please indicate the source of the credit you obtained for your farming business**",
+    TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(
+    name_question == "_4_1_1_5_2_1" ~ "_4_1_1_5_2",
+    name_question =="_4_1_1_5_1_1" ~ "_4_1_1_5_1",
+    TRUE ~name_question_recla))%>%
+
   # Indicator: climate_resilience_shocks
-  mutate(label_question = case_when(name_question =="_4_1_3_1_1"~"**In the last 12 months, what were the most severe shocks faced by the household**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question =="_4_1_3_1_1" ~ "_4_1_3_1",TRUE ~name_question_recla))%>%
-  mutate(label_question = case_when(name_question =="_4_1_3_1_2_1"~"**What did the household members do to cope with the shocks**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question =="_4_1_3_1_2_1" ~ "_4_1_3_1_2",TRUE ~name_question_recla))%>%
-  
+  mutate(label_question = case_when(
+    name_question =="_4_1_3_1_1"~"**In the last 12 months, what were the most severe shocks faced by the household**",
+    name_question =="_4_1_3_1_2_1"~"**What did the household members do to cope with the shocks**",
+    TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(
+    name_question =="_4_1_3_1_1" ~ "_4_1_3_1",
+    name_question =="_4_1_3_1_2_1" ~ "_4_1_3_1_2",
+    TRUE ~name_question_recla))%>%
+
   # Indicator:
   mutate(label_question = case_when(name_question =="_2_3_1_1_1"~"**Select all the associations/organizations of which you or other HH members are a part of.**",TRUE ~label_question))%>%
   mutate(name_question_recla = case_when(name_question =="_2_3_1_1_1" ~ "_2_3_1_1",TRUE ~name_question_recla))%>%
                                            
   # Indicator: labour_productivity
-  mutate(label_question = case_when(name_question =="_3_4_1_1_7_1_2_1"~"In what production activities did these hh members work?",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question =="_3_4_1_1_7_1_2_1"~ "_3_4_1_1_7_1_2",TRUE ~name_question_recla))%>%
+  mutate(name_question_recla = case_when(
+    name_question =="_3_4_1_1_7_1_2_1"~ "_3_4_1_1_7_1_2/other",
+    TRUE ~name_question_recla))%>%
   
   # THEME: AGRICULTURAL
   # Indicator: animal_health
   mutate(label_question = case_when(name_question =="_3_3_4_4_1"~"**Where do you source your water for drinking water for livestock?**",TRUE ~label_question))%>%
   mutate(name_question_recla = case_when(name_question =="_3_3_4_4_1"~"_3_3_4_4",TRUE ~name_question_recla))%>%
   
-  # Indicator: productivity_crosp
-  mutate(label_question = case_when(name_question =="_3_4_2_1_5_1_2"~"**Select crop production unit:**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question =="_3_4_2_1_5_1_2"~"_3_4_2_1_5_1",TRUE ~name_question_recla))%>%
+  # Indicator: productivity_crops
+  mutate(label_question = case_when(
+    name_question =="_3_4_2_1_5_1_2"~"**Select crop production unit:**",
+    name_question =="_3_4_2_1_6_1_1"~"What does the produced crop get used for?",
+    TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(
+    name_question =="_3_4_2_1_5_1_2"~"_3_4_2_1_5_1",
+    name_question =="_3_4_2_1_6_1_1"~"_3_4_2_1_6_1/other",
+    TRUE ~name_question_recla))%>%
+
+  # Indicator: productivity_livestock
+   mutate(name_choice = case_when(
+     str_detect(name_question, "_3_4_2_2_5/")~str_replace(name_choice, "_[^_]*$", ""),
+     str_detect(name_question, "_3_4_2_2_6_3/")~str_replace(name_choice, "_[^_]*$", ""),
+     TRUE ~name_choice))%>%
+  mutate(label_question = case_when(
+    name_question =="_3_4_2_2_5_1"~"What does the livestock get used for?",
+    name_question =="_3_4_2_2_6_1_1"~"Select livestock production unit:",
+    name_question =="_3_4_2_2_6_3_1"~ "What does the livestock production get used for?",
+    TRUE ~label_question))%>%
+  mutate(name_question_recla = case_when(
+    name_question =="_3_4_2_2_5_1"~"_3_4_2_2_5/other",
+    name_question =="_3_4_2_2_6_1_1"~"_3_4_2_2_6_1",
+    name_question =="_3_4_2_2_6_3_1"~"_3_4_2_2_6_3/other",
+    str_detect(name_question_recla,"_3_4_2_2_5/")~str_replace(name_question_recla, "_[^_]*$", ""),
+    str_detect(name_question_recla,"_3_4_2_2_6_3/")~str_replace(name_question_recla, "_[^_]*$", ""),
+    TRUE ~name_question_recla))%>%
   
-  mutate(label_question = case_when(name_question =="_3_4_2_1_6_1_1"~"**What does the produced ${_3_4_3_1_3_calculate} get used for?**",TRUE ~label_question))%>%
-  mutate(name_question_recla = case_when(name_question =="_3_4_2_1_6_1_1"~"_3_4_2_1_6_1",TRUE ~name_question_recla))%>%
   
   #Replace ${_1_4_1_1} in label_choice by the hectares or acres
   mutate(label_choice = gsub("\\$\\{_1_4_1_1\\}", "acres", label_choice))%>%
@@ -717,7 +827,10 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat)%>%
                                "_3_4_2_2_1_1",
                                "_3_4_2_1_5_1_2","_3_4_2_1_6_1_1","_3_4_2_1_6_2_9","_3_4_2_1_6_2_1","_3_4_2_1_6_2_2",
                                "_3_4_2_1_6_2_3","_3_4_2_1_6_2_4","_3_4_2_1_6_2_5","_3_4_2_1_6_2_6",
-                               "_3_4_2_1_6_2_7","_3_4_2_1_6_2_8",  "_3_4_2_1_6_2_9","_3_4_2_1_7_1","_3_4_2_1_7_2","_3_4_2_1_7_3","_3_4_3_1_3_calculate"
+                               "_3_4_2_1_6_2_7","_3_4_2_1_6_2_8",  "_3_4_2_1_6_2_9","_3_4_2_1_7_1","_3_4_2_1_7_2","_3_4_2_1_7_3","_3_4_3_1_3_calculate",
+                               "_3_4_2_2_1_2","_3_4_2_2_5_1",
+                               "_3_4_2_1_7_4","_3_4_2_2_6_1_1","_3_4_2_2_6_3_1"
+                              
                                ) & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
   filter(!(str_detect(name_question, "audio") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
   filter(!(name_question %in% c("_3_4_3_3_1/other", "_2_9_1_1/other", "_3_3_1_7/other","_2_8_4_4/other",
@@ -726,19 +839,18 @@ result2<- rbind(result,result_3_4_3_1_2_begin_repeat)%>%
                                 "_2_3_1_1/other",
                                 "_3_4_1_1_7_1_2/other",
                                 "_3_3_4_4/other",
-                                "_3_4_2_1_6_1/other")))%>%
+                                "_3_4_2_1_6_1/other", "_3_4_2_2_5/other","_3_4_2_2_5/other_1",
+                                "_3_4_2_2_6_3/other_10","_3_4_2_2_6_3/other_2","_3_4_2_2_6_3/other_3","_3_4_2_2_6_3/other_4","_3_4_2_2_6_3/other_6")))%>%
   filter(!(name_question %in%c("_3_4_2_1_5_1")& name_choice=="other"))
+  
+               
 
-                                                                 
-                                  
-                                                                        
-                                              
-                                                                           
 
 sort(unique(result2$label_question))
 sort(unique(result2$name_question))
+table(result2$label_question,result2$name_question)
 unique(result2$sheet_id)
-
+names(result2)
 view(dfSummary(result2))
 
 length(unique(result2$label_question))
@@ -774,238 +886,4 @@ write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HO
 #missing: indicator: animal_health _3_4_2_3_3 _1_4_3_9
 #missing: crop production section area produced by diversified farming system
 
-> print(mismatched_columns)
-                                                                  
-                                                                     
-                                                                     
-[68] "_3_4_1_1_7_2_1"                                                                        
-[69] "_3_4_1_1_7_2_calculate"                                                                
-[70] "_3_4_1_2_1_1_1"                                                                        
-[71] "_3_4_1_2_1_1_2"                                                                        
-[72] "_3_4_1_2_1_1_3/Crops"                                                                  
-[73] "_3_4_1_2_1_1_3/Fish"                                                                   
-[74] "_3_4_1_2_1_1_3/Honey"                                                                  
-[75] "_3_4_1_2_1_1_3/Livestock"                                                              
-[76] "_3_4_1_2_1_1_3/other"                                                                  
-[77] "_3_4_1_2_1_1_3/Trees"                                                                  
-[78] "_3_4_1_2_1_1_3_1/Cleaning"                                                             
-[79] "_3_4_1_2_1_1_3_1/Drying"                                                               
-[80] "_3_4_1_2_1_1_3_1/Harvesting"                                                           
-[81] "_3_4_1_2_1_1_3_1/Land_preparation"                                                     
-[82] "_3_4_1_2_1_1_3_1/other"                                                                
-[83] "_3_4_1_2_1_1_3_1/Planting"                                                             
-[84] "_3_4_1_2_1_1_3_1/Processing_(milling,_grinding,_grating,_etc)"                         
-[85] "_3_4_1_2_1_1_3_1/Protection_from_losses"                                               
-[86] "_3_4_1_2_1_1_3_1/Ridging,_fertilizing,_other_non-harvested_activities"                 
-[87] "_3_4_1_2_1_1_3_1/Shelling/Threshing/Peeling"                                           
-[88] "_3_4_1_2_1_1_3_1/Sorting"                                                              
-[89] "_3_4_1_2_1_1_3_1/Supervision"                                                          
-[90] "_3_4_1_2_1_1_3_1/Weeding"                                                              
-[91] "_3_4_1_2_1_1_3_1_1"                                                                    
-[92] "_3_4_1_2_1_1_3_2/Animal_feeding"                                                       
-[93] "_3_4_1_2_1_1_3_2/Egg_collection"                                                       
-[94] "_3_4_1_2_1_1_3_2/Health_care_and_veterinary_services"                                  
-[95] "_3_4_1_2_1_1_3_2/Herd_management"                                                      
-[96] "_3_4_1_2_1_1_3_2/Management_of_housing_and_shelter_(e.g.,_cleaning,_repairs)"          
-[97] "_3_4_1_2_1_1_3_2/Marketing"                                                            
-[98] "_3_4_1_2_1_1_3_2/Milking_and_dairy_management"                                         
-[99] "_3_4_1_2_1_1_3_2/other"                                                                
-[100] "_3_4_1_2_1_1_3_2/Pasture_management"                                                   
-[101] "_3_4_1_2_1_1_3_2/Waste_management"                                                     
-[102] "_3_4_1_2_1_1_3_2/Wool_management"                                                      
-[103] "_3_4_1_2_1_1_3_2_1"                                                                    
-[104] "_3_4_1_2_1_1_3_3/Disease_prevention_and_health_management"                             
-[105] "_3_4_1_2_1_1_3_3/Feeding_and_nutrition"                                                
-[106] "_3_4_1_2_1_1_3_3/Filleting_and_processing"                                             
-[107] "_3_4_1_2_1_1_3_3/Harvesting"                                                           
-[108] "_3_4_1_2_1_1_3_3/Marketing_and_sales"                                                  
-[109] "_3_4_1_2_1_1_3_3/other"                                                                
-[110] "_3_4_1_2_1_1_3_3/Record_keeping"                                                       
-[111] "_3_4_1_2_1_1_3_3/Site_preparation_(e.g.,_prepare_ponds,_tanks,_or_cages_accordingly)"  
-[112] "_3_4_1_2_1_1_3_3/Stocking"                                                             
-[113] "_3_4_1_2_1_1_3_3/Water_quality_management"                                             
-[114] "_3_4_1_2_1_1_3_3_1"                                                                    
-[115] "_3_4_1_2_1_1_3_4/Fertilization_and_nutrient_management"                                
-[116] "_3_4_1_2_1_1_3_4/Irrigation_and_water_management"                                      
-[117] "_3_4_1_2_1_1_3_4/Market_and_sales"                                                     
-[118] "_3_4_1_2_1_1_3_4/other"                                                                
-[119] "_3_4_1_2_1_1_3_4/Pest_and_disease_management"                                          
-[120] "_3_4_1_2_1_1_3_4/Planting_and_transplanting"                                           
-[121] "_3_4_1_2_1_1_3_4/Pruning_and_training"                                                 
-[122] "_3_4_1_2_1_1_3_4/Seedling_production_or_sourcing"                                      
-[123] "_3_4_1_2_1_1_3_4/Soil_preparation"                                                     
-[124] "_3_4_1_2_1_1_3_4/Weed_control"                                                         
-[125] "_3_4_1_2_1_1_3_4_1"                                                                    
-[126] "_3_4_1_2_1_1_3_5/Bee_colony_management"                                                
-[127] "_3_4_1_2_1_1_3_5/Bee_health_management"                                                
-[128] "_3_4_1_2_1_1_3_5/Hive_management"                                                      
-[129] "_3_4_1_2_1_1_3_5/Honey_extraction:"                                                    
-[130] "_3_4_1_2_1_1_3_5/Honey_processing"                                                     
-[131] "_3_4_1_2_1_1_3_5/Marketing_and_sales"                                                  
-[132] "_3_4_1_2_1_1_3_5/other"                                                                
-[133] "_3_4_1_2_1_1_3_5/Packaging_and_labeling"                                               
-[134] "_3_4_1_2_1_1_3_5_1"                                                                    
-[135] "_3_4_1_2_1_1_3_6"                                                                      
-[136] "_3_4_1_2_1_1_calculate"                                                                
-[137] "_3_4_1_2_1_2_1"                                                                        
-[138] "_3_4_1_2_1_2_1_2/1"                                                                    
-[139] "_3_4_1_2_1_2_1_2/10"                                                                   
-[140] "_3_4_1_2_1_2_1_2/11"                                                                   
-[141] "_3_4_1_2_1_2_1_2/12"                                                                   
-[142] "_3_4_1_2_1_2_1_2/2"                                                                    
-[143] "_3_4_1_2_1_2_1_2/3"                                                                    
-[144] "_3_4_1_2_1_2_1_2/4"                                                                    
-[145] "_3_4_1_2_1_2_1_2/5"                                                                    
-[146] "_3_4_1_2_1_2_1_2/6"                                                                    
-[147] "_3_4_1_2_1_2_1_2/7"                                                                    
-[148] "_3_4_1_2_1_2_1_2/8"                                                                    
-[149] "_3_4_1_2_1_2_1_2/9"                                                                    
-[150] "_3_4_1_2_1_2_1_2_join"                                                                 
-[151] "_3_4_1_2_1_2_1_3"                                                                      
-[152] "_3_4_1_2_1_2_1_4"                                                                      
-[153] "_3_4_1_2_1_2_1_5/Crops"                                                                
-[154] "_3_4_1_2_1_2_1_5/Fish"                                                                 
-[155] "_3_4_1_2_1_2_1_5/Honey"                                                                
-[156] "_3_4_1_2_1_2_1_5/Livestock"                                                            
-[157] "_3_4_1_2_1_2_1_5/other"                                                                
-[158] "_3_4_1_2_1_2_1_5/Trees"                                                                
-[159] "_3_4_1_2_1_2_1_5_1/Cleaning"                                                           
-[160] "_3_4_1_2_1_2_1_5_1/Drying"                                                             
-[161] "_3_4_1_2_1_2_1_5_1/Harvesting"                                                         
-[162] "_3_4_1_2_1_2_1_5_1/Land_preparation"                                                   
-[163] "_3_4_1_2_1_2_1_5_1/other"                                                              
-[164] "_3_4_1_2_1_2_1_5_1/Planting"                                                           
-[165] "_3_4_1_2_1_2_1_5_1/Processing_(milling,_grinding,_grating,_etc)"                       
-[166] "_3_4_1_2_1_2_1_5_1/Protection_from_losses"                                             
-[167] "_3_4_1_2_1_2_1_5_1/Ridging,_fertilizing,_other_non-harvested_activities"               
-[168] "_3_4_1_2_1_2_1_5_1/Shelling/Threshing/Peeling"                                         
-[169] "_3_4_1_2_1_2_1_5_1/Sorting"                                                            
-[170] "_3_4_1_2_1_2_1_5_1/Supervision"                                                        
-[171] "_3_4_1_2_1_2_1_5_1/Weeding"                                                            
-[172] "_3_4_1_2_1_2_1_5_1_1"                                                                  
-[173] "_3_4_1_2_1_2_1_5_2/Animal_feeding"                                                     
-[174] "_3_4_1_2_1_2_1_5_2/Egg_collection"                                                     
-[175] "_3_4_1_2_1_2_1_5_2/Health_care_and_veterinary_services"                                
-[176] "_3_4_1_2_1_2_1_5_2/Herd_management"                                                    
-[177] "_3_4_1_2_1_2_1_5_2/Management_of_housing_and_shelter_(e.g.,_cleaning,_repairs)"        
-[178] "_3_4_1_2_1_2_1_5_2/Marketing"                                                          
-[179] "_3_4_1_2_1_2_1_5_2/Milking_and_dairy_management"                                       
-[180] "_3_4_1_2_1_2_1_5_2/other"                                                              
-[181] "_3_4_1_2_1_2_1_5_2/Pasture_management"                                                 
-[182] "_3_4_1_2_1_2_1_5_2/Waste_management"                                                   
-[183] "_3_4_1_2_1_2_1_5_2/Wool_management"                                                    
-[184] "_3_4_1_2_1_2_1_5_2_1"                                                                  
-[185] "_3_4_1_2_1_2_1_5_3/Disease_prevention_and_health_management"                           
-[186] "_3_4_1_2_1_2_1_5_3/Feeding_and_nutrition"                                              
-[187] "_3_4_1_2_1_2_1_5_3/Filleting_and_processing"                                           
-[188] "_3_4_1_2_1_2_1_5_3/Harvesting"                                                         
-[189] "_3_4_1_2_1_2_1_5_3/Marketing_and_sales"                                                
-[190] "_3_4_1_2_1_2_1_5_3/other"                                                              
-[191] "_3_4_1_2_1_2_1_5_3/Record_keeping"                                                     
-[192] "_3_4_1_2_1_2_1_5_3/Site_preparation_(e.g.,_prepare_ponds,_tanks,_or_cages_accordingly)"
-[193] "_3_4_1_2_1_2_1_5_3/Stocking"                                                           
-[194] "_3_4_1_2_1_2_1_5_3/Water_quality_management"                                           
-[195] "_3_4_1_2_1_2_1_5_3_1"                                                                  
-[196] "_3_4_1_2_1_2_1_5_4/Fertilization_and_nutrient_management"                              
-[197] "_3_4_1_2_1_2_1_5_4/Irrigation_and_water_management"                                    
-[198] "_3_4_1_2_1_2_1_5_4/Market_and_sales"                                                   
-[199] "_3_4_1_2_1_2_1_5_4/other"                                                              
-[200] "_3_4_1_2_1_2_1_5_4/Pest_and_disease_management"                                        
-[201] "_3_4_1_2_1_2_1_5_4/Planting_and_transplanting"                                         
-[202] "_3_4_1_2_1_2_1_5_4/Pruning_and_training"                                               
-[203] "_3_4_1_2_1_2_1_5_4/Seedling_production_or_sourcing"                                    
-[204] "_3_4_1_2_1_2_1_5_4/Soil_preparation"                                                   
-[205] "_3_4_1_2_1_2_1_5_4/Weed_control"                                                       
-[206] "_3_4_1_2_1_2_1_5_4_1"                                                                  
-[207] "_3_4_1_2_1_2_1_5_5/Bee_colony_management"                                              
-[208] "_3_4_1_2_1_2_1_5_5/Bee_health_management"                                              
-[209] "_3_4_1_2_1_2_1_5_5/Hive_management"                                                    
-[210] "_3_4_1_2_1_2_1_5_5/Honey_extraction:"                                                  
-[211] "_3_4_1_2_1_2_1_5_5/Honey_processing"                                                   
-[212] "_3_4_1_2_1_2_1_5_5/Marketing_and_sales"                                                
-[213] "_3_4_1_2_1_2_1_5_5/other"                                                              
-[214] "_3_4_1_2_1_2_1_5_5/Packaging_and_labeling"                                             
-[215] "_3_4_1_2_1_2_1_5_5_1"                                                                  
-[216] "_3_4_1_2_1_2_note"                                                                     
-[217] "_3_4_1_2_7_2_1_calculate"                                                              
-[218] "_3_4_1_2_7_2_1_note"                                                                   
-[219] "_3_4_1_2_7_2_10/Bee_colony_management"                                                 
-[220] "_3_4_1_2_7_2_10/Bee_health_management"                                                 
-[221] "_3_4_1_2_7_2_10/Hive_management"                                                       
-[222] "_3_4_1_2_7_2_10/Honey_extraction:"                                                     
-[223] "_3_4_1_2_7_2_10/Honey_processing"                                                      
-[224] "_3_4_1_2_7_2_10/Marketing_and_sales"                                                   
-[225] "_3_4_1_2_7_2_10/other"                                                                 
-[226] "_3_4_1_2_7_2_10/Packaging_and_labeling"                                                
-[227] "_3_4_1_2_7_2_10_1"                                                                     
-[228] "_3_4_1_2_7_2_2/1"                                                                      
-[229] "_3_4_1_2_7_2_2/10"                                                                     
-[230] "_3_4_1_2_7_2_2/11"                                                                     
-[231] "_3_4_1_2_7_2_2/12"                                                                     
-[232] "_3_4_1_2_7_2_2/2"                                                                      
-[233] "_3_4_1_2_7_2_2/3"                                                                      
-[234] "_3_4_1_2_7_2_2/4"                                                                      
-[235] "_3_4_1_2_7_2_2/5"                                                                      
-[236] "_3_4_1_2_7_2_2/6"                                                                      
-[237] "_3_4_1_2_7_2_2/7"                                                                      
-[238] "_3_4_1_2_7_2_2/8"                                                                      
-[239] "_3_4_1_2_7_2_2/9"                                                                      
-[240] "_3_4_1_2_7_2_2_join"                                                                   
-[241] "_3_4_1_2_7_2_3"                                                                        
-[242] "_3_4_1_2_7_2_4"                                                                        
-[243] "_3_4_1_2_7_2_5/Crops"                                                                  
-[244] "_3_4_1_2_7_2_5/Fish"                                                                   
-[245] "_3_4_1_2_7_2_5/Honey"                                                                  
-[246] "_3_4_1_2_7_2_5/Livestock"                                                              
-[247] "_3_4_1_2_7_2_5/other"                                                                  
-[248] "_3_4_1_2_7_2_5/Trees"                                                                  
-[249] "_3_4_1_2_7_2_5_1"                                                                      
-[250] "_3_4_1_2_7_2_6/Cleaning"                                                               
-[251] "_3_4_1_2_7_2_6/Drying"                                                                 
-[252] "_3_4_1_2_7_2_6/Harvesting"                                                             
-[253] "_3_4_1_2_7_2_6/Land_preparation"                                                       
-[254] "_3_4_1_2_7_2_6/other"                                                                  
-[255] "_3_4_1_2_7_2_6/Planting"                                                               
-[256] "_3_4_1_2_7_2_6/Processing_(milling,_grinding,_grating,_etc)"                           
-[257] "_3_4_1_2_7_2_6/Protection_from_losses"                                                 
-[258] "_3_4_1_2_7_2_6/Ridging,_fertilizing,_other_non-harvested_activities"                   
-[259] "_3_4_1_2_7_2_6/Shelling/Threshing/Peeling"                                             
-[260] "_3_4_1_2_7_2_6/Sorting"                                                                
-[261] "_3_4_1_2_7_2_6/Supervision"                                                            
-[262] "_3_4_1_2_7_2_6/Weeding"                                                                
-[263] "_3_4_1_2_7_2_6_1"                                                                      
-[264] "_3_4_1_2_7_2_7/Animal_feeding"                                                         
-[265] "_3_4_1_2_7_2_7/Egg_collection"                                                         
-[266] "_3_4_1_2_7_2_7/Health_care_and_veterinary_services"                                    
-[267] "_3_4_1_2_7_2_7/Herd_management"                                                        
-[268] "_3_4_1_2_7_2_7/Management_of_housing_and_shelter_(e.g.,_cleaning,_repairs)"            
-[269] "_3_4_1_2_7_2_7/Marketing"                                                              
-[270] "_3_4_1_2_7_2_7/Milking_and_dairy_management"                                           
-[271] "_3_4_1_2_7_2_7/other"                                                                  
-[272] "_3_4_1_2_7_2_7/Pasture_management"                                                     
-[273] "_3_4_1_2_7_2_7/Waste_management"                                                       
-[274] "_3_4_1_2_7_2_7/Wool_management"                                                        
-[275] "_3_4_1_2_7_2_7_1"                                                                      
-[276] "_3_4_1_2_7_2_8/Disease_prevention_and_health_management"                               
-[277] "_3_4_1_2_7_2_8/Feeding_and_nutrition"                                                  
-[278] "_3_4_1_2_7_2_8/Filleting_and_processing"                                               
-[279] "_3_4_1_2_7_2_8/Harvesting"                                                             
-[280] "_3_4_1_2_7_2_8/Marketing_and_sales"                                                    
-[281] "_3_4_1_2_7_2_8/other"                                                                  
-[282] "_3_4_1_2_7_2_8/Record_keeping"                                                         
-[283] "_3_4_1_2_7_2_8/Site_preparation_(e.g.,_prepare_ponds,_tanks,_or_cages_accordingly)"    
-[284] "_3_4_1_2_7_2_8/Stocking"                                                               
-[285] "_3_4_1_2_7_2_8/Water_quality_management"                                               
-[286] "_3_4_1_2_7_2_8_1"                                                                      
-[287] "_3_4_1_2_7_2_9/Fertilization_and_nutrient_management"                                  
-[288] "_3_4_1_2_7_2_9/Irrigation_and_water_management"                                        
-[289] "_3_4_1_2_7_2_9/Market_and_sales"                                                       
-[290] "_3_4_1_2_7_2_9/other"                                                                  
-[291] "_3_4_1_2_7_2_9/Pest_and_disease_management"                                            
-[292] "_3_4_1_2_7_2_9/Planting_and_transplanting"                                             
-[293] "_3_4_1_2_7_2_9/Pruning_and_training"                                                   
-[294] "_3_4_1_2_7_2_9/Seedling_production_or_sourcing"                                        
-[295] "_3_4_1_2_7_2_9/Soil_preparation"                                                       
-[296] "_3_4_1_2_7_2_9/Weed_control"                                                           
-[297] "_3_4_1_2_7_2_9_1"                                                                      
-[298] "_3_7_2_2_3_6"  
+                                                               
