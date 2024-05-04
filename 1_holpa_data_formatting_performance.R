@@ -279,17 +279,15 @@ performance_choices <- rbind(performance_agr_choices,performance_soc_choices,per
          indicator = subindicator)%>%
   mutate(name_question_choice= if_else(type_question=="select_multiple",
                                        paste(name_question,"/",name_choice, sep=""),
-                                       name_question))%>%
+                                       name_question))
   filter(
-    theme=="environmental"
-    #      theme=="social"|#ok
+    #theme=="environmental"
+          theme=="social"#ok
     #theme== "economic"| #ok
     # theme=="agricultural"#ok
     )%>%
-  filter(
-    #"biodiversity_abundance"          "biodiversity_agrobiodiversity" "biodiversity_climate_mitigation" "biodiversity_cover"
-    #"biodiversity_diversity"
-    indicator== "biodiversity_practices" 
+  filter(#"farmer_agency"
+    indicator==   "land_tenure"
     )
 names(performance_choices)
 sort(unique(performance_choices$theme))
@@ -300,18 +298,20 @@ sort(unique(performance_choices$type_question))
 sort(unique(performance_choices$type))
 sort(unique(performance_choices$name_question))
 
+## PLEASE DO NOT MODIFY THE CODE FROM HERE. (IMPROVEMENTS IN PROGRESS)
+# IF YOU FIND AN ERROR, IS NOT THE CODE, IS THE DATABASE!!
 performance_questions_columns<- performance_choices%>% 
-  filter(
-    theme=="environmental"
-     # theme=="social"|
+  # filter(
+    # theme=="environmental"
+  #  theme=="social"
    #theme== "economic"
      # theme=="agricultural"
     
-    )%>%
-  filter(
-    indicator=="biodiversity_practices" 
+# )%>%
+# filter(
+#   indicator==   "land_tenure"
     
-  )%>%  
+#  )%>%  
   dplyr::select(label_question, name_question_choice)%>%
   dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
   spread(key = name_question_choice, value = label_question)%>%
@@ -326,7 +326,7 @@ performance_questions_columns<- performance_choices%>%
 performance_questions_columns <- colnames(performance_questions_columns)
 performance_questions_columns
 
-## ANALYSIS BY COUNTRY
+
 # Zimbabwe 
 colnames(zwe_survey)
 zwe_performance_columns <- intersect(performance_questions_columns, colnames(zwe_survey))
@@ -394,7 +394,7 @@ result <- zwe_performance%>%
          parent_index=NA)
 names(result)
 
-### CHECK ALL THE BEGIN_REPEAT GROUPS PARTICULARLY climate_mitigation FROM ENVIRONMENTAL THEME _3_3_3_2_begin_repeat
+
 ## _3_4_3_1_2_begin_repeat: Crop production ----
 zwe_performance_columns_3_4_3_1_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_3_1_2_begin_repeat))
 zwe_performance_columns_3_4_3_1_2_begin_repeat
@@ -502,7 +502,7 @@ zwe_performance_3_3_4_1_3_begin_repeat <- zwe_performance_3_3_4_1_3_begin_repeat
 view(dfSummary(zwe_performance_3_3_4_1_3_begin_repeat))
 
 result_3_3_4_1_3_begin_repeat <- zwe_performance_3_3_4_1_3_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-farmer_repeat_group_id)%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   perform_left_join(performance_choices,.)%>%
   mutate(name_question_recla= name_question)%>%
   mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
@@ -712,18 +712,20 @@ result_3_3_3_2_begin_repeat <- zwe_performance_3_3_3_2_begin_repeat%>%
 
 
  # Combine all----
-result2<- rbind(result
-                #indicator: productivity_crops
-  #result_3_4_3_1_2_begin_repeat
-                #indicator: productivity_livestock
-  #result_3_4_2_2_2_begin_repeat#,result_3_4_2_2_6_begin_repeat
-                #indicator:labour_productivity
-  # result_3_4_1_1_7_1_begin_repeat,result_3_4_1_1_7_2_1_begin_repeat,result_3_4_1_1_7_2_begin_repeat ,
-  #result_3_4_1_2_1_1_begin_repeat,result_3_4_1_2_1_2_begin_repeat,result_3_4_1_2_1_2_1_begin_repeat
-  # indicator: biodiversity_climate_mitigation
-  #result_3_3_3_2_begin_repeat
+result2<- rbind(result,
+                # Indicator: productivity_crops
+                result_3_4_3_1_2_begin_repeat,
+                # Indicator: productivity_livestock
+                result_3_4_2_2_2_begin_repeat,result_3_4_2_2_6_begin_repeat,
+                # Indicator:labour_productivity
+                result_3_4_1_1_7_1_begin_repeat,result_3_4_1_1_7_2_1_begin_repeat,result_3_4_1_1_7_2_begin_repeat ,
+                result_3_4_1_2_1_1_begin_repeat,result_3_4_1_2_1_2_begin_repeat,result_3_4_1_2_1_2_1_begin_repeat,
+                # Indicator: biodiversity_climate_mitigation
+                result_3_3_3_2_begin_repeat,
+                # Indicator: irrigation
+                result_3_3_4_1_3_begin_repeat
                           )%>%
-  #  rbind(, ,,result_3_3_4_1_3_begin_repeat) 
+  
   ## THEME: ENVIRONMENTAL----
   # Indicator: biodiversity_agrobiodiversity
   mutate(name_choice = case_when(
@@ -764,7 +766,13 @@ result2<- rbind(result
     name_question_recla== "_2_9_1_1_1" ~ "Which ecological practices do you use on cropland to improve soil quality and health?",
     name_question_recla== "_3_3_1_7_1" ~ "What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?",
     # Indicator: energy
+    name_question_recla== "_2_8_4_1_1"~ "What types of energy do you use for: Irrigation",
+    name_question_recla=="_2_8_4_2_1" ~ "What types of energy do you use for: Tillage, sowing or harvesting",
     name_question_recla== "_2_8_4_3_4" ~ "What types of energy do you use for: Cleaning, processing or transporting harvested food",
+    name_question_recla=="_2_8_4_3_1"~"What types of energy do you use for: Cooking",
+    # Indicator: water
+    name_question_recla=="_3_3_4_1_1_1"~"What methods of irrigation do you use",
+    name_question_recla=="_3_3_4_1_2_1"~"Where do you source your water for irrigation?",
     TRUE ~ label_question))%>%
   
   ## Indicator: biodiversity_diversity
@@ -775,7 +783,14 @@ result2<- rbind(result
   mutate(name_question_recla = case_when(
     name_question_recla== "_2_9_1_1_1" ~ "_2_9_1_1/other",
     name_question_recla== "_3_3_1_7_1" ~ "_3_3_1_7/other",
-    name_question_recla== "_2_8_4_3_4" ~ "_2_8_4_4",
+    # Indicator: energy
+    name_question_recla=="_2_8_4_1_1"~ "_2_8_4_1/other",
+    name_question_recla=="_2_8_4_2_1"~ "_2_8_4_2/other",
+    name_question_recla== "_2_8_4_3_4" ~ "_2_8_4_4/other",
+    name_question_recla=="_2_8_4_3_1"~ "_2_8_4_3/other",
+    # Indicator: water
+    name_question_recla== "_3_3_4_1_1_1"~ "_3_3_4_1_1/other",
+    name_question_recla=="_3_3_4_1_2_1"~"_3_3_4_1_2/other",
     TRUE ~name_question_recla))%>%
 
   # Indicator: water
@@ -882,7 +897,8 @@ result2<- rbind(result
                                "_3_4_2_1_7_4","_3_4_2_2_6_1_1","_3_4_2_2_6_3_1",
                                "_4_1_4_13_1",
                                "_4_1_4_12",
-                               "_2_4_1_1"
+                               "_2_4_1_1","_3_1_2_3_1","_3_1_2_4_1","_3_1_2_5_1","_3_1_2_6_1","_3_1_2_7_1"
+
                               
                                ) & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
   filter(!(str_detect(name_question, "audio") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
@@ -893,9 +909,13 @@ result2<- rbind(result
                                 "_3_4_1_1_7_1_2/other",
                                 "_3_3_4_4/other",
                                 "_3_4_2_1_6_1/other", "_3_4_2_2_5/other","_3_4_2_2_5/other_1",
-                                "_3_4_2_2_6_3/other_10","_3_4_2_2_6_3/other_2","_3_4_2_2_6_3/other_3","_3_4_2_2_6_3/other_4","_3_4_2_2_6_3/other_6")))%>%
+                                "_3_4_2_2_6_3/other_10","_3_4_2_2_6_3/other_2","_3_4_2_2_6_3/other_3","_3_4_2_2_6_3/other_4","_3_4_2_2_6_3/other_6",
+                                "_3_3_4_1_1/other")))%>%
   filter(!(name_question %in%c("_3_4_2_1_5_1")& name_choice=="other"))
   
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
+
+
 sort(unique(result2$indicator))
 
 sort(unique(result2$label_question))
@@ -917,7 +937,6 @@ x<-result2%>%
 sort(unique(x$x))
 
 
-write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
 
 
 #
