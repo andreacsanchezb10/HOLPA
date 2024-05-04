@@ -19,8 +19,6 @@ labour_productivity_long<- result2%>%
 sort(unique(labour_productivity_long$label_question))
 sort(unique(labour_productivity_long$name_question_recla))
 sort(unique(labour_productivity_long$sheet_id))
-     "_3_4_1_2_7_2_1_begin_repeat"    
-
 sort(unique(labour_productivity_long$merge_id))
 
 labour_productivity_final<- labour_productivity_long%>%
@@ -37,7 +35,7 @@ sort(unique(labour_productivity_final$merge_id))
 labour_productivity_repeat1<- labour_productivity_long%>%
   filter(sheet_id=="_3_4_1_1_7_1_begin_repeat")%>%
   #mutate(merge_id2= paste(kobo_farmer_id,sheet_id,index,sep = "_"))%>%
-  select( merge_id,merge_id2,name_question_recla,name_choice)%>%
+  select( merge_id,name_question_recla,name_choice)%>%
   #filter(!is.na(name_choice))%>%
   tidyr::spread(key = name_question_recla, value = name_choice)%>%
   mutate(index_id=merge_id,
@@ -53,7 +51,9 @@ labour_productivity_repeat2<- labour_productivity_long%>%
   mutate(index_id=merge_id,
          merge_id= sub("_[^_]*$", "", merge_id))
 
-##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 ----
+sort(unique(labour_productivity_repeat2$merge_id2))
+
+##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
 labour_productivity_repeat3<- labour_productivity_long%>%
   filter(sheet_id=="_3_4_1_2_7_2_1_begin_repeat")%>%
   select( merge_id,name_question_recla,name_choice)%>%
@@ -61,14 +61,41 @@ labour_productivity_repeat3<- labour_productivity_long%>%
   tidyr::spread(key = name_question_recla, value = name_choice)%>%
   mutate(index_id=merge_id,
          merge_id= sub("_[^_]*$", "", merge_id))
+sort(unique(labour_productivity_repeat3$merge_id))
 
 #labour_productivity_repeat3 is embedded in labour_productivity_repeat2
-labour_productivity_short<-left_join(labour_productivity_repeat2,labour_productivity_repeat3,by=c("merge_id2"="merge_id"))
-sort(unique(productivity_livestock_short$merge_id))
+labour_productivity_repeat23<-left_join(labour_productivity_repeat2,labour_productivity_repeat3,by=c("merge_id2"="merge_id"))
+sort(unique(labour_productivity_repeat23$merge_id))
+
+##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
+labour_productivity_repeat4<- labour_productivity_long%>%
+  filter(sheet_id=="_3_4_1_2_1_2_begin_repeat")%>%
+  mutate(merge_id2= paste(kobo_farmer_id,sheet_id,index,sep = "_"))%>%
+  select( merge_id,merge_id2 ,name_question_recla,name_choice)%>%
+  #filter(!is.na(name_choice))%>%
+  tidyr::spread(key = name_question_recla, value = name_choice)%>%
+  mutate(index_id=merge_id,
+         merge_id= sub("_[^_]*$", "", merge_id))
+
+##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
+labour_productivity_repeat5<- labour_productivity_long%>%
+  filter(sheet_id=="_3_4_1_2_1_2_1_begin_repeat")%>%
+  select( merge_id,name_question_recla,name_choice)%>%
+  #filter(!is.na(name_choice))%>%
+  tidyr::spread(key = name_question_recla, value = name_choice)%>%
+  mutate(index_id=merge_id,
+         merge_id= sub("_[^_]*$", "", merge_id))
+
+#labour_productivity_repeat5 is embedded in labour_productivity_repeat4
+labour_productivity_repeat45<-left_join(labour_productivity_repeat4,labour_productivity_repeat5,by=c("merge_id2"="merge_id"))
+sort(unique(labour_productivity_repeat45$merge_id))
+
 
 #repeat 1 is embedded in main dataset
-labour_productivity_short2<-left_join(labour_productivity_final,labour_productivity_repeat1,by="merge_id" )%>%
-  left_join(labour_productivity_short,by="merge_id")
+labour_productivity_short<-left_join(labour_productivity_final,labour_productivity_repeat1,by="merge_id" )%>%
+  left_join(labour_productivity_repeat23,by="merge_id")%>%
+  left_join(labour_productivity_repeat45,by="merge_id")
+  
 
 
 ## THEME: AGRICULTURAL
