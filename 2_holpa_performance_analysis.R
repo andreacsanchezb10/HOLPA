@@ -101,7 +101,8 @@ labour_productivity_short<-left_join(labour_productivity_final,labour_productivi
 ## THEME: AGRICULTURAL
 # Indicator: productivity_crops ----
 productivity_crops_long<- result2%>%
-  filter(indicator=="productivity_crops")%>%
+  filter(indicator=="productivity_crops"|
+           indicator=="agricultural_all")%>%
   mutate(merge_id = case_when(sheet_id=="Final HOLPA_Zimbabwe_Household"~paste(kobo_farmer_id,sheet_id,index,sep = "_"),TRUE ~paste(kobo_farmer_id,parent_table_name,parent_index,index,sep="_"))) 
 
 sort(unique(productivity_crops_long$sheet_id))
