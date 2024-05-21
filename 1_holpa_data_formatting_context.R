@@ -45,8 +45,12 @@ read_and_process_survey <- function(sheet_name, column_id_rename, data_path, cou
 zwe_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.data.path,"zimbabwe","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
-  select(sheet_id)
 
+zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey("_1_4_2_7_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: "production_end_use": other on-farm produce
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="274186917")
+
+  
 zwe_choices <- read_excel(path=paste0(zwe.data.path,"`zimbabwe_household_survey.xlsx`"),
                                sheet = "choices")%>%
   select("list_name","name","label::English ((en))","score_agroecology_module")%>%
@@ -92,7 +96,7 @@ context_survey <-  global_survey %>%
 sort(unique(context_survey$subindicator))
 context_survey$subindicator[str_detect(context_survey$subindicator,"respondent_characteristics")]<- "respondent_characteristics"
 context_survey$subindicator[str_detect(context_survey$subindicator,"household_characteristic")]<- "household_characteristics"
-context_survey$subindicator[str_detect(context_survey$subindicator,"land_tenure")]<- "land_tenure"
+context_survey$subindicator[str_detect(context_survey$subindicator,"context_all")]<- "context_all"
 context_survey$subindicator[str_detect(context_survey$subindicator,"farm_characteristic")]<- "farm_characteristics"
 context_survey$subindicator[str_detect(context_survey$subindicator,"inputs")]<- "inputs"
 context_survey$subindicator[str_detect(context_survey$subindicator,"production_systems")]<- "production_systems"
@@ -117,7 +121,7 @@ sort(unique(context_choices1$subindicator))
 # CORRECT: LAND TENURE SHOULD BE UNDER SOCIAL PERFORMANCE
 context_choices1$subindicator[str_detect(context_choices1$subindicator,"respondent_characteristics")]<- "respondent_characteristics"
 context_choices1$subindicator[str_detect(context_choices1$subindicator,"household_characteristic")]<- "household_characteristics"
-context_choices1$subindicator[str_detect(context_choices1$subindicator,"land_tenure")]<- "land_tenure"
+context_choices1$subindicator[str_detect(context_choices1$subindicator,"context_all")]<- "context_all"
 context_choices1$subindicator[str_detect(context_choices1$subindicator,"farm_characteristic")]<- "farm_characteristics"
 context_choices1$subindicator[str_detect(context_choices1$subindicator,"inputs")]<- "inputs"
 context_choices1$subindicator[str_detect(context_choices1$subindicator,"production_systems")]<- "production_systems"
@@ -139,14 +143,17 @@ context_choices<- context_choices1%>%
                                      paste(name_question,"/",name_choice, sep=""),
                                      name_question))%>%
   filter(indicator==
-           "inputs"  )       
+           "production_systems")       
                                                                                      
-         [19]                                                                                 
-         [25] "land_tenure"                                                                                  
-         [31]                               "production_end_use"      "production_systems"         
-         [37]             "structure"               "training" "climate_resilience"  "household_labour"
+         
+         [37]  "climate_resilience"  "household_labour"
 
 "climate_rainfall_timing"  #check what I did with select multiple questions for performance
+"context_all"
+"production_end_use" #ok
+"training"
+"structure"#ok
+"inputs"#ok
 "income" #ok
 "id_site" #ok
 "societal_factor"#ok
@@ -241,6 +248,7 @@ context_left_join <- function(context_choices, gathered_data ) {
   return(result)
 }
 
+# Final HOLPA_Zimbabwe_Household
 zwe_context <- zwe_survey %>%
   select(all_of(zwe_context_columns))%>%
   mutate_all(as.character)
@@ -255,7 +263,7 @@ na_columns
 zwe_context <- zwe_context[, !na_columns]
 
 view(dfSummary(zwe_context))
-
+zwe_survey
 result <- zwe_context%>%
   gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
   #Indicator: climate_drought and climate_flood
@@ -270,9 +278,42 @@ result <- zwe_context%>%
          parent_index=NA)
 names(result)
 sort(unique(result$name_choice))
+
+## _1_4_2_7_begin_repeat: production_end_use for OTHER NON-FARM PRODUCT  ----
+zwe_context_columns_1_4_2_7_begin_repeat <- intersect(context_questions_columns, colnames(zwe_survey_1_4_2_7_begin_repeat))
+zwe_context_columns_1_4_2_7_begin_repeat
+context_questions_columns
+mismatched_columns_1_4_2_7_begin_repeat <- setdiff(context_questions_columns, zwe_context_columns_1_4_2_7_begin_repeat)
+print(mismatched_columns_1_4_2_7_begin_repeat)
+
+zwe_context_1_4_2_7_begin_repeat <- zwe_survey_1_4_2_7_begin_repeat %>%
+  select(all_of(zwe_context_columns_1_4_2_7_begin_repeat))%>%
+  mutate_all(as.character)
+
+view(dfSummary(zwe_context_1_4_2_7_begin_repeat))
+
+# Identify columns with only NA values
+na_columns_1_4_2_7_begin_repeat <- colSums(is.na(zwe_context_1_4_2_7_begin_repeat)) == nrow(zwe_context_1_4_2_7_begin_repeat)
+na_columns_1_4_2_7_begin_repeat
+
+# Remove columns with only NA values
+zwe_context_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat[, !na_columns_1_4_2_7_begin_repeat]
+
+view(dfSummary(zwe_context_1_4_2_7_begin_repeat))
+
+result_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat%>%
+  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+  context_left_join(context_choices,.)%>%
+  mutate(name_question_recla= name_question)
+
+
 # Combine all----
 result2<- #rbind(
-  result%>%
+  result%>%#,
+  # Indicator: production_end_use for OTHER NON-FARM PRODUCT
+  #result_1_4_2_7_begin_repeat
+  # )
+
   mutate(
     name_question_recla = case_when(
       #Indicator: "hh_head_relation"
@@ -288,6 +329,9 @@ result2<- #rbind(
       name_question_recla=="_1_2_1_13_1_1"~ "_1_2_1_13_1",
       #Indicator: "secondary_occupation"
       name_question_recla=="_1_2_1_13_2_2_1"~ "_1_2_1_13_2_2/other",
+      #Indicator: "inputs"
+      str_detect(name_question_recla,"_1_4_3_1/")~"_1_4_3_1",
+      str_detect(name_question_recla, "_1_4_3_5/")~"_1_4_3_5",
       TRUE ~name_question_recla))%>%
   
   mutate(label_question = case_when(
@@ -323,9 +367,18 @@ result2<- #rbind(
     name_question %in% c("_3_2_1_3_1_1","_3_2_1_3_2_1","_2_3_1_1_1","_1_2_1_13_1_1","_1_2_1_13_2_2_1") ~ "other",
     #Indicator: "location"
     name_question %in% c("_1_3")~ "latitude longitude altitude",
+    #Indicator: "inputs"
+    name_question %in% c( 
+      #Indicator: "inputs"
+      "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3",
+      #Indicator: "context_all"
+      "_1_4_1_1_1")~"acres",
     TRUE ~ label_choice))%>%
   filter(!(name_question%in% c("_1_2_1_5_1","_1_2_1_6_1","_3_2_1_3_1_1","_3_2_1_3_2_1","_1_3_1","_2_3_1_1_1",
-                               "_1_2_1_13_1_1","_1_2_1_13_2_2_1","_1_2_1_15_1","_3_2_1_2_1") & is.na(name_choice)))%>%
+                               "_1_2_1_13_1_1","_1_2_1_13_2_2_1","_1_2_1_15_1","_3_2_1_2_1",
+                               "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2",
+                               "_1_4_3_4_3","_1_4_3_6_4","_1_4_3_6_2","_1_4_3_6_3","_1_4_3_6_1_calculate",
+                               "_4_1_1_4_4_1","_1_4_2_2_6_1","_1_4_2_3_7_1") & is.na(name_choice)))%>%
   filter(!(str_detect(name_question, "hh_photo") & is.na(name_choice))) #Remove the rows with **Specify other:** == NA 
   
 
@@ -335,516 +388,3 @@ sort(unique(result2$label_question))
 sort(unique(result2$name_question))
 sort(unique(result2$name_question_recla))
 sort(unique(result2$name_choice)) 
-
-
-
-## _3_4_3_1_2_begin_repeat: Crop production ----
-zwe_performance_columns_3_4_3_1_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_3_1_2_begin_repeat))
-zwe_performance_columns_3_4_3_1_2_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_3_1_2_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_3_1_2_begin_repeat)
-print(mismatched_columns_3_4_3_1_2_begin_repeat)
-
-zwe_performance_3_4_3_1_2_begin_repeat <- zwe_survey_3_4_3_1_2_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_3_1_2_begin_repeat))%>%
-  mutate_all(as.character)
-
-view(dfSummary(zwe_performance_3_4_3_1_2_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_3_1_2_begin_repeat <- colSums(is.na(zwe_performance_3_4_3_1_2_begin_repeat)) == nrow(zwe_performance_3_4_3_1_2_begin_repeat)
-na_columns_3_4_3_1_2_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_3_1_2_begin_repeat <- zwe_performance_3_4_3_1_2_begin_repeat[, !na_columns_3_4_3_1_2_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_3_1_2_begin_repeat))
-
-result_3_4_3_1_2_begin_repeat <- zwe_performance_3_4_3_1_2_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-##_3_4_2_2_2_begin_repeat: Livestock production 1 ----
-zwe_performance_columns_3_4_2_2_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_2_2_2_begin_repeat))
-zwe_performance_columns_3_4_2_2_2_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_2_2_2_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_2_2_2_begin_repeat)
-print(mismatched_columns_3_4_2_2_2_begin_repeat)
-
-zwe_performance_3_4_2_2_2_begin_repeat <- zwe_survey_3_4_2_2_2_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_2_2_2_begin_repeat))%>%
-  mutate_all(as.character)
-
-names(zwe_performance_3_4_2_2_2_begin_repeat)
-view(dfSummary(zwe_performance_3_4_2_2_2_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_2_2_2_begin_repeat <- colSums(is.na(zwe_performance_3_4_2_2_2_begin_repeat)) == nrow(zwe_performance_3_4_2_2_2_begin_repeat)
-na_columns_3_4_2_2_2_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_2_2_2_begin_repeat <- zwe_performance_3_4_2_2_2_begin_repeat[, !na_columns_3_4_2_2_2_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_2_2_2_begin_repeat))
-
-result_3_4_2_2_2_begin_repeat <- zwe_performance_3_4_2_2_2_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-#mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
-
-##_3_4_2_2_6_begin_repeat: Livestock production 2 ----
-zwe_performance_columns_3_4_2_2_6_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_2_2_6_begin_repeat))
-zwe_performance_columns_3_4_2_2_6_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_2_2_6_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_2_2_6_begin_repeat)
-print(mismatched_columns_3_4_2_2_6_begin_repeat)
-
-zwe_performance_3_4_2_2_6_begin_repeat <- zwe_survey_3_4_2_2_6_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_2_2_6_begin_repeat))%>%
-  mutate_all(as.character)
-
-names(zwe_performance_3_4_2_2_6_begin_repeat)
-view(dfSummary(zwe_performance_3_4_2_2_6_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_2_2_6_begin_repeat <- colSums(is.na(zwe_performance_3_4_2_2_6_begin_repeat)) == nrow(zwe_performance_3_4_2_2_6_begin_repeat)
-na_columns_3_4_2_2_6_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_2_2_6_begin_repeat <- zwe_performance_3_4_2_2_6_begin_repeat[, !na_columns_3_4_2_2_6_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_2_2_6_begin_repeat))
-
-result_3_4_2_2_6_begin_repeat <- zwe_performance_3_4_2_2_6_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-##_3_3_4_1_3_begin_repeat: Irrigation ----
-zwe_performance_columns_3_3_4_1_3_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_3_4_1_3_begin_repeat))
-zwe_performance_columns_3_3_4_1_3_begin_repeat
-performance_questions_columns
-mismatched_columns_3_3_4_1_3_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_3_4_1_3_begin_repeat)
-print(mismatched_columns_3_3_4_1_3_begin_repeat)
-
-zwe_performance_3_3_4_1_3_begin_repeat <- zwe_survey_3_3_4_1_3_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_3_4_1_3_begin_repeat))%>%
-  mutate_all(as.character)
-names(zwe_performance_3_3_4_1_3_begin_repeat)
-view(dfSummary(zwe_performance_3_3_4_1_3_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_3_4_1_3_begin_repeat <- colSums(is.na(zwe_performance_3_3_4_1_3_begin_repeat)) == nrow(zwe_performance_3_3_4_1_3_begin_repeat)
-na_columns_3_3_4_1_3_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_3_4_1_3_begin_repeat <- zwe_performance_3_3_4_1_3_begin_repeat[, !na_columns_3_3_4_1_3_begin_repeat]
-
-view(dfSummary(zwe_performance_3_3_4_1_3_begin_repeat))
-
-result_3_3_4_1_3_begin_repeat <- zwe_performance_3_3_4_1_3_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
-  mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
-
-##_3_4_1_1_7_1_begin_repeat: household members permanent workers ----
-zwe_performance_columns_3_4_1_1_7_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_1_7_1_begin_repeat))
-zwe_performance_columns_3_4_1_1_7_1_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_1_1_7_1_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_1_7_1_begin_repeat)
-print(mismatched_columns_3_4_1_1_7_1_begin_repeat)
-
-zwe_performance_3_4_1_1_7_1_begin_repeat <- zwe_survey_3_4_1_1_7_1_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_1_1_7_1_begin_repeat))%>%
-  mutate_all(as.character)
-
-names(zwe_performance_3_4_1_1_7_1_begin_repeat)
-view(dfSummary(zwe_performance_3_4_1_1_7_1_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_1_1_7_1_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_1_7_1_begin_repeat)) == nrow(zwe_performance_3_4_1_1_7_1_begin_repeat)
-na_columns_3_4_1_1_7_1_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_1_1_7_1_begin_repeat <- zwe_performance_3_4_1_1_7_1_begin_repeat[, !na_columns_3_4_1_1_7_1_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_1_1_7_1_begin_repeat))
-
-result_3_4_1_1_7_1_begin_repeat <- zwe_performance_3_4_1_1_7_1_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-#mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
-
-##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 ----
-zwe_performance_columns_3_4_1_1_7_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_1_7_2_begin_repeat))
-zwe_performance_columns_3_4_1_1_7_2_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_1_1_7_2_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_1_7_2_begin_repeat)
-print(mismatched_columns_3_4_1_1_7_2_begin_repeat)
-
-zwe_performance_3_4_1_1_7_2_begin_repeat <- zwe_survey_3_4_1_1_7_2_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_1_1_7_2_begin_repeat))%>%
-  mutate_all(as.character)
-
-names(zwe_performance_3_4_1_1_7_2_begin_repeat)
-view(dfSummary(zwe_performance_3_4_1_1_7_2_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_1_1_7_2_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_1_7_2_begin_repeat)) == nrow(zwe_performance_3_4_1_1_7_2_begin_repeat)
-na_columns_3_4_1_1_7_2_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_1_1_7_2_begin_repeat <- zwe_performance_3_4_1_1_7_2_begin_repeat[, !na_columns_3_4_1_1_7_2_begin_repeat]
-
-unique(zwe_performance_3_4_1_1_7_2_begin_repeat$merge_id2)
-view(dfSummary(zwe_performance_3_4_1_1_7_2_begin_repeat))
-
-result_3_4_1_1_7_2_begin_repeat<- zwe_performance_3_4_1_1_7_2_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 ----
-zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_7_2_1_begin_repeat))
-zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_1_2_7_2_1_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat)
-print(mismatched_columns_3_4_1_2_7_2_1_begin_repeat)
-
-zwe_performance_3_4_1_2_7_2_1_begin_repeat <- zwe_survey_3_4_1_2_7_2_1_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_1_2_7_2_1_begin_repeat))%>%
-  mutate_all(as.character)
-
-names(zwe_performance_3_4_1_2_7_2_1_begin_repeat)
-unique(zwe_performance_3_4_1_2_7_2_1_begin_repeat$index)
-view(dfSummary(zwe_performance_3_4_1_2_7_2_1_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_1_2_7_2_1_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_7_2_1_begin_repeat)) == nrow(zwe_performance_3_4_1_2_7_2_1_begin_repeat)
-na_columns_3_4_1_2_7_2_1_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_1_2_7_2_1_begin_repeat <- zwe_performance_3_4_1_2_7_2_1_begin_repeat[, !na_columns_3_4_1_2_7_2_1_begin_repeat]
-
-names(zwe_performance_3_4_1_2_7_2_1_begin_repeat)
-view(dfSummary(zwe_performance_3_4_1_2_7_2_1_begin_repeat))
-
-result_3_4_1_1_7_2_1_begin_repeat<- zwe_performance_3_4_1_2_7_2_1_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-names(result_3_4_1_1_7_2_1_begin_repeat)
-unique(result_3_4_1_1_7_2_1_begin_repeat$parent_table_name)
-
-##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers ----
-zwe_performance_columns_3_4_1_2_1_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_1_1_begin_repeat))
-zwe_performance_columns_3_4_1_2_1_1_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_1_2_1_1_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_1_1_begin_repeat)
-print(mismatched_columns_3_4_1_2_1_1_begin_repeat)
-
-zwe_performance_3_4_1_2_1_1_begin_repeat <- zwe_survey_3_4_1_2_1_1_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_4_1_2_1_1_begin_repeat))%>%
-  mutate_all(as.character)
-
-view(dfSummary(zwe_performance_3_4_1_2_1_1_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_1_2_1_1_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_1_1_begin_repeat)) == nrow(zwe_performance_3_4_1_2_1_1_begin_repeat)
-na_columns_3_4_1_2_1_1_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_1_2_1_1_begin_repeat <- zwe_performance_3_4_1_2_1_1_begin_repeat[, !na_columns_3_4_1_2_1_1_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_1_2_1_1_begin_repeat))
-
-result_3_4_1_2_1_1_begin_repeat<- zwe_performance_3_4_1_2_1_1_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-
-##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 ----
-zwe_performance_columns_3_4_1_2_1_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_1_2_begin_repeat))
-zwe_performance_columns_3_4_1_2_1_2_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_1_2_1_2_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_1_2_begin_repeat)
-print(mismatched_columns_3_4_1_2_1_2_begin_repeat)
-
-zwe_performance_3_4_1_2_1_2_begin_repeat <- zwe_survey_3_4_1_2_1_2_begin_repeat%>%
-  select(all_of(zwe_performance_columns_3_4_1_2_1_2_begin_repeat))%>%
-  mutate_all(as.character)
-
-view(dfSummary(zwe_performance_3_4_1_2_1_2_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_1_2_1_2_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_1_2_begin_repeat)) == nrow(zwe_performance_3_4_1_2_1_2_begin_repeat)
-na_columns_3_4_1_2_1_2_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_1_2_1_2_begin_repeat <- zwe_performance_3_4_1_2_1_2_begin_repeat[, !na_columns_3_4_1_2_1_2_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_1_2_1_2_begin_repeat))
-
-result_3_4_1_2_1_2_begin_repeat<- zwe_performance_3_4_1_2_1_2_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
-zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_4_1_2_1_2_1_begin_repeat))
-zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat
-performance_questions_columns
-mismatched_columns_3_4_1_2_1_2_1_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat)
-print(mismatched_columns_3_4_1_2_1_2_1_begin_repeat)
-
-zwe_performance_3_4_1_2_1_2_1_begin_repeat <- zwe_survey_3_4_1_2_1_2_1_begin_repeat%>%
-  select(all_of(zwe_performance_columns_3_4_1_2_1_2_1_begin_repeat))%>%
-  mutate_all(as.character)
-
-view(dfSummary(zwe_performance_3_4_1_2_1_2_1_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_4_1_2_1_2_1_begin_repeat <- colSums(is.na(zwe_performance_3_4_1_2_1_2_1_begin_repeat)) == nrow(zwe_performance_3_4_1_2_1_2_1_begin_repeat)
-na_columns_3_4_1_2_1_2_1_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_4_1_2_1_2_1_begin_repeat <- zwe_performance_3_4_1_2_1_2_1_begin_repeat[, !na_columns_3_4_1_2_1_2_1_begin_repeat]
-
-view(dfSummary(zwe_performance_3_4_1_2_1_2_1_begin_repeat))
-
-result_3_4_1_2_1_2_1_begin_repeat<- zwe_performance_3_4_1_2_1_2_1_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
-zwe_performance_columns_3_3_3_2_begin_repeat <- intersect(performance_questions_columns, colnames(zwe_survey_3_3_3_2_begin_repeat))
-zwe_performance_columns_3_3_3_2_begin_repeat
-
-performance_questions_columns
-mismatched_columns_3_3_3_2_begin_repeat <- setdiff(performance_questions_columns, zwe_performance_columns_3_3_3_2_begin_repeat)
-print(mismatched_columns_3_3_3_2_begin_repeat)
-
-zwe_performance_3_3_3_2_begin_repeat <- zwe_survey_3_3_3_2_begin_repeat %>%
-  select(all_of(zwe_performance_columns_3_3_3_2_begin_repeat))%>%
-  mutate_all(as.character)
-
-names(zwe_performance_3_3_3_2_begin_repeat)
-view(dfSummary(zwe_performance_3_3_3_2_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_3_3_3_2_begin_repeat <- colSums(is.na(zwe_performance_3_3_3_2_begin_repeat)) == nrow(zwe_performance_3_3_3_2_begin_repeat)
-na_columns_3_3_3_2_begin_repeat
-
-# Remove columns with only NA values
-zwe_performance_3_3_3_2_begin_repeat <- zwe_performance_3_3_3_2_begin_repeat[, !na_columns_3_3_3_2_begin_repeat]
-
-view(dfSummary(zwe_performance_3_3_3_2_begin_repeat))
-
-result_3_3_3_2_begin_repeat <- zwe_performance_3_3_3_2_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  perform_left_join(performance_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-
-
- 
-
-    
-  filter(!(name_question %in% c("_1_2_1_5_1")))
-#,
-                # Indicator: productivity_crops
-                # result_3_4_3_1_2_begin_repeat,
-                # Indicator: productivity_livestock
-                # result_3_4_2_2_2_begin_repeat,result_3_4_2_2_6_begin_repeat,
-                # Indicator:labour_productivity
-                #result_3_4_1_1_7_1_begin_repeat,result_3_4_1_1_7_2_1_begin_repeat,result_3_4_1_1_7_2_begin_repeat ,
-                #result_3_4_1_2_1_1_begin_repeat,result_3_4_1_2_1_2_begin_repeat,result_3_4_1_2_1_2_1_begin_repeat,
-                # Indicator: biodiversity_climate_mitigation
-                #result_3_3_3_2_begin_repeat,
-                # Indicator: irrigation
-                #result_3_3_4_1_3_begin_repeat
-#)
-  # Indicator: biodiversity_agrobiodiversity
-
-mutate(name_choice = case_when(
-  name_question %in% c("_3_4_3_1_1", "_3_4_2_2_2_3_calculate", "_3_4_3_4_1") & is.na(name_choice) ~ "0",
-  TRUE ~ name_choice))%>%
-  mutate(label_choice = case_when(
-    name_question == "_3_4_3_1_1" ~ paste("produce", name_choice, "crop species", sep = " "),
-    name_question == "_3_4_2_2_2_3_calculate" ~ paste("produce", name_choice, "livestock species", sep = " "),
-    name_question == "_3_4_3_4_1" ~ paste("produce", name_choice, "fish species", sep = " "),
-    TRUE ~ label_choice))%>%
-  mutate(name_question_recla  = case_when(
-    label_question==  "In the last 12 months [add country meaning], how many different crops species (including perennial crops) were produced on your farm"~ "_3_4_3_1_1" ,
-    label_question==  "In the last 12 months [add country meaning], how many different livestock species were produced in your farm?"~ "_3_4_2_2_2_3_calculate" ,
-    name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~paste("_3_4_3_1_1_2/",name_question,sep=""),
-    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ paste("_3_4_3_3_1/other",name_question,sep=""),
-    TRUE ~ name_question_recla))%>%
-  
-  mutate(name_choice = case_when(
-    type_question == "select_multiple" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
-    #name_question_recla == "_3_4_3_3_1" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
-    TRUE ~ name_choice))%>%
-  
-  filter(!(str_detect(name_question_recla, "_3_4_3_1_1_2/c")& is.na(name_choice)))%>%
-  
- 
-  mutate(label_question = case_when(
-    name_question_recla== "_3_4_3_3_1" ~  "In the last 12 months [add country meaning], which different livestock species did you keep?",
-    # Indicator: biodiversity_practices
-    name_question_recla== "_2_9_1_1_1" ~ "Which ecological practices do you use on cropland to improve soil quality and health?",
-    name_question_recla== "_3_3_1_7_1" ~ "What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?",
-    # Indicator: energy
-    name_question_recla== "_2_8_4_1_1"~ "What types of energy do you use for: Irrigation",
-    name_question_recla=="_2_8_4_2_1" ~ "What types of energy do you use for: Tillage, sowing or harvesting",
-    name_question_recla== "_2_8_4_3_4" ~ "What types of energy do you use for: Cleaning, processing or transporting harvested food",
-    name_question_recla=="_2_8_4_3_1"~"What types of energy do you use for: Cooking",
-    # Indicator: water
-    name_question_recla=="_3_3_4_1_1_1"~"What methods of irrigation do you use",
-    name_question_recla=="_3_3_4_1_2_1"~"Where do you source your water for irrigation?",
-    TRUE ~ label_question))%>%
-  
-  ## Indicator: biodiversity_diversity
-  filter(!(name_question_recla == "_3_3_1_1_9_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
-  
-  mutate(label_choice = case_when(name_question_recla%in% c("_2_9_1_1_1","_3_3_1_7_1") ~ "other ecological practice",TRUE ~label_choice))%>%
-  
-  mutate(name_question_recla = case_when(
-    name_question_recla== "_2_9_1_1_1" ~ "_2_9_1_1/other",
-    name_question_recla== "_3_3_1_7_1" ~ "_3_3_1_7/other",
-    # Indicator: energy
-    name_question_recla=="_2_8_4_1_1"~ "_2_8_4_1/other",
-    name_question_recla=="_2_8_4_2_1"~ "_2_8_4_2/other",
-    name_question_recla== "_2_8_4_3_4" ~ "_2_8_4_4/other",
-    name_question_recla=="_2_8_4_3_1"~ "_2_8_4_3/other",
-    # Indicator: water
-    name_question_recla== "_3_3_4_1_1_1"~ "_3_3_4_1_1/other",
-    name_question_recla=="_3_3_4_1_2_1"~"_3_3_4_1_2/other",
-    TRUE ~name_question_recla))%>%
-  
-  # Indicator: water
-  mutate(name_choice = case_when(
-    name_question_recla == "_3_4_1_2_7_2_2_1" ~ str_replace(name_choice, "//1$", paste0("//", label_choice)),TRUE ~ name_choice))%>%
-  
-  filter(!(str_ends(name_question_recla, "//0") & name_question_recla == "_3_4_1_2_7_2_2_1"))%>%
-  
-  ## THEME: SOCIAL----
-# Indicator: 
-mutate(name_question_recla = str_replace(name_question_recla, "_audio", ""))%>%
-  
-  # Indicator: land tenure
-  mutate(name_choice = case_when(name_question_recla%in% c("_1_4_4_1_1", "_1_4_4_1_2", "_1_4_4_2_1" ,"_1_4_4_2_2", "_1_4_4_3_1", "_1_4_4_3_2",
-                                                           "_1_4_4_4_1") &
-                                   is.na(name_choice)~ "0",TRUE ~name_choice))%>%
-  mutate(label_choice = case_when(name_question_recla%in% c("_1_4_4_1_1", "_1_4_4_1_2", "_1_4_4_2_1" ,"_1_4_4_2_2", "_1_4_4_3_1", "_1_4_4_3_2",
-                                                            "_1_4_4_4_1",
-                                                            "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3") ~ "acres",TRUE ~label_choice))%>%
-  ## THEME: ECONOMIC ----
-mutate(label_question = case_when(
-  # Indicator: "climate_resilience"
-  name_question == "_4_1_1_5_2_1" ~ "Credit for what types of investment",
-  name_question == "_4_1_1_5_1_1" ~"Please indicate the source of the credit you obtained for your farming business",
-  # Indicator: climate_resilience_shocks
-  name_question =="_4_1_3_1_1"~"In the last 12 months, what were the most severe shocks faced by the household",
-  name_question =="_4_1_3_1_2_1"~"What did the household members do to cope with the shocks",
-  # Indicator: climate_resilience_social_network
-  name_question =="_2_3_1_1_1"~"Select all the associations/organizations of which you or other HH members are a part of.",
-  TRUE ~label_question))%>%
-  
-  mutate(name_question_recla = case_when(
-    # Indicator: "climate_resilience"
-    name_question == "_4_1_1_5_2_1" ~ "_4_1_1_5_2/other",
-    name_question =="_4_1_1_5_1_1" ~ "_4_1_1_5_1",
-    # Indicator: climate_resilience_shocks
-    name_question =="_4_1_3_1_1" ~ "_4_1_3_1/other",
-    name_question =="_4_1_3_1_2_1" ~ "_4_1_3_1_2/other",
-    # Indicator: climate_resilience_social_network
-    name_question =="_2_3_1_1_1" ~ "_2_3_1_1/other",
-    # Indicator: labour_productivity
-    name_question =="_3_4_1_1_7_1_2_1"~ "_3_4_1_1_7_1_2/other",
-    TRUE ~name_question_recla))%>%
-  
-  ## THEME: AGRICULTURAL ----
-mutate(label_question = case_when(
-  # Indicator: animal_health
-  name_question =="_3_3_4_4_1"~"Where do you source your water for drinking water for livestock?",
-  # Indicator: productivity_crops
-  name_question =="_3_4_2_1_5_1_2"~"Select crop production unit:",
-  name_question =="_3_4_2_1_6_1_1"~"What does the produced crop get used for?",
-  # Indicator: productivity_livestock
-  name_question =="_3_4_2_2_5_1"~"What does the livestock get used for?",
-  name_question =="_3_4_2_2_6_1_1"~"Select livestock production unit:",
-  name_question =="_3_4_2_2_6_3_1"~ "What does the livestock production get used for?",
-  TRUE ~label_question))%>%
-  
-  #All----
-
-#Replace ${_1_4_1_1} in label_choice by the hectares or acres
-mutate(label_choice = gsub("\\$\\{_1_4_1_1\\}", "acres", label_choice))%>%
-  mutate(label_choice =case_when(name_question %in% c("_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_1_3","_3_3_3_2_2")~"in acres",TRUE ~label_choice))%>%
-  
-  
-  #mutate(label_question = gsub("\\$\\{_1_4_1_1_calculate\\}", "acres", label_question))%>%
-  filter(!(name_question %in% c("_3_3_1_1_9_1", "_2_9_1_1_1", "_3_3_1_7_1","_2_8_4_3_4",
-                                "_3_1_2_2_1","_3_1_2_8",
-                                "_4_1_1_5_2_1","_4_1_1_5_1_1","_4_1_1_6_1",
-                                "_4_1_1_4_4_1","_2_4_1_2","_4_1_2_1_10","_4_1_2_1_2","_4_1_2_1_4","_4_1_2_1_5","_4_1_2_1_6","_4_1_2_1_7","_4_1_2_1_9",
-                                "_4_1_3_1_1","_4_1_3_1_2_1",
-                                "_2_3_1_1_1","_4_1_3_2_13_1",
-                                "_3_2_1_2_1",
-                                "_3_4_1_1_1_1","_3_4_1_1_1_2","_3_4_1_1_2_1","_3_4_1_1_2_2","_3_4_1_1_3_1","_3_4_1_1_3_2","_3_4_1_1_4_1","_3_4_1_1_4_2","_3_4_1_1_5_1","_3_4_1_1_5_2","_3_4_1_1_6_1","_3_4_1_1_6_2",
-                                "_3_4_1_1_7_1_2_1",
-                                "_3_3_4_4_1",
-                                "_3_4_2_1_8_2","_3_4_2_1_8_3",
-                                "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2","_1_4_3_4_3",
-                                "_3_4_2_1_1",
-                                "_3_4_2_2_1_1",
-                                "_3_4_2_1_5_1_2","_3_4_2_1_6_1_1","_3_4_2_1_6_2_9","_3_4_2_1_6_2_1","_3_4_2_1_6_2_2",
-                                "_3_4_2_1_6_2_3","_3_4_2_1_6_2_4","_3_4_2_1_6_2_5","_3_4_2_1_6_2_6",
-                                "_3_4_2_1_6_2_7","_3_4_2_1_6_2_8",  "_3_4_2_1_6_2_9","_3_4_2_1_7_1","_3_4_2_1_7_2","_3_4_2_1_7_3","_3_4_3_1_3_calculate",
-                                "_3_4_2_2_1_2","_3_4_2_2_5_1",
-                                "_3_4_2_1_7_4","_3_4_2_2_6_1_1","_3_4_2_2_6_3_1",
-                                "_4_1_4_13_1",
-                                "_4_1_4_12",
-                                "_2_4_1_1","_3_1_2_3_1","_3_1_2_4_1","_3_1_2_5_1","_3_1_2_6_1","_3_1_2_7_1"
-                                
-                                
-  ) & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
-  filter(!(str_detect(name_question, "audio") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
-  filter(!(name_question %in% c("_3_4_3_3_1/other", "_2_9_1_1/other", "_3_3_1_7/other","_2_8_4_4/other",
-                                "_4_1_1_5_1/other","_4_1_1_5_2/other",
-                                "_4_1_3_1/other","_4_1_3_1_2/other",
-                                "_2_3_1_1/other",
-                                "_3_4_1_1_7_1_2/other",
-                                "_3_3_4_4/other",
-                                "_3_4_2_1_6_1/other", "_3_4_2_2_5/other","_3_4_2_2_5/other_1",
-                                "_3_4_2_2_6_3/other_10","_3_4_2_2_6_3/other_2","_3_4_2_2_6_3/other_3","_3_4_2_2_6_3/other_4","_3_4_2_2_6_3/other_6",
-                                "_3_3_4_1_1/other")))%>%
-  filter(!(name_question %in%c("_3_4_2_1_5_1")& name_choice=="other"))
-
-#write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
-
-
-
-table(result2$label_question,result2$name_question_recla)
-unique(result2$sheet_id)
-names(result2)
-view(dfSummary(result2))
-
-length(unique(result2$label_question))
-length(unique(result2$name_question_recla))
-table( result2$name_question_recla, result2$label_question)
-
-x<-result2%>%
-  mutate(x=paste(name_question_recla,label_question,sep="_"))
-
-sort(unique(x$x))
-
-

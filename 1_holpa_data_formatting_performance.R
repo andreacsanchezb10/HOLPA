@@ -860,6 +860,8 @@ result2<- rbind(result,
     name_question =="_3_4_2_2_6_3_1"~"_3_4_2_2_6_3/other",
     str_detect(name_question_recla,"_3_4_2_2_5/")~str_replace(name_question_recla, "_[^_]*$", ""),
     str_detect(name_question_recla,"_3_4_2_2_6_3/")~str_replace(name_question_recla, "_[^_]*$", ""),
+    # Indicator: nutrient_use
+    str_detect(name_question_recla,"_1_4_3_1/")~"_1_4_3_1",
     TRUE ~name_question_recla))%>%
  
    mutate(name_choice = case_when(
