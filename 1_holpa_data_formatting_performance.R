@@ -939,24 +939,6 @@ sort(unique(x$x))
 
 
 
-#
 
-
-### OBSERVATIONS
-## Zimbabwe 
-#ENVIRONMENTAL
-#does not have data for THEME ENVIRONMENT - indicator: biodiversity (10 questions)
-# questions missing  "_3_4_3_4_2" fishing production
-  
-# SOCIAL
-#missing questions: "_3_1_2_4_1_audio" "_3_1_2_5_1_audio" "_3_1_2_6_1_audio" "_3_1_2_7_1_audio" "_3_1_3_1_2"
-
-#ENVIRONMENTAL
-#missing questions: "_3_4_2_3_2_2" fishing production; "_3_1_3_1_2"
-
-# AGRICULTURAL
-#missing: Indicator "productivity_fish"; 
-#missing: indicator: animal_health _3_4_2_3_3 _1_4_3_9
-#missing: crop production section area produced by diversified farming system
 
                                                                
