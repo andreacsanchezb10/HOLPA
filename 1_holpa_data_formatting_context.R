@@ -45,12 +45,10 @@ read_and_process_survey <- function(sheet_name, column_id_rename, data_path, cou
 zwe_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.data.path,"zimbabwe","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
-
 zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey("_1_4_2_7_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: "production_end_use": other on-farm produce
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
 
-  
 zwe_choices <- read_excel(path=paste0(zwe.data.path,"`zimbabwe_household_survey.xlsx`"),
                                sheet = "choices")%>%
   select("list_name","name","label::English ((en))","score_agroecology_module")%>%
@@ -93,6 +91,11 @@ context_survey <-  global_survey %>%
   filter(str_detect(module, "context"))%>%
   mutate(module= "context")
 
+#"production_end_use/production_systems" these question is part of two indicators
+duplicate_rows <-  context_survey%>% filter(str_detect(subindicator, "production_end_use/production_systems"))
+duplicate_rows$subindicator <- "production_end_use"
+context_survey <- rbind(context_survey, duplicate_rows)
+
 sort(unique(context_survey$subindicator))
 context_survey$subindicator[str_detect(context_survey$subindicator,"respondent_characteristics")]<- "respondent_characteristics"
 context_survey$subindicator[str_detect(context_survey$subindicator,"household_characteristic")]<- "household_characteristics"
@@ -109,9 +112,17 @@ context_survey$subindicator[str_detect(context_survey$subindicator,"education")]
 context_survey$subindicator[str_detect(context_survey$subindicator,"literacy")]<- "literacy"
 context_survey$subindicator[str_detect(context_survey$subindicator,"membership")]<- "membership"
 context_survey$subindicator[str_detect(context_survey$subindicator,"accessibility")]<- "accessibility"
-
 sort(unique(context_survey$subindicator))
 
+sort(unique(context_survey$indicator))
+context_survey$indicator[str_detect(context_survey$indicator,"farm_characteristics")]<- "farm_characteristics"
+context_survey$indicator[str_detect(context_survey$indicator,"farm_characteristic")]<- "farm_characteristics"
+context_survey$indicator[str_detect(context_survey$indicator,"household_characteristic")]<- "household_characteristics"
+context_survey$indicator[str_detect(context_survey$indicator,"household_characteristics")]<- "household_characteristics"
+context_survey$indicator[str_detect(context_survey$indicator,"respondent_characteristics")]<- "respondent_characteristics"
+context_survey$indicator[str_detect(context_survey$indicator,"inputs")]<- "inputs"
+context_survey$indicator[str_detect(context_survey$indicator,"context_all")]<- "context_all"
+sort(unique(context_survey$indicator))
 
 context_choices1 <- global_choices %>%
   filter(str_detect(module, "context"))%>%
@@ -136,56 +147,26 @@ context_choices1$subindicator[str_detect(context_choices1$subindicator,"membersh
 context_choices1$subindicator[str_detect(context_choices1$subindicator,"accessibility")]<- "accessibility"
 sort(unique(context_choices1$subindicator))
 
+sort(unique(context_choices1$indicator))
+context_choices1$indicator[str_detect(context_choices1$indicator,"farm_characteristics")]<- "farm_characteristics"
+context_choices1$indicator[str_detect(context_choices1$indicator,"farm_characteristic")]<- "farm_characteristics"
+context_choices1$indicator[str_detect(context_choices1$indicator,"household_characteristic")]<- "household_characteristics"
+context_choices1$indicator[str_detect(context_choices1$indicator,"household_characteristics")]<- "household_characteristics"
+context_choices1$indicator[str_detect(context_choices1$indicator,"respondent_characteristics")]<- "respondent_characteristics"
+context_choices1$indicator[str_detect(context_choices1$indicator,"inputs")]<- "inputs"
+context_choices1$indicator[str_detect(context_choices1$indicator,"context_all")]<- "context_all"
+sort(unique(context_choices1$indicator))
+
+
 context_choices<- context_choices1%>%
   rename(theme = indicator,
          indicator = subindicator)%>%
   mutate(name_question_choice= if_else(type_question=="select_multiple",
                                      paste(name_question,"/",name_choice, sep=""),
-                                     name_question))%>%
+                                     name_question))
   filter(indicator==
-           "production_systems")       
+           "climate_rainfall_timing")       
                                                                                      
-         
-         [37]  "climate_resilience"  "household_labour"
-
-"climate_rainfall_timing"  #check what I did with select multiple questions for performance
-"context_all"
-"production_end_use" #ok
-"training"
-"structure"#ok
-"inputs"#ok
-"income" #ok
-"id_site" #ok
-"societal_factor"#ok
-"project_involvement"  #ok
-"secondary_occupation" #ok
-"primary_occupation" #ok
-"photo" #ok
-"name"#ok
-"personal_factors"#ok
-"membership"#ok
-"location" #ok
-"marital_status" #ok
-"literacy" #ok
-"housing"#ok
-"gender"#ok
-"farmer_relation"#ok
-"hh_head_relation" #ok
-"farm_layout"#ok
-"ethnicity"#ok
-"enumerator"#ok
-"education" #ok
-"credit_access"#ok
-"consent"#ok
-"climate_temp"#ok
-"climate_rainfall_change"#ok   
-"climate_flood" #ok        
-"climate_drought"  #ok
-"agroecology_knowledge"#ok
-"age_dob"#ok
-"age_community" #ok
-"accessibility"  #ok
- "photo" 
 sort(unique(context_choices$indicator))
 
 #### Context module ####
@@ -202,16 +183,6 @@ context_questions_columns<- context_choices%>%
 
 context_questions_columns <- colnames(context_questions_columns)
 context_questions_columns
-
-
-## ANALYSIS BY COUNTRY
-# Zimbabwe
-colnames(zwe_survey)
-zwe_context_columns <- intersect(context_questions_columns, colnames(zwe_survey))
-zwe_context_columns
-context_questions_columns
-mismatched_columns <- setdiff(context_questions_columns, zwe_context_columns)
-print(mismatched_columns)
 
 context_left_join <- function(context_choices, gathered_data ) {
   # Left join for "calculate" and "integer"
@@ -248,6 +219,15 @@ context_left_join <- function(context_choices, gathered_data ) {
   return(result)
 }
 
+## ANALYSIS BY COUNTRY
+# Zimbabwe
+colnames(zwe_survey)
+zwe_context_columns <- intersect(context_questions_columns, colnames(zwe_survey))
+zwe_context_columns
+context_questions_columns
+mismatched_columns <- setdiff(context_questions_columns, zwe_context_columns)
+print(mismatched_columns)
+
 # Final HOLPA_Zimbabwe_Household
 zwe_context <- zwe_survey %>%
   select(all_of(zwe_context_columns))%>%
@@ -264,7 +244,7 @@ zwe_context <- zwe_context[, !na_columns]
 
 view(dfSummary(zwe_context))
 zwe_survey
-result <- zwe_context%>%
+result_zwe_context <- zwe_context%>%
   gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
   #Indicator: climate_drought and climate_flood
   #Error: the choices options should be "4_2_1_3" (1=yes, 0=no, notsure), but the country put "4_2_1_1" (increased, nochange, decreased, notsure)
@@ -276,8 +256,8 @@ result <- zwe_context%>%
   mutate(name_question_recla= name_question)%>%
   mutate(parent_table_name= NA,
          parent_index=NA)
-names(result)
-sort(unique(result$name_choice))
+names(result_zwe_context)
+sort(unique(result_zwe_context$name_choice))
 
 ## _1_4_2_7_begin_repeat: production_end_use for OTHER NON-FARM PRODUCT  ----
 zwe_context_columns_1_4_2_7_begin_repeat <- intersect(context_questions_columns, colnames(zwe_survey_1_4_2_7_begin_repeat))
@@ -301,18 +281,18 @@ zwe_context_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat[, !na_colum
 
 view(dfSummary(zwe_context_1_4_2_7_begin_repeat))
 
-result_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat%>%
+result_zwe_context_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat%>%
   gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
   context_left_join(context_choices,.)%>%
   mutate(name_question_recla= name_question)
 
 
 # Combine all----
-result2<- #rbind(
-  result%>%#,
+zwe_context_all<- rbind(
+  result_zwe_context,
   # Indicator: production_end_use for OTHER NON-FARM PRODUCT
-  #result_1_4_2_7_begin_repeat
-  # )
+  result_zwe_context_1_4_2_7_begin_repeat
+   )%>%
 
   mutate(
     name_question_recla = case_when(
@@ -332,6 +312,11 @@ result2<- #rbind(
       #Indicator: "inputs"
       str_detect(name_question_recla,"_1_4_3_1/")~"_1_4_3_1",
       str_detect(name_question_recla, "_1_4_3_5/")~"_1_4_3_5",
+      # Indicator: "production_systems"
+      str_detect(name_question_recla,"_1_4_2_1/")~ "_1_4_2_1",
+      name_question_recla=="_1_4_2_7_calculate"~ "_1_4_2_1",
+      # Indicator:climate_rainfall_timing
+      str_detect(name_question_recla,"_4_2_1_2_1/")~"_4_2_1_2_1",
       TRUE ~name_question_recla))%>%
   
   mutate(label_question = case_when(
@@ -373,14 +358,21 @@ result2<- #rbind(
       "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3",
       #Indicator: "context_all"
       "_1_4_1_1_1")~"acres",
+    # Indicator: "production_systems"
+    name_question %in%c("_1_4_2_7_calculate")~"other",
+    
     TRUE ~ label_choice))%>%
-  filter(!(name_question%in% c("_1_2_1_5_1","_1_2_1_6_1","_3_2_1_3_1_1","_3_2_1_3_2_1","_1_3_1","_2_3_1_1_1",
-                               "_1_2_1_13_1_1","_1_2_1_13_2_2_1","_1_2_1_15_1","_3_2_1_2_1",
-                               "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2",
-                               "_1_4_3_4_3","_1_4_3_6_4","_1_4_3_6_2","_1_4_3_6_3","_1_4_3_6_1_calculate",
-                               "_4_1_1_4_4_1","_1_4_2_2_6_1","_1_4_2_3_7_1") & is.na(name_choice)))%>%
+  filter(!is.na(name_choice))%>%
+  #filter(!(name_question%in% c("_1_2_1_5_1","_1_2_1_6_1","_3_2_1_3_1_1","_3_2_1_3_2_1","_1_3_1","_2_3_1_1_1",
+  #                             "_1_2_1_13_1_1","_1_2_1_13_2_2_1","_1_2_1_15_1","_3_2_1_2_1",
+  #                            "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2",
+  #                            "_1_4_3_4_3","_1_4_3_6_4","_1_4_3_6_2","_1_4_3_6_3","_1_4_3_6_1_calculate",
+  #                            "_4_1_1_4_4_1","_1_4_2_2_6_1","_1_4_2_3_7_1",
+  #                            "_3_4_1_1_4_1","_3_4_1_1_6_2","_3_4_1_1_6_1","_3_4_1_1_5_2","_3_4_1_1_5_1","_3_4_1_1_4_2","_3_4_1_1_3_2",
+  #                            "_3_4_1_1_3_1") & is.na(name_choice)))%>%
   filter(!(str_detect(name_question, "hh_photo") & is.na(name_choice))) #Remove the rows with **Specify other:** == NA 
   
+write.csv(zwe_context_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context.csv",row.names=FALSE)
 
 sort(unique(result2$indicator))
 
@@ -388,3 +380,5 @@ sort(unique(result2$label_question))
 sort(unique(result2$name_question))
 sort(unique(result2$name_question_recla))
 sort(unique(result2$name_choice)) 
+sort(unique(result2$theme)) 
+
