@@ -1,0 +1,66 @@
+#library(openxlsx)
+library(tidyr)
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(summarytools)
+
+#### Set file paths ####
+# TO CHECK: I need to connect directly to the share point, I already asked Sebastien for permision
+#For now I will leave it like this to continue working
+
+#Sarah
+global.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/"
+zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
+
+#Andrea 
+global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/"
+zwe.h.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/household_database_2024.04.18_clean.xlsx"
+zwe.f.data.path<-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/fieldwork_database_2024.05.22_clean.xlsx"
+#### Import data ####
+# Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
+# a choices worksheet with the response options for multiple choice questions (single or multiple).
+# These need to be imported and combined.
+
+### Country databases ####
+read_and_process_survey <- function(sheet_name, column_id_rename, data_path, country_name, index) {
+  survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
+    mutate(country = country_name,
+           sheet_id = sheet_name) %>%
+    rename("kobo_farmer_id" := !!column_id_rename,
+           "index" := !!index) %>%
+    slice(-1)
+  
+  # Automatically rename columns for begin_repeat groups
+  if (grepl("begin_repeat", tolower(sheet_name))) {
+    survey_data <- survey_data %>%
+      rename("parent_table_name" = "_parent_table_name",
+             "parent_index" = "_parent_index")
+  }
+  
+  return(survey_data)
+}
+
+#Zimbabwe
+zwe_h_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.h.data.path,"zimbabwe","_index")%>%
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="274186917")
+
+zwe_f_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Field", "_id", zwe.f.data.path,"zimbabwe","_index")
+
+names(zwe_f_survey)
+
+
+#### Fieldwork module ####
+
+### ANALYSIS BY COUNTRY
+# Zimbabwe
+zwe_fieldwork<- zwe_h_survey%>%
+  select(kobo_farmer_id, household_id,farmer )%>%
+  right_join(zwe_f_survey,by=c("household_id","farmer"))%>%
+ # filter(farmer=="mudzimbabwe _ thomas")
+  filter(is.na(kobo_farmer_id.x))
+
+write.csv(zwe_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_error_fieldwork.csv",row.names=FALSE)
+
+
