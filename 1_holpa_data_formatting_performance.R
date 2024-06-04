@@ -117,7 +117,6 @@ duplicate_rows <-  performance_eco_survey%>% filter(str_detect(subindicator, "in
 duplicate_rows$subindicator <- "income"
 performance_eco_survey <- rbind(performance_eco_survey, duplicate_rows)
 
-
 # CHECK land_productivity only one calculate question related
 sort(unique(performance_eco_survey$subindicator))
 performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
@@ -138,7 +137,7 @@ performance_eco_choices <- global_choices %>%
   filter(str_detect(indicator, "economic"))%>%
   mutate(indicator="economic")
 
-#"income/climate_resilience_adaptative_capacity" these question is part of two indicators
+#"income/climate_resilience_adaptative_capacity" this question is part of two indicators
 duplicate_rows <-  performance_eco_choices%>% filter(str_detect(subindicator, "income/climate_resilience_adaptative_capacity"))
 duplicate_rows$subindicator <- "income"
 performance_eco_choices <- rbind(performance_eco_choices, duplicate_rows)
