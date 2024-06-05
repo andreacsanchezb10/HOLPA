@@ -164,8 +164,8 @@ agroecology_choices<- agroecology_choices%>%
 sort(unique(agroecology_choices$indicator))
 
 agroecology_questions_columns<- agroecology_choices%>% 
-   filter(
-     indicator=="5_biodiversity"
+   #filter(
+  # indicator=="5_biodiversity"
        #"6_synergy"
        #"13_participation" 
      #"12_governance"
@@ -178,7 +178,7 @@ agroecology_questions_columns<- agroecology_choices%>%
    #"3_soil_health"
      #"2_input_reduction"
    #"1_recycling"
-    )%>%  
+# )%>%  
 dplyr::select(label_question, name_question_choice)%>%
   dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
   spread(key = name_question_choice, value = label_question)%>%
