@@ -296,28 +296,51 @@ zwe_agroecology_all<- #rbind(
   mutate(name_choice = case_when(
     name_question %in% c("_2_8_2_1","_2_8_3_1") &is.na(name_choice)  ~ "0",
     TRUE ~ name_choice))%>%
-  mutate(name_question_recla = case_when(
     # Indicator: "2_input_reduction"
+  mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_1_4_3_1/")~str_replace(name_question_recla, "/.*",""),
     str_detect(name_question_recla,"_1_4_3_5/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_1_4_3_8/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
     # Indicator: "3_soil_health"
+  mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_9_1_1/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
     # Indicator: "4_animal_health"
+    mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_10_1_2/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
+  #Indicator: 5_biodiversity
+  mutate(name_question_recla = case_when(
+    str_detect(name_question_recla,"_3_4_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
+  mutate(name_choice = case_when(
+    str_detect(name_question,"_3_4_3_3_1/")~str_extract(name_question, "(?<=/).*"),
+    TRUE ~ name_choice))%>%
+  mutate(name_question_recla  = case_when(
+    name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
+    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
+    TRUE ~ name_question_recla))%>%
+  filter(name_question!="_3_4_3_3_1/other")%>%
     #Indicator: "6_synergy"
+  mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_12_1/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_3_3_1_7/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_3_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_3_3_3_3/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
     # Indicator: "7_economic_diversification"
+  mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_4_1/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
     # Indicator: "11_connectivity"
+  mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_7_1_1/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_7_1_2/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_7_1_5/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_7_1_6/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))
+
   
 sort(unique(zwe_agroecology_all$indicator))
 sort(unique(zwe_agroecology_all$name_question_recla))
