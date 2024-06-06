@@ -1,7 +1,11 @@
 ---
 title: "HOLPA farm-household data analysis"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 date: "2024-04-18"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -9,32 +13,227 @@ knitr::opts_chunk$set(echo = TRUE)
 library(magrittr) # for piping
 library(tidyverse) #for formatting data
 library(ggplot2) # for plots
+library(readr)
 
-zwe_ae <- read.csv("agroecology_zimbabwe.csv",header=TRUE)
+global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
+zwe.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/zwe/"
+
+zwe_ae <- read_csv("zwe/zwe_agroecology.csv",show_col_types = FALSE)
+zwe_cn <- read_csv("zwe/zwe_context.csv",show_col_types = FALSE)
+zwe_pf <- read_csv("zwe/zwe_performance.csv",show_col_types = FALSE)
+
+zwe_data <- zwe_ae %>% full_join(zwe_cn) %>% full_join(zwe_pf)
 
 ```
+## Calculate agroecology and performance indicator scores
+Indicator scores need to be calculated from survey responses.
+
+```{r indicator calcs, include=TRUE, echo=FALSE}
+#### Overall agroecology score ####
+d <- zwe_data
+
+d <- d %>%
+  mutate(subindicator = label_question) %>%
+  mutate(score = ifelse(score_agroecology_module=="no_answer",NA,score_agroecology_module)) %>%
+  mutate(score = as.numeric(score)) %>% 
+  mutate(indicator_order = ifelse(module=="agroecology",sub('_.*', "", indicator),NA)) %>%
+  mutate(indicator_order = as.numeric(indicator_order))
+
+d_ae_summary <- d %>%
+  filter(module == "agroecology") %>%
+  group_by(kobo_farmer_id,module) %>%
+  summarise(score = median(score,na.rm=TRUE)) %>%
+  mutate(indicator = "score_ae_overall",
+         indicator_order=14)
+
+d <- d %>% full_join(d_ae_summary) 
+
+d <- d %>% 
+  mutate(score = ifelse(module != "agroecology" & type %in% c("integer","decimal"),as.numeric(name_choice),score))
+
+#### Performance KPI1 crop health ####
+#sort(unique(d$indicator))
+#temp <- d %>% filter(indicator =="crop_health")
+#table(temp$label_question)
+#table(temp$name_choice)
+d <- d %>% 
+  mutate(subindicator = ifelse(label_question == "What percentage of the total crop production was lost or damaged in the last 12 months [add country meaning]","crop_loss",
+                               ifelse(label_question=="What was the main cause of crop loss or damage?","crop_loss_cause",subindicator))) %>%
+  mutate(indicator = ifelse(subindicator=="crop_loss","kpi1_crop_health",indicator),
+         indicator_order = ifelse(subindicator =="crop_loss",1,indicator_order))
+
+### Performance KPI2 animal health ####
+#sort(unique(d$indicator))
+#temp <- d %>% filter(indicator =="animal_health")
+#table(temp$label_question)
+#table(temp$name_choice)
+#table(temp$label_choice)
+
+d <- d %>% 
+  mutate(subindicator = ifelse(label_question == "What was the extent of injury, illness or death of livestock due to diseases in the last 12 months","livestock_loss",
+                               ifelse(label_question=="Over the past 12 months [add country meaning], how did you manage livestock diseases","livestock_disease_management",subindicator))) %>%
+  mutate(score = ifelse(subindicator =="livestock_loss" & name_choice=="0",5,
+                        ifelse(subindicator =="livestock_loss" & name_choice=="1",3.66,
+                               ifelse(subindicator =="livestock_loss" & name_choice=="2",2.33,
+                                      ifelse(subindicator =="livestock_loss" & name_choice=="3",1,score))))) %>%
+  mutate(indicator = ifelse(subindicator=="livestock_loss","kpi2_animal_health",indicator),
+         indicator_order = ifelse(subindicator =="livestock_loss",2,indicator_order))
+
+### Performance KPI3 soil health ####
+#temp <- d %>% filter(indicator =="soil_health")
+#table(temp$label_question)
+#table(temp$subindicator)
+#table(temp$name_choice,temp$label_question)
+#table(temp$label_choice,temp$name_choice)
+#table(temp$label_choice_short,temp$name_choice)
+#table(temp$label_choice_short,temp$score)
+
+d <- d %>% 
+  mutate(subindicator = ifelse(label_question == "**How would you describe the fertility of your soil on your farmland?**","soil_fertility",
+                               ifelse(label_question=="**How would you describe the level of soil erosion problem on your farmland?**","soil_erosion",subindicator))) %>%
+  mutate(label_choice_short = ifelse(subindicator=="soil_erosion" & name_choice=="0","No erosion",
+                                     ifelse(subindicator=="soil_erosion" & name_choice=="1","Minor erosion",
+                                            ifelse(subindicator=="soil_erosion" & name_choice=="2","Major erosion",label_choice)))) %>%
+  # NOTE that soil erosion label_choice is the 'wrong' way around, i.e. lower scores are better         
+  mutate(score = ifelse(subindicator=="soil_erosion" & name_choice=="0",5,
+                        ifelse(subindicator=="soil_erosion" & name_choice=="1",3,
+                               ifelse(subindicator=="soil_erosion" & name_choice=="2",1,score)))) %>%
+  
+  mutate(score = ifelse(subindicator=="soil_fertility" & name_choice=="0",1,
+                        ifelse(subindicator=="soil_fertility" & name_choice=="1",2.33,
+                               ifelse(subindicator=="soil_fertility" & name_choice=="2",3.66,
+                                      ifelse(subindicator=="soil_fertility" & name_choice=="3",5,score)))))
+
+d_pf_summary <- d %>% filter(subindicator %in% c("soil_erosion","soil_fertility")) %>%
+  mutate(score = as.numeric(score)) %>%
+  group_by(kobo_farmer_id, country, module) %>%
+  summarise(score = median(score,na.rm=TRUE)) %>%
+  mutate(indicator = "soil_health",
+         subindicator = "soil_health_overall")
+
+d <- d %>% full_join(d_pf_summary) %>%
+  mutate(indicator = ifelse(subindicator=="soil_health_overall","kpi3_soil_health",indicator),
+         indicator_order = ifelse(subindicator =="soil_health_overall",3,indicator_order))
+
+
+# CONTINUE HERE WITH KPI prep
+```
+
+## Extract context indicators of interest 
+
+HOLPA collects data on multiple context, agroecology, and performance themes. For the context module, there are several indicators per theme and several measurements per indicator. We need to separate and name the indicators and measurements to include them into the analysis.
+
+```{r context variables, include=TRUE, echo=FALSE}
+
+# ERRORS:
+#temp <- temp %>% filter(kobo_farmer_id == 274186917) # MISSING from context (no district information)
+# 	name_question == _4_1_1_6_1 is wrongly assigned to context section
+
+#### Location ####
+#temp <- d[d$indicator =="location",] 
+#sort(unique(temp[temp$subindicator=="District",]$name_choice))
+d <- d %>% 
+  mutate(subindicator = ifelse(label_question == "Please specify the COUNTRY","Country",subindicator),
+         subindicator = ifelse(label_question == "Please specify the LOCALITY or DISTRICT","District",subindicator),
+         subindicator = ifelse(label_question == "Please specify the VILLAGE","Village",subindicator),
+         subindicator = ifelse(label_question == "Please specify the GPS point","GPS",subindicator)) %>%
+  # create dummy variable to allow district to be added to factor analysis
+  mutate(score = ifelse(subindicator=="District" & name_choice == "mbire",1,
+                        ifelse(subindicator=="District" & name_choice == "murehwa",2,
+                               ifelse(subindicator=="District" & !(name_choice %in% c("mbire", "murehwa")),NA,score))))
+
+#### Access to markets and more ####
+# This is a select one question - sort if using
+#temp <- d[d$indicator =="accessibility",] 
+#sort(unique(temp$label_question))
+
+#### Age community ####
+#temp <- d[d$indicator =="age_community",] 
+d <- d %>%
+  mutate(subindicator = ifelse(label_question == "For how many years have you lived in this community?","Time_in_community",subindicator))
+
+#### Age DOB ####
+#temp <- d[d$indicator =="age_dob",] 
+d <- d %>%
+  mutate(subindicator = ifelse(label_question == "Year of birth","Age_years",subindicator))
+
+#### Agroecology understanding ####
+#temp <- d_cn[d_cn$indicator =="agroecology_knowledge",] 
+d <- d %>%
+  mutate(subindicator = ifelse(label_question == "Do you know what Agroecology means?","Ae_understanding",subindicator)) %>%
+  mutate(label_choice_short = ifelse(name_choice=="0" & subindicator == "Ae_understanding","No",
+                                     ifelse(name_choice=="1" & subindicator == "Ae_understanding","Some",
+                                            ifelse(name_choice=="2" & subindicator == "Ae_understanding","Yes",label_choice_short)))) %>%
+    mutate(score = ifelse(subindicator=="Ae_understanding",as.numeric(name_choice),score)) 
+
+#### Insurance against losses ####
+#temp <- d[d$indicator =="climate_resilience",] 
+d <- d %>%
+  mutate(subindicator = ifelse(label_question == "Do you have insurance against agricultural losses?","Insurance_ag_losses",subindicator)) %>%
+  mutate(subindicator= ifelse(label_question=="What is covered, e.g. losses to crops/livestock/buildings from weather events, pest outbreaks, market shocks?","Insurance_ag_losses_detail",subindicator)) %>%
+  mutate(label_choice_short = ifelse(name_choice=="0" & subindicator == "Insurance_ag_losses","No",
+                                     ifelse(name_choice=="1" & subindicator == "Insurance_ag_losses","Some",
+                                            ifelse(name_choice=="2" & subindicator == "Insurance_ag_losses","Yes",label_choice_short)))) %>%
+    mutate(score = ifelse(subindicator=="Insurance_ag_losses",as.numeric(name_choice),score))
+           
+#### CONTINUE HERE to sort context variables as needed ####
+# credit_access
+# education
+# literacy
+# gender
+# household_labour
+# income (this is a performance indicator too)
+# training
+# membership
+# personal_factors
+# societal_factor
+# climate_rainfall_change
+# climate_temp
+# USE THIS pattern:
+#sort(unique(d$indicator))
+#temp <- d[d$indicator =="climate_resilience",] 
+#table(temp$label_choice,temp$subindicator)
+#table(temp$label_choice,temp$name_choice)
+#table(temp$label_choice,temp$label_choice_short)
+
+#### Attach key context variables to rest of data in wide format ####
+
+d_cn_wide <- d %>%
+  filter(module=="context") %>%
+  select(c("kobo_farmer_id", "subindicator","name_choice")) %>%
+  filter(subindicator %in% c("District","Age_years","Time_in_community","Ae_understanding", "Insurance_ag_losses"))  %>% 
+  pivot_wider(names_from=c(subindicator),
+              values_from=c(name_choice), # OR use score here if everything needs to be numeric
+              names_sort=TRUE,
+              #names_glue="{subindicator}_{.value}",
+              names_vary = "slowest")
+
+d_wide <- d %>% filter(!(module=="context")) %>% left_join(d_cn_wide,by="kobo_farmer_id",relationship="many-to-many") 
+
+d <- d %>% mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
+levels(d_wide$indicator)
+d_wide <- d_wide %>% mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
+
+```
+
 
 ## Agroecology adherence of farm-households
 
 Agroecology adherence assessed using Likert scale responses from 1 (low adherence) to 5 (high adherence).
 
-```{r, echo=FALSE}
+```{r basic figures, include=TRUE, echo=FALSE}
 
-d <- zwe_ae %>% filter(X=="") %>%
-  mutate(indicator_order = sub('_.*', "", indicator)) %>%
-  mutate(indicator_order = as.numeric(indicator_order),
-         score_final = as.numeric(score_final)) %>%
-  mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
-
-ggplot(d, aes(x=indicator,y=score_final,fill=indicator))+
+ggplot(d_wide %>% filter(module=="agroecology"), aes(x=indicator,y=score,fill=indicator))+
   geom_boxplot()+
-  ggtitle(paste0("Agroecology adherence across n= ",length(unique(d$kobo_id))," farm-households"))+
+  ggtitle(paste0("Agroecology adherence across n= ",length(unique(d_wide$kobo_farmer_id))," farm-households"))+
   labs(x="",y="Score\n(1 = low adherence, 5 = high adherence)")+
   #geom_violin()+
-  scale_fill_viridis_d(n=13)+
+  scale_fill_viridis_d()+
+  facet_wrap(~District,ncol=1)+
   theme_bw()+
   theme(axis.text.x=element_text(angle=90,hjust=1),
         plot.title=element_text(hjust=0.5))
+
 
 ```
 
