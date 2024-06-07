@@ -339,6 +339,7 @@ zwe_agroecology_all<- rbind(
     str_detect(name_question_recla,"_2_7_1_2/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_7_1_5/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_7_1_6/")~str_replace(name_question_recla, "/.*", ""),
+    str_detect(name_question_recla,"_1_4_2_1/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))
 
   
