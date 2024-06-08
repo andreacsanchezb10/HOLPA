@@ -307,8 +307,8 @@ zwe_agroecology_all<- rbind(
     str_detect(name_question_recla,"_2_9_1_1/")~str_replace(name_question_recla, "/.*", ""),
     name_question_recla=="_2_9_1_1_1"~"_2_9_1_1",
     TRUE ~ name_question_recla))%>%
-  filter(name_question!="_2_9_1_1/other")%>% #Remove the rows with "_2_9_1_1/other"== NA
-  filter(!(name_question %in% c("_2_9_1_1_1") & is.na(name_choice)))%>%
+  filter(name_question!="_2_9_1_1/other")%>% #Remove the rows with "_2_9_1_1/other"
+  filter(!(name_question %in% c("_2_9_1_1_1") & is.na(name_choice)))%>% # Remove rows NA for other practices
   mutate(label_choice = case_when(
     name_question=="_2_9_1_1_1"~"Specify other practice:",
     TRUE ~ label_choice))%>%
@@ -322,32 +322,62 @@ zwe_agroecology_all<- rbind(
     mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_10_1_2/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))%>%
+  filter(name_question!="_2_10_1_2/other")%>% #Remove the rows with "_2_10_1_2/other"
+  filter(!(name_question %in% c("_2_10_1_2_1") & is.na(name_choice)))%>% # Remove rows NA for other practices
+  mutate(label_choice = case_when(
+    name_question=="_2_10_1_2_1"~"Describe other practice:",
+    TRUE ~ label_choice))%>%
+  mutate(label_question = case_when(
+    name_question=="_2_10_1_2_1"~"What do you do on the farm to keep animals healthy and happy?", #Put the same label_question to the specify other question
+    TRUE ~ label_question))%>%
+  mutate(name_choice = case_when(
+    str_detect(name_question,"_2_10_1_2/")~label_choice, #Replace code in name_question by label_choice for analysis
+    TRUE ~ name_choice))%>%
   #Indicator: 5_biodiversity
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_3_4_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))%>%
   mutate(name_choice = case_when(
-    str_detect(name_question,"_3_4_3_3_1/")~str_extract(name_question, "(?<=/).*"),
+    str_detect(name_question,"_3_4_3_3_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of the livestock
     TRUE ~ name_choice))%>%
   mutate(name_question_recla  = case_when(
     name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
     TRUE ~ name_question_recla))%>%
   filter(name_question!="_3_4_3_3_1/other")%>%
-  
-  
     #Indicator: "6_synergy"
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_12_1/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_3_3_1_7/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_3_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_3_3_3_3/")~str_replace(name_question_recla, "/.*", ""),
+    name_question_recla=="_3_3_3_1_1"~"_3_3_3_1",
     TRUE ~ name_question_recla))%>%
-    # Indicator: "7_economic_diversification"
+  filter(!(name_question %in% c("_3_3_1_7/other", "_3_3_3_3/other","_2_12_1/other__please_specify")))%>% #Remove the rows with "_3_3_1_7/other" "_3_3_3_3/other"
+  filter(!(name_question %in% c("_3_3_1_7_1","_3_3_3_3_1","_2_12_1_1") & is.na(name_choice)))%>% # Remove rows NA for other practices
+  mutate(label_choice = case_when(
+    name_question %in% c("_3_3_1_7_1","_3_3_3_3_1","_2_12_1_1" )~"Specify other practices:",
+    TRUE ~ label_choice))%>%
+  
+  mutate(label_question = case_when( #replace label_question of specify other for the label_question of the main question
+    name_question == "_3_3_1_7_1"  ~ unique(label_question[name_question_recla == "_3_3_1_7"]),
+    name_question == "_3_3_3_3_1"  ~ unique(label_question[name_question_recla == "_3_3_3_3"]), 
+    name_question == "_2_12_1_1"  ~ unique(label_question[name_question_recla == "_2_12_1"]), 
+    TRUE ~ label_question))%>%
+  
+   mutate(name_choice = case_when(
+    str_detect(name_question,"_3_3_1_7/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
+    str_detect(name_question,"_3_3_3_3/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
+    str_detect(name_question,"_3_3_3_3/")~label_choice, # replace name_question by the name of practice
+    TRUE ~ name_choice))%>%
+  
+  
+  
+  # Indicator: "7_economic_diversification"
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_4_1/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))%>%
-    # Indicator: "11_connectivity"
+  # Indicator: "11_connectivity"
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_7_1_1/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_7_1_2/")~str_replace(name_question_recla, "/.*", ""),
