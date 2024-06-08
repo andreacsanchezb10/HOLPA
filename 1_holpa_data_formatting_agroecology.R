@@ -305,8 +305,20 @@ zwe_agroecology_all<- rbind(
     # Indicator: "3_soil_health"
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_9_1_1/")~str_replace(name_question_recla, "/.*", ""),
+    name_question_recla=="_2_9_1_1_1"~"_2_9_1_1",
     TRUE ~ name_question_recla))%>%
-    # Indicator: "4_animal_health"
+  filter(name_question!="_2_9_1_1/other")%>% #Remove the rows with "_2_9_1_1/other"== NA
+  filter(!(name_question %in% c("_2_9_1_1_1") & is.na(name_choice)))%>%
+  mutate(label_choice = case_when(
+    name_question=="_2_9_1_1_1"~"Specify other practice:",
+    TRUE ~ label_choice))%>%
+  mutate(label_question = case_when(
+    name_question=="_2_9_1_1_1"~"Which ecological practices do you use on cropland to improve soil quality and health?", #Put the same label_question to the specify other question
+    TRUE ~ label_question))%>%
+  mutate(name_choice = case_when(
+    str_detect(name_question,"_2_9_1_1/")~label_choice, #Replace code in name_question by label_choice for analysis
+    TRUE ~ name_choice))%>%
+  # Indicator: "4_animal_health"
     mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_10_1_2/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))%>%
@@ -322,6 +334,8 @@ zwe_agroecology_all<- rbind(
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
     TRUE ~ name_question_recla))%>%
   filter(name_question!="_3_4_3_3_1/other")%>%
+  
+  
     #Indicator: "6_synergy"
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_12_1/")~str_replace(name_question_recla, "/.*", ""),
