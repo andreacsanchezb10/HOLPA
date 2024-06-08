@@ -366,7 +366,8 @@ zwe_agroecology_all<- rbind(
     TRUE ~ label_question))%>%
   
    mutate(name_choice = case_when(
-    str_detect(name_question,"_3_3_1_7/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
+     str_detect(name_question,"_3_3_3_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
+     str_detect(name_question,"_3_3_1_7/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
     str_detect(name_question,"_3_3_3_3/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
     str_detect(name_question,"_3_3_3_3/")~label_choice, # replace name_question by the name of practice
     TRUE ~ name_choice))%>%
