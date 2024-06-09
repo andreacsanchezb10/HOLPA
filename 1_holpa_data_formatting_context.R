@@ -372,7 +372,7 @@ zwe_context_all<- rbind(
   #                            "_3_4_1_1_3_1") & is.na(name_choice)))%>%
   filter(!(str_detect(name_question, "hh_photo") & is.na(name_choice))) #Remove the rows with **Specify other:** == NA 
   
-write.csv(zwe_context_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context.csv",row.names=FALSE)
+write.csv(zwe_context_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context_format.csv",row.names=FALSE)
 
 sort(unique(result2$indicator))
 
