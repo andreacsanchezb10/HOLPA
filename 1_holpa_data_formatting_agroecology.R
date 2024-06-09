@@ -347,6 +347,15 @@ zwe_agroecology_all<- rbind(
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
     TRUE ~ name_question_recla))%>%
   filter(name_question!="_3_4_3_3_1/other")%>%
+  filter(!(name_question_recla %in% c("_3_4_3_1_1_2","_3_4_3_3_1",# Remove rows NA for other practices questions
+                                      "_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2", # Remove NA for area of production questions
+                                      "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3") & # Remove NA for total area of land of household
+             is.na(name_choice)))%>% 
+  mutate(label_choice  = case_when(
+    name_question_recla %in% c("_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2",
+                               "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3")&country=="zimbabwe"~"acres",TRUE ~ label_choice))%>% # specify the unit metric for area of land
+  
+  
   
     #Indicator: "6_synergy"
   filter(!(name_question %in% c("_3_3_1_7/other", "_3_3_3_3/other","_2_12_1/other__please_specify")))%>% #Remove the rows with "_3_3_1_7/other" "_3_3_3_3/other"
@@ -411,6 +420,6 @@ unique(zwe_agroecology_all$sheet_id)
 names(zwe_agroecology_all)
 view(dfSummary(zwe_agroecology_all))
 
-write.csv(zwe_agroecology_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology2.csv",row.names=FALSE)
+write.csv(zwe_agroecology_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_clean.csv",row.names=FALSE)
 
 
