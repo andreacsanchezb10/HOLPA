@@ -57,12 +57,7 @@ zwe_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_7_2_1_b
 zwe_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey("_3_4_1_2_1_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
 zwe_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
 zwe_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
-
-
 zwe_survey_3_3_3_2_begin_repeat<- read_and_process_survey("_3_3_3_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: area of land per agricultural practice
-
-
-
 zwe_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey("_3_3_4_1_3_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Irrigation
 
 
@@ -914,7 +909,7 @@ result2<- rbind(result,
                                 "_3_3_4_1_1/other")))%>%
   filter(!(name_question %in%c("_3_4_2_1_5_1")& name_choice=="other"))
   
-write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance.csv",row.names=FALSE)
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance_format.csv",row.names=FALSE)
 
 
 sort(unique(result2$indicator))
