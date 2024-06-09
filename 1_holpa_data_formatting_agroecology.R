@@ -420,6 +420,6 @@ unique(zwe_agroecology_all$sheet_id)
 names(zwe_agroecology_all)
 view(dfSummary(zwe_agroecology_all))
 
-write.csv(zwe_agroecology_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_clean.csv",row.names=FALSE)
+write.csv(zwe_agroecology_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_format.csv",row.names=FALSE)
 
 
