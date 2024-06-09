@@ -14,7 +14,7 @@ zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
 
 #Andrea 
 global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/"
-zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_clean.csv"
+zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_format.csv"
 
 #### Import data ####
 # Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
@@ -329,6 +329,4 @@ names(select_multiple3)
 sort(unique(integer$label_score_agroecology_module))
 
   
-write.csv(agroecology_module_score,file='zwe/zwe_agroecology.csv',row.names=FALSE)
-
-write.csv(zwe_agroecology_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_clean.csv",row.names=FALSE)
+write.csv(agroecology_module_score,file='zwe/zwe_agroecology_score.csv',row.names=FALSE)
