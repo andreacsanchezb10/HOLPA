@@ -15,7 +15,6 @@ zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
 
 #Andrea 
 global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/"
-zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/household_database_2024.04.18_clean.xlsx"
 
 #### Import data ####
 # Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
@@ -42,7 +41,10 @@ read_and_process_survey <- function(sheet_name, column_id_rename, data_path, cou
 }
 
 
-#Zimbabwe
+### ZIMBABWE ----
+#path: Andrea
+zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/household_database_2024.04.18_clean.xlsx"
+
 zwe_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.data.path,"zimbabwe","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
@@ -60,8 +62,6 @@ zwe_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_1_b
 zwe_survey_3_3_3_2_begin_repeat<- read_and_process_survey("_3_3_3_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: area of land per agricultural practice
 zwe_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey("_3_3_4_1_3_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Irrigation
 
-
-#choices
 zwe_choices <- read_excel(path=paste0(zwe.data.path,"zimbabwe_household_survey.xlsx"),
                           sheet = "choices")%>%
   select("list_name","name","label::English ((en))","score_agroecology_module")%>%
@@ -69,7 +69,10 @@ zwe_choices <- read_excel(path=paste0(zwe.data.path,"zimbabwe_household_survey.x
   rename("label_choice" = "label::English ((en))")%>%
   rename("name_choice" = "name")
 
-#### Global databases ####
+### KENYA ----
+ken
+
+#### Global databases ----
 global_survey <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx"),
                             sheet = "survey")%>%
   #select only the necessary columns
