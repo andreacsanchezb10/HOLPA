@@ -154,7 +154,7 @@ tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOL
 tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")
-
+ 
 
 tun_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Crop production
 tun_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 1
@@ -406,14 +406,26 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
     #Remove answers == "0" or NA
     filter(type_question == "select_multiple" & !is.na(name_choice) & name_choice != 0)
   
-  # Left join for "select_one"
-  select_one <- gathered_data  %>%
+  # Left join for "select_one" for country== "zwe"
+  select_one1 <- gathered_data  %>%
     left_join(select(performance_choices,
                      c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
               by = c("name_question"="name_question", "name_choice"="name_choice"))%>%
-    filter(type_question=="select_one")
+    filter(type_question=="select_one")%>%
+    filter(country=="zimbabwe")
+
+  # Left join for "select_one" for country== "tun"
+  select_one2 <- gathered_data  %>%
+    left_join(select(performance_choices,
+                     c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
+              by = c("name_question"="name_question", "name_choice"="label_choice"))%>%
+    dplyr::rename("label_choice"="name_choice")%>%
+    dplyr::rename("name_choice"="name_choice.y")%>%
+    filter(type_question=="select_one")%>%
+    filter(country=="tunisia")
+
   
-  result<- rbind(continuous,select_multiple,select_one)
+  result<- rbind(continuous,select_multiple,select_one1,select_one2)
   
   
   return(result)
@@ -740,21 +752,22 @@ fun_performance_3_3_3_2_begin_repeat<- function(country_global_choices,country_s
 }
 ### Function to combine answers from all performance sections ---- 
 fun_performance_data<- function(country_global_choices,
-                                country_survey_main,
-                                country_survey_3_4_3_1_2_begin_repeat,  
-                                country_survey_3_4_2_2_2_begin_repeat,  
-                                country_survey_3_4_2_2_6_begin_repeat,  
-                                country_survey_3_3_4_1_3_begin_repeat,  
-                                country_survey_3_4_1_1_7_1_begin_repeat,  
-                                country_survey_3_4_1_1_7_2_begin_repeat,  
-                                country_survey_3_4_1_2_7_2_1_begin_repeat,  
-                                country_survey_3_4_1_2_1_1_begin_repeat, 
-                                country_survey_3_4_1_2_1_2_begin_repeat, 
-                                country_survey_3_4_1_2_1_2_1_begin_repeat,  
-                                country_survey_3_3_3_2_begin_repeat) {
+                                country_survey_main
+                                #country_survey_3_4_3_1_2_begin_repeat,  
+                                #country_survey_3_4_2_2_2_begin_repeat,  
+                                #country_survey_3_4_2_2_6_begin_repeat,  
+                                #country_survey_3_3_4_1_3_begin_repeat,  
+                                #country_survey_3_4_1_1_7_1_begin_repeat,  
+                                #country_survey_3_4_1_1_7_2_begin_repeat,  
+                                #country_survey_3_4_1_2_7_2_1_begin_repeat,  
+                                #country_survey_3_4_1_2_1_1_begin_repeat, 
+                                #country_survey_3_4_1_2_1_2_begin_repeat, 
+                                #country_survey_3_4_1_2_1_2_1_begin_repeat,  
+                                #country_survey_3_3_3_2_begin_repeat
+                                ) {
   performance_data<- rbind(
     ## Main survey 
-    fun_performance_main(country_global_choices, country_survey_main),  
+    fun_performance_main(country_global_choices, country_survey_main)
     ## _3_4_3_1_2_begin_repeat: Crop production
     #fun_performance_main(country_global_choices, country_survey_3_4_3_1_2_begin_repeat) , 
     ##_3_4_2_2_2_begin_repeat: Livestock production 1
@@ -776,7 +789,7 @@ fun_performance_data<- function(country_global_choices,
     ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
     #fun_performance_3_4_1_2_1_2_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_1_begin_repeat)  ,
     ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
-    fun_performance_3_3_3_2_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat)
+    #fun_performance_3_3_3_2_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat)
   )
   return(performance_data)
 }
@@ -787,24 +800,24 @@ performance_survey<-  fun_performance_survey(global_survey)
 ## PERFORMACE DATA BY COUNTRY -----
 # Zimbabwe -----
 zwe_performance_data<-fun_performance_data(zwe_global_choices,
-                                           zwe_survey_main,  ## Main survey 
-                                           zwe_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
-                                           zwe_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
-                                           zwe_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
-                                           zwe_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
-                                           zwe_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
-                                           zwe_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
-                                           zwe_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
-                                           zwe_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
-                                           zwe_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
-                                           zwe_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
-                                           zwe_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           zwe_survey_main  ## Main survey 
+                                           #zwe_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           #zwe_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           #zwe_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           #zwe_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
+                                           #zwe_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           #zwe_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
+                                           #zwe_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
+                                           #zwe_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
+                                           #zwe_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
+                                           #zwe_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
+                                           #zwe_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )%>%
   filter(
     theme=="environmental"
   )%>%
   filter(
-    indicator==   "biodiversity_climate_mitigation" )
+    indicator==   "biodiversity_diversity" )
 
 
 # Tunisia-----
@@ -816,31 +829,77 @@ tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", 
 tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: area of land per agricultural practice
 
 tun_performance_data<-fun_performance_data(tun_global_choices,
-                                           tun_survey_main, ## Main survey 
-                                           tun_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
-                                           tun_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
-                                           tun_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
-                                           tun_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
-                                           tun_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
-                                           tun_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
-                                           tun_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
-                                           tun_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
-                                           tun_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
-                                           tun_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
-                                           tun_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           tun_survey_main ## Main survey 
+                                           #tun_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           #tun_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           #tun_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           #tun_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
+                                           #tun_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           #tun_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
+                                           #tun_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
+                                           #tun_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
+                                           #tun_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
+                                           #tun_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
+                                           #tun_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )%>%
   filter(
     theme=="environmental"
   )%>%
   filter(
-    indicator==   "biodiversity_climate_mitigation" )
+    indicator==   "biodiversity_diversity" )
   
 sort(unique(tun_performance_data$indicator))
 
-## If it doesn't know put 9999-----
-result2<- tun_performance_data
+## If the farmers doesn't know the answer put 9999-----
+result2<- tun_performance_data%>%
   
-result2<- zwe_performance_data%>%
+  # result2<- zwe_performance_data%>%
+  ### THEME: AGRICULTURAL----
+## Indicator: Crop health
+# Remove rows NA for other practices
+filter(!(name_question %in% c("_3_4_2_1_8_2","_3_4_2_1_8_3") & is.na(name_choice)))%>%
+## Indicator: Nutrient use
+  mutate(label_choice=case_when(
+    name_question %in% c("_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "zimbabwe"~"in acres",
+    name_question%in% c( "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "tunisia"~"in hectares",
+    TRUE ~ label_choice))%>%
+  mutate(name_question_recla = case_when(
+    # Rename name_question_recla (other text)
+    name_question_recla=="_1_4_3_2_1_calculate"~ "_1_4_3_2_1",
+    name_question_recla=="_1_4_3_3_1_calculate"~ "_1_4_3_3_1",
+    name_question_recla=="_1_4_3_4_1_calculate"~"_1_4_3_4_1",
+    TRUE ~ name_question_recla))%>%
+  # Remove rows NA for other practices
+  filter(!(name_question %in% c("_1_4_3_2_1_calculate","_1_4_3_3_1_calculate","_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_1_calculate","_1_4_3_4_2","_1_4_3_4_3") & is.na(name_choice)))%>%
+### THEME: ENVIRONMENTAL----
+## Indicator: Biodiversity abundance
+mutate(label_choice = case_when(
+  country == "zimbabwe" ~ gsub("\\$\\{_1_4_1_1\\}", "acre", label_choice),
+  country == "tunisia" ~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
+  TRUE ~ label_choice))%>%
+  ## Indicator: Agrobiodiversity
+  mutate(name_question_recla  = case_when(
+    name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
+    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10") ~ "_3_4_3_3_1",
+    str_detect(name_question_recla,"_3_4_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
+    TRUE ~ name_question_recla))%>%
+  mutate(name_choice = case_when(
+    str_detect(name_question,"_3_4_3_3_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of the livestock
+    TRUE ~ name_choice))%>%
+  # Remove rows NA for other practices
+  filter(!(name_question %in% c("_3_4_3_1_1") & is.na(name_choice)))%>%
+  filter(!(name_question_recla %in% c("_3_4_3_1_1_2","_3_4_3_3_1","_3_4_2_2_2_3_calculate","_3_4_3_3_1") & is.na(name_choice)))%>%
+## Indicator: biodiversity_cover
+# Remove rows NA for other practices
+filter(!(name_question %in% c("_3_3_1_1_9_1") & is.na(name_choice)))
+  
+
+sort(unique(result2$label_question))
+sort(unique(result2$name_question))
+sort(unique(result2$name_question_recla))
+sort(unique(result2$name_choice))
+
+  
   ### THEME: ENVIRONMENTAL----
   ## Indicator: biodiversity_climate_mitigation
 mutate(name_question_recla = case_when(
