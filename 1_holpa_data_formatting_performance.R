@@ -120,42 +120,49 @@ zwe_global_choices<-global_choices%>%
   right_join(global_survey,by="list_name",relationship="many-to-many")
 
 
-### KENYA (not ready) ----
-#path: Andrea
-ken.data.path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/"
-ken_survey <- read.csv(file = paste0(ken.data.path, "Holpa_household_kenya_main.csv"), header = TRUE, sep = ",")
-ken_survey <- read_and_process_survey(paste0("Final HOLPA_Zimbabwe_Household.csv"), "_id", zwe.data.path,"kenya","_index")
+### KENYA ----
+ken.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/holpa_household_name_2024.06.23.xlsx" #path: Andrea
 
-zwe_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey("_3_4_3_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Crop production
-zwe_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey("_3_4_2_2_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Livestock production 1
-zwe_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey("_3_4_2_2_6_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Livestock production 2
-zwe_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey("_3_4_1_1_7_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section:labour household members permanent workers
-  #Remove respondents that are not farmers
-  filter(kobo_farmer_id!="274186917")
-zwe_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey("_3_4_1_1_7_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour household members seasonal workers 1
-zwe_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour household members seasonal workers 2
-zwe_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey("_3_4_1_2_1_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
-zwe_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
-zwe_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
-zwe_survey_3_3_3_2_begin_repeat<- read_and_process_survey("_3_3_3_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: area of land per agricultural practice
-zwe_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey("_3_3_4_1_3_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: Irrigation
+ken_survey_main <- read_and_process_survey_xlsx("Holpa_global_household_surve", "_id", ken.data.path,"kenya","_index")%>%
+  #Remove respondents that did not wanted to complete the survey
+  filter(consent_2!="No")
 
-zwe_choices <- read_excel(path=paste0(zwe.data.path,"zimbabwe_household_survey.xlsx"),
+ken_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Crop production
+ken_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Livestock production 1
+ken_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Livestock production 2
+ken_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section:labour household members permanent workers
+ken_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour household members seasonal workers 1
+ken_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour household members seasonal workers 2
+ken_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
+ken_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
+ken_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
+ken_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: area of land per agricultural practice
+ken_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Irrigation
+
+ken_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_monitoring/holpa_household_form.xlsx",
                           sheet = "choices")%>%
-  select("list_name","name","label::English ((en))","score_agroecology_module")%>%
-  mutate(country="zimbabwe")%>%
+  mutate(country= "kenya")%>%
+  select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
-  rename("name_choice" = "name")
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+ken_global_choices<-global_choices%>%
+  rbind(ken_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")
 
 
-### TUNISIA ----
+### TUNISIA -----
 tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_CLEAN_2024.04.02.xlsx" #path: Andrea
 
 tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")
  
-
 tun_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Crop production
 tun_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 1
 tun_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 2
