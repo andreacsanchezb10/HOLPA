@@ -204,7 +204,11 @@ fun_performance_survey<- function(global_survey) {
   #"income/climate_resilience_adaptative_capacity" these question is part of two indicators
   eco_duplicate_rows <-  performance_eco_survey%>% filter(str_detect(subindicator, "income/climate_resilience_adaptative_capacity"))
   eco_duplicate_rows$subindicator <- "income"
-  performance_eco_survey <- rbind(performance_eco_survey, eco_duplicate_rows)
+  eco_duplicate_rows2 <- performance_eco_survey %>% filter(str_detect(subindicator, "productivity_livestock/climate_resilience_assets/biodiversity_agrobiodiversity"))
+  eco_duplicate_rows2$subindicator <- "productivity_livestock"
+  eco_duplicate_rows3 <- performance_eco_survey %>% filter(str_detect(subindicator, "productivity_fish/climate_resilience_assets"))
+  eco_duplicate_rows3$subindicator <- "productivity_fish"
+  performance_eco_survey <- rbind(performance_eco_survey, eco_duplicate_rows,eco_duplicate_rows2,eco_duplicate_rows3)
   
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_social_network")]<- "climate_resilience_social_network"
@@ -217,6 +221,11 @@ fun_performance_survey<- function(global_survey) {
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "labour_productivity")]<- "labour_productivity"
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "economic_all")]<- "economic_all"
  
+  
+  performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "productivity_crops")]<- "productivity_crops"
+  performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "productivity_livestock")]<- "productivity_livestock"
+  performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "productivity_fish")]<- "productivity_fish"
+
   ## Theme: Social 
   performance_soc_survey <-  global_survey %>%
     filter(str_detect(module, "performance"))%>%
@@ -240,9 +249,6 @@ fun_performance_survey<- function(global_survey) {
   performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "nutrient_use")]<- "nutrient_use"
   performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "soil_health")]<- "soil_health" 
   performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "animal_health")]<- "animal_health"
-  performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "productivity_crops")]<- "productivity_crops"
-  performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "productivity_livestock")]<- "productivity_livestock"
-  performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "productivity_fish")]<- "productivity_fish"
   performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "crop_health")]<- "crop_health"
   performance_agr_survey$subindicator[str_detect(performance_agr_survey$subindicator, "agricultural_all")]<- "agricultural_all"
   
@@ -284,7 +290,12 @@ fun_performance_choices<- function(country_global_choices) {
     #"income/climate_resilience_adaptative_capacity" this question is part of two indicators
     eco_duplicate_rows <- performance_eco_choices %>% filter(str_detect(subindicator, "income/climate_resilience_adaptative_capacity"))
     eco_duplicate_rows$subindicator <- "income"
-    performance_eco_choices <- rbind(performance_eco_choices, eco_duplicate_rows)
+    eco_duplicate_rows2 <- performance_eco_choices %>% filter(str_detect(subindicator, "productivity_livestock/climate_resilience_assets/biodiversity_agrobiodiversity")|
+                                                                str_detect(subindicator, "productivity_livestock/climate_resilience_assets"))
+    eco_duplicate_rows2$subindicator <- "productivity_livestock"
+    eco_duplicate_rows3 <- performance_eco_choices %>% filter(str_detect(subindicator, "productivity_fish/climate_resilience_assets"))
+    eco_duplicate_rows3$subindicator <- "productivity_fish"
+    performance_eco_choices <- rbind(performance_eco_choices, eco_duplicate_rows,eco_duplicate_rows2,eco_duplicate_rows3)
     
     # Update subindicator values
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
@@ -298,6 +309,10 @@ fun_performance_choices<- function(country_global_choices) {
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "labour_productivity")]<- "labour_productivity"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "economic_all")]<- "economic_all"
     
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_crops")]<- "productivity_crops"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_livestock")]<- "productivity_livestock"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_fish")]<- "productivity_fish"
+
   ## Theme: Social
   # Filter and mutate the data frame
   performance_soc_choices <- country_global_choices %>%
@@ -327,9 +342,6 @@ fun_performance_choices<- function(country_global_choices) {
     performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "nutrient_use")]<- "nutrient_use"
     performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "soil_health")]<- "soil_health" # CHECK THIS ONE
     performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "animal_health")]<- "animal_health"
-    performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "productivity_crops")]<- "productivity_crops"
-    performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "productivity_livestock")]<- "productivity_livestock"
-    performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "productivity_fish")]<- "productivity_fish"
     performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "crop_health")]<- "crop_health"
     performance_agr_choices$subindicator[str_detect(performance_agr_choices$subindicator, "agricultural_all")]<- "agricultural_all"
     
@@ -363,19 +375,8 @@ fun_performance_choices<- function(country_global_choices) {
     
 fun_performance_questions_columns<- function(country_performance_choices) {
   performance_questions_columns<- country_performance_choices%>% 
-    # filter(
-    # theme=="environmental"
-    #  theme=="social"
-    #theme== "economic"
-    # theme=="agricultural"
-    
-    # )%>%
-    # filter(
-    #   indicator==   "land_tenure"
-    
-    #  )%>%  
   dplyr::select(label_question, name_question_choice)%>%
-    dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
+  dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
     spread(key = name_question_choice, value = label_question)%>%
     mutate("kobo_farmer_id"="kobo_farmer_id",
            "country"="country_name",
@@ -509,8 +510,7 @@ fun_performance_3_4_2_2_2_begin_repeat<- function(country_global_choices,country
   
   # Identify columns with only NA values
   na_columns_3_4_2_2_2_begin_repeat <- colSums(is.na(country_performance_3_4_2_2_2_begin_repeat)) == nrow(country_performance_3_4_2_2_2_begin_repeat)
-  na_columns_3_4_2_2_2_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_4_2_2_2_begin_repeat <- country_performance_3_4_2_2_2_begin_repeat[, !na_columns_3_4_2_2_2_begin_repeat]
   
@@ -760,11 +760,11 @@ fun_performance_3_3_3_2_begin_repeat<- function(country_global_choices,country_s
 ### Function to combine answers from all performance sections ---- 
 fun_performance_data<- function(country_global_choices,
                                 country_survey_main, #main survey
-                                #country_survey_3_4_3_1_2_begin_repeat,  
-                                #country_survey_3_4_2_2_2_begin_repeat,  
-                                #country_survey_3_4_2_2_6_begin_repeat,  
-                                country_survey_3_3_4_1_3_begin_repeat, #Irrigation  
-                                #country_survey_3_4_1_1_7_1_begin_repeat,  
+                                country_survey_3_4_3_1_2_begin_repeat,  ## _3_4_3_1_2_begin_repeat: Crop production
+                                country_survey_3_4_2_2_2_begin_repeat,  ##_3_4_2_2_2_begin_repeat: Livestock production 1
+                                country_survey_3_4_2_2_6_begin_repeat,  ##_3_4_2_2_6_begin_repeat: Livestock production 2
+                                country_survey_3_3_4_1_3_begin_repeat, ##_3_3_4_1_3_begin_repeat: Irrigation  
+                                country_survey_3_4_1_1_7_1_begin_repeat,   ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
                                 #country_survey_3_4_1_1_7_2_begin_repeat,  
                                 #country_survey_3_4_1_2_7_2_1_begin_repeat,  
                                 #country_survey_3_4_1_2_1_1_begin_repeat, 
@@ -776,15 +776,15 @@ fun_performance_data<- function(country_global_choices,
     ## Main survey 
     fun_performance_main(country_global_choices, country_survey_main),
     ## _3_4_3_1_2_begin_repeat: Crop production
-    #fun_performance_main(country_global_choices, country_survey_3_4_3_1_2_begin_repeat) , 
+    fun_performance_main(country_global_choices, country_survey_3_4_3_1_2_begin_repeat) , 
     ##_3_4_2_2_2_begin_repeat: Livestock production 1
-    #fun_performance_3_4_2_2_2_begin_repeat(country_global_choices, country_survey_3_4_2_2_2_begin_repeat),  
+    fun_performance_3_4_2_2_2_begin_repeat(country_global_choices, country_survey_3_4_2_2_2_begin_repeat),  
     ##_3_4_2_2_6_begin_repeat: Livestock production 2 
-    #fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_4_2_2_6_begin_repeat),  
+    fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_4_2_2_6_begin_repeat),  
     ##_3_3_4_1_3_begin_repeat: Irrigation 
     fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_3_4_1_3_begin_repeat) , 
     ##_3_4_1_1_7_1_begin_repeat: household members permanent workers 
-    #fun_performance_3_4_1_1_7_1_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_1_begin_repeat)  ,
+    fun_performance_3_4_1_1_7_1_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_1_begin_repeat)  ,
     ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 ----
     #fun_performance_3_4_1_1_7_2_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_2_begin_repeat),  
     ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 ----
@@ -808,11 +808,11 @@ performance_survey<-  fun_performance_survey(global_survey)
 # Zimbabwe -----
 zwe_performance_data<-fun_performance_data(zwe_global_choices,
                                            zwe_survey_main,  ## Main survey 
-                                           #zwe_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
-                                           #zwe_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
-                                           #zwe_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           zwe_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           zwe_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           zwe_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
                                            zwe_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
-                                           #zwe_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           zwe_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
                                            #zwe_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
                                            #zwe_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
                                            #zwe_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
@@ -821,10 +821,10 @@ zwe_performance_data<-fun_performance_data(zwe_global_choices,
                                            zwe_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )%>%
   filter(
-    theme=="social"
+    theme=="economic"
   )%>%
   filter(
-    indicator==   "land_tenure_security" )
+    indicator==   "labour_productivity" )
 
 
 # Tunisia-----
@@ -837,11 +837,11 @@ tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_r
 
 tun_performance_data<-fun_performance_data(tun_global_choices,
                                            tun_survey_main, ## Main survey 
-                                           #tun_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
-                                           #tun_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
-                                           #tun_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           tun_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           tun_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           tun_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
                                            tun_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
-                                           #tun_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           tun_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
                                            #tun_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
                                            #tun_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
                                            #tun_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
@@ -850,17 +850,17 @@ tun_performance_data<-fun_performance_data(tun_global_choices,
                                            tun_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )%>%
   filter(
-    theme=="social"
+    theme=="economic"
   )%>%
   filter(
-    indicator==   "land_tenure_security" )
+    indicator==   "labour_productivity" )
   
 sort(unique(tun_performance_data$indicator))
 
 ## If the farmers doesn't know the answer put 9999-----
-#result2<- tun_performance_data%>%
+result2<- tun_performance_data%>%
   
-    result2<- zwe_performance_data%>%
+  #      result2<- zwe_performance_data%>%
 
 ### THEME: AGRICULTURAL----
 ## Indicator: Crop health
@@ -917,6 +917,7 @@ mutate(label_choice=case_when(
   filter(!(name_question %in% c("_3_3_3_3_1") & is.na(name_choice)))%>%
 ## Indicator: water
   mutate(name_question_recla = case_when(
+    #CHECK: PLEASE TRY TO REPLACE THE CODE BY question_type=="select_multiple"~str_replace(name_question_recla, "/.*", "")
   str_detect(name_question_recla,"_3_3_4_3_1/")~str_replace(name_question_recla, "/.*", ""),
   str_detect(name_question_recla,"_3_3_4_3_2/")~str_replace(name_question_recla, "/.*", ""),
   str_detect(name_question_recla,"_3_3_4_3_3/")~str_replace(name_question_recla, "/.*", ""),
@@ -967,7 +968,6 @@ mutate(name_choice = case_when(
 # Remove rows NA for other practices
 filter(!(name_question %in% c("_2_8_4_1_1","_2_8_4_2_1","_2_8_4_3_1","_2_8_4_3_4") & is.na(name_choice)))%>%
   filter(!(name_question%in%c("_2_8_4_4/other")))%>%
-
 ### THEME: SOCIAL----
 ## Indicator: farmer_agency
 # Remove rows NA for other practices
@@ -979,7 +979,17 @@ filter(!(name_question %in% c("_3_1_2_2_1","_3_1_2_3_1","_3_1_2_4_1","_3_1_2_5_1
     name_question %in% c("_1_4_4_4_1")& country== "zimbabwe"~"in acres",
     name_question%in% c( "_1_4_4_4_1")& country== "tunisia"~"in hectares",
     TRUE ~ label_choice))%>%
-  filter(!(name_question %in% c("_1_4_4_4_1") & is.na(name_choice)))
+  filter(!(name_question %in% c("_1_4_4_4_1") & is.na(name_choice)))%>%
+  ### THEME: ECONOMIC----
+## Indicator: income
+# Remove rows NA for other practices
+filter(!(name_question %in% c("_4_1_2_1_2") & is.na(name_choice)))%>%
+## Indicator: productivity_crops
+mutate(label_choice=case_when(
+  name_question %in% c("_3_4_2_1_3")& country== "zimbabwe"~"in acres",
+  name_question%in% c( "_3_4_2_1_3")& country== "tunisia"~"in hectares",
+  TRUE ~ label_choice))
+
 
 sort(unique(result2$label_question))
 sort(unique(result2$name_question))
