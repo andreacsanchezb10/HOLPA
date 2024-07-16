@@ -772,8 +772,7 @@ fun_performance_data<- function(country_global_choices,
                                 country_survey_3_3_3_2_begin_repeat #area of land per agricultural practice
                                 ) {
   performance_data<- rbind(
-    ## Main survey 
-    fun_performance_main(country_global_choices, country_survey_main),
+    fun_performance_main(country_global_choices, country_survey_main), ## Main survey
     ## _3_4_3_1_2_begin_repeat: Crop production
     fun_performance_main(country_global_choices, country_survey_3_4_3_1_2_begin_repeat) , 
     ##_3_4_2_2_2_begin_repeat: Livestock production 1
@@ -823,17 +822,9 @@ zwe_performance_data<-fun_performance_data(zwe_global_choices,
     theme=="economic"
   )%>%
   filter(
-    indicator==   "labour_productivity" )
-
+    indicator==   "climate_resilience_assets" )
 
 # Tunisia-----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_CLEAN_2024.04.02.xlsx" #path: Andrea
-
-tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
-  #Remove respondents that did not wanted to complete the survey
-  filter(consent_2!="No")
-tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: area of land per agricultural practice
-
 tun_performance_data<-fun_performance_data(tun_global_choices,
                                            tun_survey_main, ## Main survey 
                                            tun_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
@@ -852,14 +843,14 @@ tun_performance_data<-fun_performance_data(tun_global_choices,
     theme=="economic"
   )%>%
   filter(
-    indicator==   "labour_productivity" )
+    indicator==   "climate_resilience_assets" )
   
 sort(unique(tun_performance_data$indicator))
 
 ## If the farmers doesn't know the answer put 9999-----
-result2<- tun_performance_data%>%
+#result2<- tun_performance_data%>%
   
-  #      result2<- zwe_performance_data%>%
+    result2<- zwe_performance_data%>%
 
 ### THEME: AGRICULTURAL----
 ## Indicator: Crop health
@@ -889,7 +880,6 @@ mutate(label_choice = case_when(
   mutate(name_question_recla  = case_when(
     name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10") ~ "_3_4_3_3_1",
-    str_detect(name_question_recla,"_3_4_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))%>%
   mutate(name_choice = case_when(
     str_detect(name_question,"_3_4_3_3_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of the livestock
@@ -906,7 +896,6 @@ mutate(label_choice=case_when(
   name_question%in% c( "_3_3_3_2_2")& country== "tunisia"~"in hectares",
   TRUE ~ label_choice))%>%
   mutate(name_question_recla = case_when(
-    str_detect(name_question_recla,"_3_3_3_3/")~str_replace(name_question_recla, "/.*", ""),
     name_question_recla=="_3_3_3_3_1"~ "_3_3_3_3",
     TRUE ~ name_question_recla))%>%
   mutate(name_choice = case_when(
@@ -916,14 +905,6 @@ mutate(label_choice=case_when(
   filter(!(name_question %in% c("_3_3_3_3_1") & is.na(name_choice)))%>%
 ## Indicator: water
   mutate(name_question_recla = case_when(
-    #CHECK: PLEASE TRY TO REPLACE THE CODE BY question_type=="select_multiple"~str_replace(name_question_recla, "/.*", "")
-  str_detect(name_question_recla,"_3_3_4_3_1/")~str_replace(name_question_recla, "/.*", ""),
-  str_detect(name_question_recla,"_3_3_4_3_2/")~str_replace(name_question_recla, "/.*", ""),
-  str_detect(name_question_recla,"_3_3_4_3_3/")~str_replace(name_question_recla, "/.*", ""),
-  str_detect(name_question_recla,"_3_3_4_1_1/")~str_replace(name_question_recla, "/.*", ""),
-  str_detect(name_question_recla,"_3_3_4_1_2/")~str_replace(name_question_recla, "/.*", ""),
-  str_detect(name_question_recla,"_3_3_4_4/")~str_replace(name_question_recla, "/.*", ""),
-  str_detect(name_question_recla,"_3_4_1_2_7_2_2_1/")~str_replace(name_question_recla, "/.*", ""),
   str_detect(name_question_recla,"_3_3_4_1_1_1")~"_3_3_4_1_1",
   str_detect(name_question_recla,"_3_3_4_1_2_1")~"_3_3_4_1_2",
   str_detect(name_question_recla,"_3_3_4_4_1")~"_3_3_4_4",
@@ -945,23 +926,12 @@ mutate(label_choice=case_when(
   filter(!(name_question%in%c("_3_3_4_1_1/other","_3_3_4_1_2/other","_3_3_4_4/other")))%>%
 ## Indicator: energy
   mutate(name_question_recla = case_when(
-    str_detect(name_question_recla,"_2_8_4_1/")~str_replace(name_question_recla, "/.*", ""),
-    str_detect(name_question_recla,"_2_8_4_2/")~str_replace(name_question_recla, "/.*", ""),
-    str_detect(name_question_recla,"_2_8_4_3/")~str_replace(name_question_recla, "/.*", ""),
-    str_detect(name_question_recla,"_2_8_4_4/")~str_replace(name_question_recla, "/.*", ""),
     str_detect(name_question_recla,"_2_8_4_1_1")~"_2_8_4_1",
     str_detect(name_question_recla,"_2_8_4_2_1")~"_2_8_4_2",
     str_detect(name_question_recla,"_2_8_4_3_1")~"_2_8_4_3",
     str_detect(name_question_recla,"_2_8_4_3_4")~"_2_8_4_4",
     TRUE ~ name_question_recla))%>%
-  
-mutate(name_choice = case_when(
-  str_detect(name_question,"_2_8_4_1/")~ label_choice, # replace name_question by the type of energy
-  str_detect(name_question,"_2_8_4_2/")~ label_choice, # replace name_question by the type of energy
-  str_detect(name_question,"_2_8_4_3/")~ label_choice, # replace name_question by the type of energy
-  str_detect(name_question,"_2_8_4_4/")~ label_choice, # replace name_question by the type of energy
-  TRUE ~ name_choice))%>%
-  mutate(label_choice = case_when(
+ mutate(label_choice = case_when(
     name_question%in% c("_2_8_4_1_1","_2_8_4_2_1","_2_8_4_3_1","_2_8_4_3_4")~"other", 
     TRUE ~ label_choice))%>%
 # Remove rows NA for other practices
@@ -994,242 +964,57 @@ mutate(label_choice=case_when(
                                 "_3_4_1_1_7_1_3_1","_3_4_1_1_6_2","_3_4_1_1_6_1","_3_4_1_1_5_2","_3_4_1_1_5_1","_3_4_1_1_4_2",
                                 "_3_4_1_1_4_1","_3_4_1_1_3_2","_3_4_1_1_3_1","_3_4_1_1_1_1","_3_4_1_1_2_2","_3_4_1_1_2_1","_3_4_1_1_1_2") & is.na(name_choice)))%>%
   mutate(name_question_recla = case_when(
-    type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
+    str_detect(name_question_recla,"_3_4_1_1_7_1_3_1")~"_3_4_1_1_7_1_3",
+    str_detect(name_question_recla,"_3_4_1_1_7_1_4_1")~"_3_4_1_1_7_1_4",
+    str_detect(name_question_recla,"_3_4_1_1_7_1_5_1")~"_3_4_1_1_7_1_5",
+    str_detect(name_question_recla,"_3_4_1_1_7_1_6_1")~"_3_4_1_1_7_1_6",
+    str_detect(name_question_recla,"_3_4_1_1_7_1_7_1")~"_3_4_1_1_7_1_7",
+    str_detect(name_question_recla,"_3_4_1_2_7_2_6_1")~"_3_4_1_2_7_2_6",
+    str_detect(name_question_recla,"_3_4_1_2_7_2_7_1")~"_3_4_1_2_7_2_7",
+    str_detect(name_question_recla,"_3_4_1_2_7_2_8_1")~"_3_4_1_2_7_2_8",
+    str_detect(name_question_recla,"_3_4_1_2_7_2_9_1")~"_3_4_1_2_7_2_9",
+    str_detect(name_question_recla,"_3_4_1_2_7_2_10_1")~"_3_4_1_2_7_2_10",
+    str_detect(name_question_recla,"_3_4_1_2_1_1_3_1_1")~"_3_4_1_2_1_1_3_1",
+    str_detect(name_question_recla,"_3_4_1_2_1_1_3_2_1")~"_3_4_1_2_1_1_3_2",
+    str_detect(name_question_recla,"_3_4_1_2_1_1_3_3_1")~"_3_4_1_2_1_1_3_3",
+    str_detect(name_question_recla,"_3_4_1_2_1_1_3_4_1")~"_3_4_1_2_1_1_3_4",
+    str_detect(name_question_recla,"_3_4_1_2_1_1_3_5_1")~"_3_4_1_2_1_1_3_5",
+    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_1_1")~"_3_4_1_2_1_2_1_5_1",
+    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_2_1")~"_3_4_1_2_1_2_1_5_2",
+    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_3_1")~"_3_4_1_2_1_2_1_5_3",
+    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_4_1")~"_3_4_1_2_1_2_1_5_4",
+    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_5_1")~"_3_4_1_2_1_2_1_5_5",
+    TRUE ~ name_question_recla))%>%
+  ## Indicator: climate_resilience_adaptative_capacity
 
-    TRUE ~ name_question_recla))
+  # Remove rows NA for other practices
+  filter(!(name_question %in% c("_4_1_1_4_4_1","_2_4_1_2","_4_1_1_5_2_1","_4_1_1_6_1","_4_1_1_7_1",
+                                "_4_1_4_13_1","_4_1_4_13","_4_1_1_5_1_1","_2_4_1_1")& is.na(name_choice)))%>%
+  ## Indicator: climate_resilience_social_network
+  
+  filter(!(name_question %in% c("_2_3_1_1_1","_4_1_3_2_13_1")& is.na(name_choice)))%>%
+  ### THEME: ENVIRONMENTAL, AGRONOMIC, SOCIAL, ECONOMIC----
+  ##Indicator: environmental_all
+mutate(name_question_recla = case_when(
+  type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
+  TRUE ~ name_question_recla))%>%
+  mutate(label_choice= case_when(
+    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")&country== "zimbabwe"~"in acres",
+    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")&country== "tunisia"~"in hectares",
+    TRUE ~ label_choice
+  ))%>%
+  mutate(name_choice = case_when(
+    type_question == "select_multiple"~ sub("^.*/", "", name_question), # replace name_question by the type of energy
+    TRUE ~ name_choice))
 
 
 sort(unique(result2$label_question))
 sort(unique(result2$name_question))
 sort(unique(result2$name_question_recla))
 sort(unique(result2$name_choice))
+sort(unique(result2$theme))
 
-  
-
-         
-
-
-listo
-[5] "Since when has your household been farming this land?"                                                             
-[6] "What was the main previous land cover?"    
-[1] "In the past [localised description of 12 months], did you use any of these practices on your cropland?"  
-[2] "On the grazing land (owned, leased or shared), did you apply in the last 12 months any of the following practices?"
-[3] "Practices used on your cropland"                                                                                   
-
-[4] "Provide the approximate area of land under this practice in hectares or acres:"                                    
-
-table(result2$label_question,result2$name_question_recla)
-unique(result2$sheet_id)
-names(result2)
-view(dfSummary(result2))
-
-length(unique(result2$label_question))
-length(unique(result2$name_question_recla))
-table( result2$name_question_recla, result2$label_question)
-
-x<-result2%>%
-  mutate(x=paste(name_question_recla,label_question,sep="_"))
-
-sort(unique(x$x))
-
-
-
-##DESDE ACA ---  
-  ## THEME: ENVIRONMENTAL----
-  # Indicator: biodiversity_agrobiodiversity
-  mutate(name_choice = case_when(
-    name_question %in% c("_3_4_3_1_1", "_3_4_2_2_2_3_calculate", "_3_4_3_4_1") & is.na(name_choice) ~ "0",
-    TRUE ~ name_choice))%>%
-  mutate(label_choice = case_when(
-    name_question == "_3_4_3_1_1" ~ paste("produce", name_choice, "crop species", sep = " "),
-    name_question == "_3_4_2_2_2_3_calculate" ~ paste("produce", name_choice, "livestock species", sep = " "),
-    name_question == "_3_4_3_4_1" ~ paste("produce", name_choice, "fish species", sep = " "),
-    TRUE ~ label_choice))%>%
-  mutate(name_question_recla  = case_when(
-    label_question==  "In the last 12 months [add country meaning], how many different crops species (including perennial crops) were produced on your farm"~ "_3_4_3_1_1" ,
-    label_question==  "In the last 12 months [add country meaning], how many different livestock species were produced in your farm?"~ "_3_4_2_2_2_3_calculate" ,
-    name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~paste("_3_4_3_1_1_2/",name_question,sep=""),
-    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ paste("_3_4_3_3_1/other",name_question,sep=""),
-    TRUE ~ name_question_recla))%>%
-
-  mutate(name_choice = case_when(
-    type_question == "select_multiple" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
-    #name_question_recla == "_3_4_3_3_1" & name_choice == "1" ~ str_extract(name_question, "(?<=/).*"),
-    TRUE ~ name_choice))%>%
-
-  filter(!(str_detect(name_question_recla, "_3_4_3_1_1_2/c")& is.na(name_choice)))%>%
-
-  mutate(label_choice = case_when(name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8",
-                                                       "_2_8_4_3_4",
-                                                       "_4_1_1_5_1_1","_4_1_1_5_2_1",
-                                                       "_4_1_1_4_4_1","_4_1_2_1_10",
-                                                       "_4_1_3_1_1","_4_1_3_1_2_1",
-                                                       "_2_3_1_1_1","_4_1_3_2_13_1",
-                                                       "_3_4_1_1_7_1_2_1",
-                                                       "_3_3_4_4_1",
-                                                       "_3_4_2_1_6_1_1") ~ "Other (please specify)",TRUE ~ label_choice))%>%
-  
-  mutate(label_question = case_when(
-    name_question_recla== "_3_4_3_3_1" ~  "In the last 12 months [add country meaning], which different livestock species did you keep?",
-    # Indicator: biodiversity_practices
-    name_question_recla== "_2_9_1_1_1" ~ "Which ecological practices do you use on cropland to improve soil quality and health?",
-    name_question_recla== "_3_3_1_7_1" ~ "What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?",
-    # Indicator: energy
-    name_question_recla== "_2_8_4_1_1"~ "What types of energy do you use for: Irrigation",
-    name_question_recla=="_2_8_4_2_1" ~ "What types of energy do you use for: Tillage, sowing or harvesting",
-    name_question_recla== "_2_8_4_3_4" ~ "What types of energy do you use for: Cleaning, processing or transporting harvested food",
-    name_question_recla=="_2_8_4_3_1"~"What types of energy do you use for: Cooking",
-    # Indicator: water
-    name_question_recla=="_3_3_4_1_1_1"~"What methods of irrigation do you use",
-    name_question_recla=="_3_3_4_1_2_1"~"Where do you source your water for irrigation?",
-    TRUE ~ label_question))%>%
-  
-  ## Indicator: biodiversity_diversity
-  filter(!(name_question_recla == "_3_3_1_1_9_1" & is.na(name_choice)))%>% #Remove the rows with **Specify other landscape features:** == NA 
-  
-  mutate(label_choice = case_when(name_question_recla%in% c("_2_9_1_1_1","_3_3_1_7_1") ~ "other ecological practice",TRUE ~label_choice))%>%
-
-  mutate(name_question_recla = case_when(
-    name_question_recla== "_2_9_1_1_1" ~ "_2_9_1_1/other",
-    name_question_recla== "_3_3_1_7_1" ~ "_3_3_1_7/other",
-    # Indicator: energy
-    name_question_recla=="_2_8_4_1_1"~ "_2_8_4_1/other",
-    name_question_recla=="_2_8_4_2_1"~ "_2_8_4_2/other",
-    name_question_recla== "_2_8_4_3_4" ~ "_2_8_4_4/other",
-    name_question_recla=="_2_8_4_3_1"~ "_2_8_4_3/other",
-    # Indicator: water
-    name_question_recla== "_3_3_4_1_1_1"~ "_3_3_4_1_1/other",
-    name_question_recla=="_3_3_4_1_2_1"~"_3_3_4_1_2/other",
-    TRUE ~name_question_recla))%>%
-
-  # Indicator: water
-  mutate(name_choice = case_when(
-    name_question_recla == "_3_4_1_2_7_2_2_1" ~ str_replace(name_choice, "//1$", paste0("//", label_choice)),TRUE ~ name_choice))%>%
- 
-   filter(!(str_ends(name_question_recla, "//0") & name_question_recla == "_3_4_1_2_7_2_2_1"))%>%
-
-  ## THEME: SOCIAL----
-  # Indicator: 
-  mutate(name_question_recla = str_replace(name_question_recla, "_audio", ""))%>%
-  
-  # Indicator: land tenure
-  mutate(name_choice = case_when(name_question_recla%in% c("_1_4_4_1_1", "_1_4_4_1_2", "_1_4_4_2_1" ,"_1_4_4_2_2", "_1_4_4_3_1", "_1_4_4_3_2",
-                                                           "_1_4_4_4_1") &
-                                   is.na(name_choice)~ "0",TRUE ~name_choice))%>%
-  mutate(label_choice = case_when(name_question_recla%in% c("_1_4_4_1_1", "_1_4_4_1_2", "_1_4_4_2_1" ,"_1_4_4_2_2", "_1_4_4_3_1", "_1_4_4_3_2",
-                                                           "_1_4_4_4_1",
-                                                           "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3") ~ "acres",TRUE ~label_choice))%>%
-  ## THEME: ECONOMIC ----
-  mutate(label_question = case_when(
-    # Indicator: "climate_resilience"
-    name_question == "_4_1_1_5_2_1" ~ "Credit for what types of investment",
-    name_question == "_4_1_1_5_1_1" ~"Please indicate the source of the credit you obtained for your farming business",
-    # Indicator: climate_resilience_shocks
-    name_question =="_4_1_3_1_1"~"In the last 12 months, what were the most severe shocks faced by the household",
-    name_question =="_4_1_3_1_2_1"~"What did the household members do to cope with the shocks",
-    # Indicator: climate_resilience_social_network
-    name_question =="_2_3_1_1_1"~"Select all the associations/organizations of which you or other HH members are a part of.",
-    TRUE ~label_question))%>%
-  
-  mutate(name_question_recla = case_when(
-    # Indicator: "climate_resilience"
-    name_question == "_4_1_1_5_2_1" ~ "_4_1_1_5_2/other",
-    name_question =="_4_1_1_5_1_1" ~ "_4_1_1_5_1",
-    # Indicator: climate_resilience_shocks
-    name_question =="_4_1_3_1_1" ~ "_4_1_3_1/other",
-    name_question =="_4_1_3_1_2_1" ~ "_4_1_3_1_2/other",
-    # Indicator: climate_resilience_social_network
-    name_question =="_2_3_1_1_1" ~ "_2_3_1_1/other",
-    # Indicator: labour_productivity
-    name_question =="_3_4_1_1_7_1_2_1"~ "_3_4_1_1_7_1_2/other",
-    TRUE ~name_question_recla))%>%
-
-  ## THEME: AGRICULTURAL ----
-  mutate(label_question = case_when(
-    # Indicator: animal_health
-    name_question =="_3_3_4_4_1"~"Where do you source your water for drinking water for livestock?",
-    # Indicator: productivity_crops
-    name_question =="_3_4_2_1_5_1_2"~"Select crop production unit:",
-    name_question =="_3_4_2_1_6_1_1"~"What does the produced crop get used for?",
-    # Indicator: productivity_livestock
-    name_question =="_3_4_2_2_5_1"~"What does the livestock get used for?",
-    name_question =="_3_4_2_2_6_1_1"~"Select livestock production unit:",
-    name_question =="_3_4_2_2_6_3_1"~ "What does the livestock production get used for?",
-    TRUE ~label_question))%>%
-  
-  mutate(name_question_recla = case_when(
-    # Indicator: animal_health
-    name_question =="_3_3_4_4_1"~"_3_3_4_4",
-    # Indicator: productivity_crops
-    name_question =="_3_4_2_1_5_1_2"~"_3_4_2_1_5_1",
-    name_question =="_3_4_2_1_6_1_1"~"_3_4_2_1_6_1/other",
-    # Indicator: productivity_livestock
-    name_question =="_3_4_2_2_5_1"~"_3_4_2_2_5/other",
-    name_question =="_3_4_2_2_6_1_1"~"_3_4_2_2_6_1",
-    name_question =="_3_4_2_2_6_3_1"~"_3_4_2_2_6_3/other",
-    str_detect(name_question_recla,"_3_4_2_2_5/")~str_replace(name_question_recla, "_[^_]*$", ""),
-    str_detect(name_question_recla,"_3_4_2_2_6_3/")~str_replace(name_question_recla, "_[^_]*$", ""),
-    # Indicator: nutrient_use
-    str_detect(name_question_recla,"_1_4_3_1/")~"_1_4_3_1",
-    TRUE ~name_question_recla))%>%
- 
-   mutate(name_choice = case_when(
-     # Indicator: productivity_livestock
-     str_detect(name_question, "_3_4_2_2_5/")~str_replace(name_choice, "_[^_]*$", ""),
-     str_detect(name_question, "_3_4_2_2_6_3/")~str_replace(name_choice, "_[^_]*$", ""),
-     TRUE ~name_choice))%>%
-
-  #All----
-
-  #Replace ${_1_4_1_1} in label_choice by the hectares or acres
-  mutate(label_choice = gsub("\\$\\{_1_4_1_1\\}", "acres", label_choice))%>%
-  mutate(label_choice =case_when(name_question %in% c("_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_1_3","_3_3_3_2_2")~"in acres",TRUE ~label_choice))%>%
-         
-                           
-  #mutate(label_question = gsub("\\$\\{_1_4_1_1_calculate\\}", "acres", label_question))%>%
-  filter(!(name_question %in% c("_3_3_1_1_9_1", "_2_9_1_1_1", "_3_3_1_7_1","_2_8_4_3_4",
-                                "_3_1_2_2_1","_3_1_2_8",
-                                "_4_1_1_5_2_1","_4_1_1_5_1_1","_4_1_1_6_1",
-                                "_4_1_1_4_4_1","_2_4_1_2","_4_1_2_1_10","_4_1_2_1_2","_4_1_2_1_4","_4_1_2_1_5","_4_1_2_1_6","_4_1_2_1_7","_4_1_2_1_9",
-                                "_4_1_3_1_1","_4_1_3_1_2_1",
-                                "_2_3_1_1_1","_4_1_3_2_13_1",
-                                "_3_2_1_2_1",
-                                "_3_4_1_1_1_1","_3_4_1_1_1_2","_3_4_1_1_2_1","_3_4_1_1_2_2","_3_4_1_1_3_1","_3_4_1_1_3_2","_3_4_1_1_4_1","_3_4_1_1_4_2","_3_4_1_1_5_1","_3_4_1_1_5_2","_3_4_1_1_6_1","_3_4_1_1_6_2",
-                               "_3_4_1_1_7_1_2_1",
-                               "_3_3_4_4_1",
-                               "_3_4_2_1_8_2","_3_4_2_1_8_3",
-                               "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2","_1_4_3_4_3",
-                               "_3_4_2_1_1",
-                               "_3_4_2_2_1_1",
-                               "_3_4_2_1_5_1_2","_3_4_2_1_6_1_1","_3_4_2_1_6_2_9","_3_4_2_1_6_2_1","_3_4_2_1_6_2_2",
-                               "_3_4_2_1_6_2_3","_3_4_2_1_6_2_4","_3_4_2_1_6_2_5","_3_4_2_1_6_2_6",
-                               "_3_4_2_1_6_2_7","_3_4_2_1_6_2_8",  "_3_4_2_1_6_2_9","_3_4_2_1_7_1","_3_4_2_1_7_2","_3_4_2_1_7_3","_3_4_3_1_3_calculate",
-                               "_3_4_2_2_1_2","_3_4_2_2_5_1",
-                               "_3_4_2_1_7_4","_3_4_2_2_6_1_1","_3_4_2_2_6_3_1",
-                               "_4_1_4_13_1",
-                               "_4_1_4_12",
-                               "_2_4_1_1","_3_1_2_3_1","_3_1_2_4_1","_3_1_2_5_1","_3_1_2_6_1","_3_1_2_7_1"
-
-                              
-                               ) & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
-  filter(!(str_detect(name_question, "audio") & is.na(name_choice)))%>% #Remove the rows with **Specify other:** == NA 
-  filter(!(name_question %in% c("_3_4_3_3_1/other", "_2_9_1_1/other", "_3_3_1_7/other","_2_8_4_4/other",
-                                "_4_1_1_5_1/other","_4_1_1_5_2/other",
-                                "_4_1_3_1/other","_4_1_3_1_2/other",
-                                "_2_3_1_1/other",
-                                "_3_4_1_1_7_1_2/other",
-                                "_3_3_4_4/other",
-                                "_3_4_2_1_6_1/other", "_3_4_2_2_5/other","_3_4_2_2_5/other_1",
-                                "_3_4_2_2_6_3/other_10","_3_4_2_2_6_3/other_2","_3_4_2_2_6_3/other_3","_3_4_2_2_6_3/other_4","_3_4_2_2_6_3/other_6",
-                                "_3_3_4_1_1/other")))%>%
-  filter(!(name_question %in%c("_3_4_2_1_5_1")& name_choice=="other"))
   
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance_format.csv",row.names=FALSE)
 
-
-
-
-
-
-
-                                                               
+         
