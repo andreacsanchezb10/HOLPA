@@ -817,7 +817,7 @@ zwe_performance_data<-fun_performance_data(zwe_global_choices,
                                            zwe_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            zwe_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
                                            zwe_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
-)%>%
+)
   filter(
     theme=="economic"
   )%>%
@@ -838,7 +838,7 @@ tun_performance_data<-fun_performance_data(tun_global_choices,
                                            tun_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            tun_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
                                            tun_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
-)%>%
+)
   filter(
     theme=="economic"
   )%>%
@@ -848,7 +848,7 @@ tun_performance_data<-fun_performance_data(tun_global_choices,
 sort(unique(tun_performance_data$indicator))
 
 ## If the farmers doesn't know the answer put 9999-----
-#result2<- tun_performance_data%>%
+result2<- tun_performance_data%>%
   
     result2<- zwe_performance_data%>%
 
@@ -958,11 +958,16 @@ mutate(label_choice=case_when(
   name_question %in% c("_3_4_2_1_3")& country== "zimbabwe"~"in acres",
   name_question%in% c( "_3_4_2_1_3")& country== "tunisia"~"in hectares",
   TRUE ~ label_choice))%>%
+  ## Indicator: productivity_livestock
+  # Remove rows NA for other practices
+  filter(!(name_question %in% c("_3_4_2_2_7_4","_3_4_2_2_7_3","_3_4_2_2_7_2","_3_4_2_2_7_1",
+                                "_3_4_2_2_6_4_9","_3_4_2_2_6_4_8","_3_4_2_2_6_4_7","_3_4_2_2_6_4_6") & is.na(name_choice)))%>%
   ##Indicator: labour_productivity
   # Remove rows NA for other practices
   filter(!(name_question %in% c("_3_4_1_2_1_2_1_5_4_1","_3_4_1_2_1_2_calculate","_3_4_1_2_1_1_3_2_1","_3_4_1_2_7_2_6_1","_3_4_1_1_7_1_4_1",
                                 "_3_4_1_1_7_1_3_1","_3_4_1_1_6_2","_3_4_1_1_6_1","_3_4_1_1_5_2","_3_4_1_1_5_1","_3_4_1_1_4_2",
-                                "_3_4_1_1_4_1","_3_4_1_1_3_2","_3_4_1_1_3_1","_3_4_1_1_1_1","_3_4_1_1_2_2","_3_4_1_1_2_1","_3_4_1_1_1_2") & is.na(name_choice)))%>%
+                                "_3_4_1_1_4_1","_3_4_1_1_3_2","_3_4_1_1_3_1","_3_4_1_1_1_1","_3_4_1_1_2_2","_3_4_1_1_2_1","_3_4_1_1_1_2",
+                                "_3_4_1_1_7_2_calculate") & is.na(name_choice)))%>%
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_3_4_1_1_7_1_3_1")~"_3_4_1_1_7_1_3",
     str_detect(name_question_recla,"_3_4_1_1_7_1_4_1")~"_3_4_1_1_7_1_4",
@@ -1005,7 +1010,8 @@ mutate(name_question_recla = case_when(
   ))%>%
   mutate(name_choice = case_when(
     type_question == "select_multiple"~ sub("^.*/", "", name_question), # replace name_question by the type of energy
-    TRUE ~ name_choice))
+    TRUE ~ name_choice))%>%
+  filter(!is.na(name_choice))
 
 
 sort(unique(result2$label_question))
@@ -1016,5 +1022,6 @@ sort(unique(result2$theme))
 
   
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance_format.csv",row.names=FALSE)
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_performance_format.csv",row.names=FALSE)
 
          
