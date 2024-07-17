@@ -41,26 +41,40 @@ read_and_process_survey <- function(sheet_name, column_id_rename, data_path, cou
   return(survey_data)
 }
 
-#Zimbabwe
-zwe_h_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.h.data.path,"zimbabwe","_index")%>%
+#Household survey
+zwe_household_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Household", "_id", zwe.h.data.path,"zimbabwe","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
+#Fieldwork survey
+zwe_fieldwork_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Field", "_id", zwe.f.data.path,"zimbabwe","_index")
 
-zwe_f_survey <- read_and_process_survey("Final HOLPA_Zimbabwe_Field", "_id", zwe.f.data.path,"zimbabwe","_index")
-
-names(zwe_f_survey)
+names(zwe_fieldwork_survey)
 
 
 #### Fieldwork module ####
 
 ### ANALYSIS BY COUNTRY
 # Zimbabwe
-zwe_fieldwork<- zwe_h_survey%>%
+zwe_fieldwork<- zwe_household_survey%>%
   select(kobo_farmer_id, household_id,farmer )%>%
-  right_join(zwe_f_survey,by=c("household_id","farmer"))%>%
+  right_join(zwe_fieldwork_survey,by=c("household_id","farmer"))%>%
+  # filter(farmer=="mudzimbabwe _ thomas")%>%
+  rename("kobo_farmer_id"="kobo_farmer_id.x",
+        "kobo_farmer_id.fieldwork"="kobo_farmer_id.y" )%>%
+  #Remove the farmers that do not match in the household survey
+  filter(!is.na(kobo_farmer_id))
+
+names(zwe_fieldwork)
+
+
+write.csv(zwe_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_fieldwork_format.csv",row.names=FALSE)
+
+zwe_error_fieldwork<- zwe_household_survey%>%
+  select(kobo_farmer_id, household_id,farmer )%>%
+  right_join(zwe_fieldwork_survey,by=c("household_id","farmer"))%>%
  # filter(farmer=="mudzimbabwe _ thomas")
   filter(is.na(kobo_farmer_id.x))
 
-write.csv(zwe_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_error_fieldwork.csv",row.names=FALSE)
+write.csv(zwe_error_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_error_fieldwork.csv",row.names=FALSE)
 
 
