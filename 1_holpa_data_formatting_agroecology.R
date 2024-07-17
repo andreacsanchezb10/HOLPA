@@ -371,7 +371,7 @@ zwe_agroecology_data<-fun_agroecology_data(zwe_global_choices,
                                            zwe_survey_1_4_2_7_begin_repeat, ## _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics 
                                            zwe_survey_3_3_3_2_begin_repeat # Section: area of land per agricultural practice
                                            
-)%>%
+)
 filter(
   #theme=="1_recycling"
   #theme=="2_input_reduction"
@@ -405,9 +405,9 @@ tun_agroecology_data<-rbind(
 
 
 ## If the farmers doesn't know the answer put 9999-----
-result2<- tun_agroecology_data%>%
+  result2<- tun_agroecology_data%>%
   
-  # result2<- zwe_agroecology_data%>%
+    #  result2<- zwe_agroecology_data%>%
   
   #Indicator: 5_biodiversity
   mutate(name_question_recla  = case_when(
