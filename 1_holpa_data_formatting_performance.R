@@ -34,26 +34,6 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
   return(survey_data)
 }
 
-# Read csv files----
-read_and_process_survey_csv <- function(sheet_name, column_id_rename, data_path, country_name, index) {
-  survey_data<- read.csv(path = data_path, header = TRUE, sep = ",")%>%
-    mutate(country = country_name,
-           sheet_id = sheet_name) %>%
-    rename("kobo_farmer_id" := !!column_id_rename,
-           "index" := !!index) %>%
-    slice(-1)
-  
-  # Automatically rename columns for begin_repeat groups
-  if (grepl("begin_repeat", tolower(sheet_name))) {
-    survey_data <- survey_data %>%
-      rename("parent_table_name" = "_parent_table_name",
-             "parent_index" = "_parent_index")
-  }
-  
-  return(survey_data)
-}
-
-
 #### GLOBAL DATABASES ----
 global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #Andrea
 
@@ -119,6 +99,41 @@ zwe_global_choices<-global_choices%>%
   distinct(list_name,name_choice, .keep_all = TRUE) %>%
   right_join(global_survey,by="list_name",relationship="many-to-many")
 
+### TUNISIA -----
+tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_CLEAN_2024.04.02.xlsx" #path: Andrea
+
+tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
+  #Remove respondents that did not wanted to complete the survey
+  filter(consent_2!="No")
+ 
+tun_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Crop production
+tun_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 1
+tun_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 2
+tun_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section:labour household members permanent workers
+tun_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour household members seasonal workers 1
+tun_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour household members seasonal workers 2
+tun_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
+tun_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
+tun_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
+tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: area of land per agricultural practice
+tun_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Irrigation
+
+tun_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_form_clean.xlsx",
+                          sheet = "choices")%>%
+  mutate(country= "tunisia")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+tun_global_choices<-global_choices%>%
+  rbind(tun_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")
+
 ### KENYA ----
 ken.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/holpa_household_name_2024.06.23.xlsx" #path: Andrea
 
@@ -155,42 +170,6 @@ ken_global_choices<-global_choices%>%
   right_join(global_survey,by="list_name",relationship="many-to-many")
 
 
-### TUNISIA -----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_CLEAN_2024.04.02.xlsx" #path: Andrea
-
-tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
-  #Remove respondents that did not wanted to complete the survey
-  filter(consent_2!="No")
- 
-tun_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Crop production
-tun_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 1
-tun_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Livestock production 2
-tun_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section:labour household members permanent workers
-tun_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour household members seasonal workers 1
-tun_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour household members seasonal workers 2
-tun_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
-tun_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
-tun_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
-tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: area of land per agricultural practice
-tun_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Irrigation
-
-tun_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/Tunisia_monitoring/holpa_household_form.xlsx",
-                          sheet = "choices")%>%
-  mutate(country= "tunisia")%>%
-  select("list_name","name","label::English ((en))","country")%>%
-  rename("label_choice" = "label::English ((en))")%>%
-  rename("name_choice" = "name")%>%
-  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
-
-#Add country choices to global choices
-tun_global_choices<-global_choices%>%
-  rbind(tun_choices)%>%
-  arrange(desc(country == "global")) %>%
-  #Removing duplicates
-  distinct(list_name,name_choice, .keep_all = TRUE) %>%
-  right_join(global_survey,by="list_name",relationship="many-to-many")
-
-
 #### PERFORMANCE MODULE ####
 fun_performance_survey<- function(global_survey) {
   ## Theme: Economic 
@@ -219,8 +198,6 @@ fun_performance_survey<- function(global_survey) {
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "climate_resilience_basic_services")]<- "climate_resilience_basic_services"
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "labour_productivity")]<- "labour_productivity"
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "economic_all")]<- "economic_all"
- 
-  
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "productivity_crops")]<- "productivity_crops"
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "productivity_livestock")]<- "productivity_livestock"
   performance_eco_survey$subindicator[str_detect(performance_eco_survey$subindicator, "productivity_fish")]<- "productivity_fish"
@@ -438,7 +415,7 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
   return(result)
 }
 
-### Function to get answers from the following sections ---- # I can combine all this functions, but lets see
+### Function to get answers from the following sections ---- 
 ## Main survey ----
 fun_performance_main<- function(country_global_choices,country_survey_main){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
@@ -453,8 +430,7 @@ fun_performance_main<- function(country_global_choices,country_survey_main){
   
   # Identify columns with only NA values
   na_columns <- colSums(is.na(country_performance)) == nrow(country_performance)
-  na_columns
-  
+
   # Remove columns with only NA values
   country_performance <- country_performance[, !na_columns]
   
@@ -467,7 +443,7 @@ fun_performance_main<- function(country_global_choices,country_survey_main){
   return(result_main_survey)
 }
 
-## _3_4_3_1_2_begin_repeat: Crop production ----
+## _3_4_3_1_2_begin_repeat: Crop production ---- # I think all the repeat group functions are the same, please combine them
 fun_performance_3_4_3_1_2_begin_repeat<- function(country_global_choices,country_survey_3_4_3_1_2_begin_repeat){
   
   country_performance_choices<-  fun_performance_choices(country_global_choices)
@@ -500,7 +476,6 @@ fun_performance_3_4_2_2_2_begin_repeat<- function(country_global_choices,country
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
   
   country_performance_columns_3_4_2_2_2_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_2_2_2_begin_repeat))
-  
   mismatched_columns_3_4_2_2_2_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_2_2_2_begin_repeat)
   
   country_performance_3_4_2_2_2_begin_repeat <- country_survey_3_4_2_2_2_begin_repeat %>%
@@ -535,8 +510,7 @@ fun_performance_3_4_2_2_6_begin_repeat<- function(country_global_choices,country
  
   # Identify columns with only NA values
   na_columns_3_4_2_2_6_begin_repeat <- colSums(is.na(country_performance_3_4_2_2_6_begin_repeat)) == nrow(country_performance_3_4_2_2_6_begin_repeat)
-  na_columns_3_4_2_2_6_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_4_2_2_6_begin_repeat <- country_performance_3_4_2_2_6_begin_repeat[, !na_columns_3_4_2_2_6_begin_repeat]
   
@@ -551,7 +525,6 @@ fun_performance_3_4_2_2_6_begin_repeat<- function(country_global_choices,country
 fun_performance_3_3_4_1_3_begin_repeat<- function(country_global_choices,country_survey_3_3_4_1_3_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_3_4_1_3_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_3_4_1_3_begin_repeat))
   mismatched_columns_3_3_4_1_3_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_3_4_1_3_begin_repeat)
   
@@ -561,8 +534,7 @@ fun_performance_3_3_4_1_3_begin_repeat<- function(country_global_choices,country
   
   # Identify columns with only NA values
   na_columns_3_3_4_1_3_begin_repeat <- colSums(is.na(country_performance_3_3_4_1_3_begin_repeat)) == nrow(country_performance_3_3_4_1_3_begin_repeat)
-  na_columns_3_3_4_1_3_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_3_4_1_3_begin_repeat <- country_performance_3_3_4_1_3_begin_repeat[, !na_columns_3_3_4_1_3_begin_repeat]
   
@@ -579,11 +551,9 @@ fun_performance_3_3_4_1_3_begin_repeat<- function(country_global_choices,country
 fun_performance_3_4_1_1_7_1_begin_repeat<- function(country_global_choices,country_survey_3_4_1_1_7_1_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_4_1_1_7_1_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_1_1_7_1_begin_repeat))
   mismatched_columns_3_4_1_1_7_1_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_1_1_7_1_begin_repeat)
-  print(mismatched_columns_3_4_1_1_7_1_begin_repeat)
-  
+
   country_performance_3_4_1_1_7_1_begin_repeat <- country_survey_3_4_1_1_7_1_begin_repeat %>%
     select(all_of(country_performance_columns_3_4_1_1_7_1_begin_repeat))%>%
     mutate_all(as.character)
@@ -591,8 +561,7 @@ fun_performance_3_4_1_1_7_1_begin_repeat<- function(country_global_choices,count
   
   # Identify columns with only NA values
   na_columns_3_4_1_1_7_1_begin_repeat <- colSums(is.na(country_performance_3_4_1_1_7_1_begin_repeat)) == nrow(country_performance_3_4_1_1_7_1_begin_repeat)
-  na_columns_3_4_1_1_7_1_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_4_1_1_7_1_begin_repeat <- country_performance_3_4_1_1_7_1_begin_repeat[, !na_columns_3_4_1_1_7_1_begin_repeat]
   
@@ -607,7 +576,6 @@ fun_performance_3_4_1_1_7_1_begin_repeat<- function(country_global_choices,count
 fun_performance_3_4_1_1_7_2_begin_repeat<- function(country_global_choices,country_survey_3_4_1_1_7_2_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_4_1_1_7_2_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_1_1_7_2_begin_repeat))
   mismatched_columns_3_4_1_1_7_2_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_1_1_7_2_begin_repeat)
   
@@ -617,8 +585,7 @@ fun_performance_3_4_1_1_7_2_begin_repeat<- function(country_global_choices,count
   
   # Identify columns with only NA values
   na_columns_3_4_1_1_7_2_begin_repeat <- colSums(is.na(country_performance_3_4_1_1_7_2_begin_repeat)) == nrow(country_performance_3_4_1_1_7_2_begin_repeat)
-  na_columns_3_4_1_1_7_2_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_4_1_1_7_2_begin_repeat <- country_performance_3_4_1_1_7_2_begin_repeat[, !na_columns_3_4_1_1_7_2_begin_repeat]
   
@@ -633,7 +600,6 @@ fun_performance_3_4_1_1_7_2_begin_repeat<- function(country_global_choices,count
 fun_performance_3_4_1_2_7_2_1_begin_repeat<- function(country_global_choices,country_survey_3_4_1_2_7_2_1_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_4_1_2_7_2_1_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_1_2_7_2_1_begin_repeat))
   mismatched_columns_3_4_1_2_7_2_1_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_1_2_7_2_1_begin_repeat)
   
@@ -643,8 +609,7 @@ fun_performance_3_4_1_2_7_2_1_begin_repeat<- function(country_global_choices,cou
   
   # Identify columns with only NA values
   na_columns_3_4_1_2_7_2_1_begin_repeat <- colSums(is.na(country_performance_3_4_1_2_7_2_1_begin_repeat)) == nrow(country_performance_3_4_1_2_7_2_1_begin_repeat)
-  na_columns_3_4_1_2_7_2_1_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_4_1_2_7_2_1_begin_repeat <- country_performance_3_4_1_2_7_2_1_begin_repeat[, !na_columns_3_4_1_2_7_2_1_begin_repeat]
   
@@ -660,7 +625,6 @@ fun_performance_3_4_1_2_7_2_1_begin_repeat<- function(country_global_choices,cou
 fun_performance_3_4_1_2_1_1_begin_repeat<- function(country_global_choices,country_survey_3_4_1_2_1_1_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_4_1_2_1_1_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_1_2_1_1_begin_repeat))
   mismatched_columns_3_4_1_2_1_1_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_1_2_1_1_begin_repeat)
   
@@ -670,8 +634,7 @@ fun_performance_3_4_1_2_1_1_begin_repeat<- function(country_global_choices,count
   
   # Identify columns with only NA values
   na_columns_3_4_1_2_1_1_begin_repeat <- colSums(is.na(country_performance_3_4_1_2_1_1_begin_repeat)) == nrow(country_performance_3_4_1_2_1_1_begin_repeat)
-  na_columns_3_4_1_2_1_1_begin_repeat
-  
+
   # Remove columns with only NA values
   country_performance_3_4_1_2_1_1_begin_repeat <- country_performance_3_4_1_2_1_1_begin_repeat[, !na_columns_3_4_1_2_1_1_begin_repeat]
   
@@ -687,7 +650,6 @@ fun_performance_3_4_1_2_1_1_begin_repeat<- function(country_global_choices,count
 fun_performance_3_4_1_2_1_2_begin_repeat<- function(country_global_choices,country_survey_3_4_1_2_1_2_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_4_1_2_1_2_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_1_2_1_2_begin_repeat))
   mismatched_columns_3_4_1_2_1_2_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_1_2_1_2_begin_repeat)
   
@@ -712,7 +674,6 @@ fun_performance_3_4_1_2_1_2_begin_repeat<- function(country_global_choices,count
 fun_performance_3_4_1_2_1_2_1_begin_repeat<- function(country_global_choices,country_survey_3_4_1_2_1_2_1_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
   country_performance_question_columns<- fun_performance_questions_columns(country_performance_choices)
-  
   country_performance_columns_3_4_1_2_1_2_1_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_4_1_2_1_2_1_begin_repeat))
   mismatched_columns_3_4_1_2_1_2_1_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_4_1_2_1_2_1_begin_repeat)
   
@@ -732,6 +693,7 @@ fun_performance_3_4_1_2_1_2_1_begin_repeat<- function(country_global_choices,cou
     mutate(name_question_recla= name_question)
   return(result_3_4_1_2_1_2_1_begin_repeat)
 }
+
 ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
 fun_performance_3_3_3_2_begin_repeat<- function(country_global_choices,country_survey_3_3_3_2_begin_repeat){
   country_performance_choices<-  fun_performance_choices(country_global_choices)
@@ -773,34 +735,23 @@ fun_performance_data<- function(country_global_choices,
                                 ) {
   performance_data<- rbind(
     fun_performance_main(country_global_choices, country_survey_main), ## Main survey
-    ## _3_4_3_1_2_begin_repeat: Crop production
-    fun_performance_main(country_global_choices, country_survey_3_4_3_1_2_begin_repeat) , 
-    ##_3_4_2_2_2_begin_repeat: Livestock production 1
-    fun_performance_3_4_2_2_2_begin_repeat(country_global_choices, country_survey_3_4_2_2_2_begin_repeat),  
-    ##_3_4_2_2_6_begin_repeat: Livestock production 2 
-    fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_4_2_2_6_begin_repeat),  
-    ##_3_3_4_1_3_begin_repeat: Irrigation 
-    fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_3_4_1_3_begin_repeat) , 
-    ##_3_4_1_1_7_1_begin_repeat: household members permanent workers 
-    fun_performance_3_4_1_1_7_1_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_1_begin_repeat)  ,
-    ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 ----
-    fun_performance_3_4_1_1_7_2_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_2_begin_repeat),  
-    ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 ----
-    fun_performance_3_4_1_2_7_2_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_7_2_1_begin_repeat) , 
-    ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers ----
-    fun_performance_3_4_1_2_1_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_1_begin_repeat) , 
-    ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 ----
-    fun_performance_3_4_1_2_1_2_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_begin_repeat) , 
-    ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
-    fun_performance_3_4_1_2_1_2_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_1_begin_repeat)  ,
-    ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
-    fun_performance_3_3_3_2_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat)
+    fun_performance_3_4_3_1_2_begin_repeat(country_global_choices, country_survey_3_4_3_1_2_begin_repeat) , ## _3_4_3_1_2_begin_repeat: Crop production 
+    fun_performance_3_4_2_2_2_begin_repeat(country_global_choices, country_survey_3_4_2_2_2_begin_repeat),  ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+    fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_4_2_2_6_begin_repeat),  ##_3_4_2_2_6_begin_repeat: Livestock production 2
+    fun_performance_3_4_2_2_6_begin_repeat(country_global_choices, country_survey_3_3_4_1_3_begin_repeat), ##_3_3_4_1_3_begin_repeat: Irrigation
+    fun_performance_3_4_1_1_7_1_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_1_begin_repeat), ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+    fun_performance_3_4_1_1_7_2_begin_repeat(country_global_choices, country_survey_3_4_1_1_7_2_begin_repeat),  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 ----
+    fun_performance_3_4_1_2_7_2_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_7_2_1_begin_repeat), ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 ----
+    fun_performance_3_4_1_2_1_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_1_begin_repeat), ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers ----
+    fun_performance_3_4_1_2_1_2_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_begin_repeat), ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 ----
+    fun_performance_3_4_1_2_1_2_1_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_1_begin_repeat), ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
+    fun_performance_3_3_3_2_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat) ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
   )
   return(performance_data)
 }
 
 ### ----  
-performance_survey<-  fun_performance_survey(global_survey)
+performance_survey<-  fun_performance_survey(global_survey) #I think this should be remove
 
 ## PERFORMACE DATA BY COUNTRY -----
 # Zimbabwe -----
@@ -850,7 +801,7 @@ sort(unique(tun_performance_data$indicator))
 ## If the farmers doesn't know the answer put 9999-----
 result2<- tun_performance_data%>%
   
-    result2<- zwe_performance_data%>%
+  #  result2<- zwe_performance_data%>%
 
 ### THEME: AGRICULTURAL----
 ## Indicator: Crop health
@@ -1011,6 +962,7 @@ mutate(name_question_recla = case_when(
   mutate(name_choice = case_when(
     type_question == "select_multiple"~ sub("^.*/", "", name_question), # replace name_question by the type of energy
     TRUE ~ name_choice))%>%
+  # Remove rows name_choice == NA
   filter(!is.na(name_choice))
 
 
