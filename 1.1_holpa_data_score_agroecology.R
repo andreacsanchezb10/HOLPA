@@ -104,6 +104,11 @@ tun_agroecology_data <- read.csv(tun.data.path)
 sort(unique(zwe_agroecology_data$theme))
 
 pre_processing<- tun_agroecology_data%>%
+  #11_connectivity
+  mutate(type_question = case_when(
+    name_question_recla %in%c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4")~"select_multiple",
+    TRUE ~ type_question))%>%
+  
     mutate(type_question = case_when(
     name_question_recla %in% c(
       #3_soil_health
@@ -141,13 +146,12 @@ select_one<- pre_processing%>%
 
 ## type_question: select_multiple
 # Put score to answers from select_multiple questions (see doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: agroecology_look_up, column: score_agroecology_module)
-#TO CHECK: - Produced crops but did not sell them For this I need the answer from another question
-#- _2_7_1_2 Other (please, specify): see if I can reclasify the others or just add the specify other to the question.
+#- _2_7_1_2 Other (please, specify): see if I can reclassify the others or just add the specify other to the question.
 
 select_multiple<- pre_processing%>%
-  #filter(theme=="2_input_reduction")%>%
-  filter(type_question == "select_multiple")
-  filter(name_question_recla=="_1_4_3_8")
+  filter(theme=="11_connectivity")%>%
+  filter(type_question == "select_multiple")%>%
+  #filter(name_question_recla=="_1_4_3_8")
   filter(!(name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") & name_choice != 0))
   
   sort(unique(select_multiple$name_question_recla))
@@ -158,10 +162,10 @@ select_multiple2<-select_multiple%>%
   summarise(multiple_responses_label_choice = paste(label_choice, collapse = "//", sep=""),
             multiple_responses_name_choice = paste(name_choice, collapse = "//", sep="")) %>%
   ungroup()%>%
-  left_join(agroecology_global_score, by=c("name_question_recla",  "multiple_responses_label_choice"))
-  #mutate(score_agroecology_module = case_when(
-   # name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") ~ 1,
-  #  TRUE ~ as.numeric(score_agroecology_module)))
+  left_join(agroecology_global_score, by=c("name_question_recla",  "multiple_responses_label_choice"))%>%
+  mutate(score_agroecology_module = case_when(
+    name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") ~ 1,
+    TRUE ~ as.numeric(score_agroecology_module)))
   filter(is.na(score_agroecology_module))
   
   sort(unique(select_multiple2$label_score_agroecology_module))

@@ -398,9 +398,9 @@ tun_agroecology_data<-rbind(
     #theme=="8_knowledge"
     #theme=="9_social_values"
     #theme=="10_fairness"
-    #theme=="11_connectivity"
+    theme=="11_connectivity"
     #theme=="12_governance"
-    theme=="13_participation"
+    #theme=="13_participation"
 )
 
 
