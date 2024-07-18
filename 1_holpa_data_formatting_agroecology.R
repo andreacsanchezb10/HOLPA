@@ -405,16 +405,16 @@ tun_agroecology_data<-rbind(
 
 
 ## If the farmers doesn't know the answer put 9999-----
-  result2<- tun_agroecology_data%>%
+  #result2<- tun_agroecology_data%>%
   
-    #  result2<- zwe_agroecology_data%>%
+      result2<- zwe_agroecology_data%>%
   
   #Indicator: 5_biodiversity
   mutate(name_question_recla  = case_when(
     name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
     TRUE ~ name_question_recla))%>%
-  
+    
 # Indicator: all principles
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),

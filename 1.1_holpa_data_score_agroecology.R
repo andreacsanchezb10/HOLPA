@@ -4,6 +4,7 @@ library(tidyr)
 library(tidyverse)
 library(readxl)
 library(dplyr)
+library("summarytools")
 
 #### Set file paths ####
 # TO CHECK: I need to connect directly to the share point, I already asked Sebastien for permision
@@ -89,9 +90,9 @@ tun_agroecology_data <- read.csv(tun.data.path)
 ### type_question: select_multiple
 ## The scores to the answers from select one questions are in doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: agroecology_look_up, column: score_agroecology_module
 # 2_input_reduction:"_1_4_3_1", "_1_4_3_5",   "_2_8_5_3","_1_4_3_8", "_1_4_3_9" = 5/6
-# 11_connectivity: "_2_7_1_1","_2_7_1_2","_2_7_1_3","_2_7_1_4", "_2_7_1_5","_2_7_1_6" = 6/6
+# 11_connectivity: "_2_7_1_1","_2_7_1_2","_2_7_1_3","_2_7_1_4", "_2_7_1_5","_2_7_1_6""_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4" = 12/12
 
-## type_question: count
+## type_question: counting
 # 3- soil_health: "_2_9_1_1" = 1/1
 # 4_animal_health: "_2_10_1_2","_3_3_3_4" = 2/3
 # 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2
@@ -100,32 +101,28 @@ tun_agroecology_data <- read.csv(tun.data.path)
 
 ## type_question: integer
 # 8 - knowledge: "_2_1_1_1" "_2_1_1_2" "_2_1_1_3" "_2_1_1_4" "_2_1_1_5" "_2_1_1_6" "_2_1_1_7" = 7/7
+#Total = 7 questions
 
 sort(unique(zwe_agroecology_data$theme))
 
-pre_processing<- tun_agroecology_data%>%
-  #11_connectivity
+pre_processing<- zwe_agroecology_data%>%
+  #Extra questions we need to score produced crops/livestock/honey/wood but did not sell them 11_connectivity
   mutate(type_question = case_when(
     name_question_recla %in%c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4")~"select_multiple",
     TRUE ~ type_question))%>%
-  
-    mutate(type_question = case_when(
-    name_question_recla %in% c(
-      #3_soil_health
-      "_2_9_1_1",
-      #4_animal_health
-      "_2_10_1_2","_3_3_3_4",
-      #5_biodiversity
-      "_3_4_3_1_1_2", "_3_4_3_3_1",
-      #6_synergy
-      "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1",
-      #7_economic_diversification
-      "_2_4_1") ~ "count",
+  #Rename type_question for questions we need for counting  
+  mutate(type_question = case_when(
+      name_question_recla %in% c(
+      "_2_9_1_1", #3_soil_health
+      "_2_10_1_2","_3_3_3_4", #4_animal_health
+      "_3_4_3_1_1_2", "_3_4_3_3_1",#5_biodiversity
+      "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1", #6_synergy
+      "_2_4_1" #7_economic_diversification
+    ) ~ "counting",
      TRUE ~ type_question))
     # mutate(label_choice= case_when(
     #label_choice%in%c("Specify other practice:", "Other (please specify)")~name_choice,
     #name_question_recla%in%c("_3_4_3_1_1_2", "_3_4_3_3_1")~name_choice,
-    
     #TRUE ~ label_choice))
   
 sort(unique(pre_processing$label_choice))
@@ -142,12 +139,8 @@ select_one<- pre_processing%>%
   select(!name_label_choice)%>%
   mutate(label_score_agroecology_module= label_choice)
 
-
-
 ## type_question: select_multiple
 # Put score to answers from select_multiple questions (see doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: agroecology_look_up, column: score_agroecology_module)
-#- _2_7_1_2 Other (please, specify): see if I can reclassify the others or just add the specify other to the question.
-
 select_multiple<- pre_processing%>%
   filter(theme=="11_connectivity")%>%
   filter(type_question == "select_multiple")%>%
@@ -185,10 +178,10 @@ area <- pre_processing %>%
   filter(name_question_recla %in% c("_3_4_2_1_1", "_3_4_2_2_1_1", "_3_4_2_2_1_2", "_3_4_2_3_2",
                                     "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3")) %>%
   mutate(name_choice = as.numeric(name_choice))%>% 
-  # Remove rows with 999, 9999, or 0
-  filter(!(name_choice %in% c(999, 9999, 0))) %>%
+  # Remove rows with 9999, or 0
+  filter(!(name_choice %in% c(9999, 0))) %>%
   # Convert acres to hectares
-  mutate(name_choice = case_when(label_choice == "acres" ~ name_choice * 0.404686, TRUE ~ name_choice))%>%
+  mutate(name_choice = case_when(label_choice == "in acres" ~ name_choice * 0.404686, TRUE ~ name_choice))%>%
   mutate(name_question_recla= case_when(
     #Rename area of owned and leased land for livestock production to get total land for livestock production
     name_question_recla %in%c("_3_4_2_2_1_1", "_3_4_2_2_1_2")~ "_3_4_2_2_1_3",
@@ -318,14 +311,14 @@ integer<- pre_processing%>%
          score_agroecology_module=NA,
          label_score_agroecology_module=as.numeric(label_score_agroecology_module))%>%
   mutate(score_agroecology_module= case_when(
-    # 10_knowlege
-      label_score_agroecology_module == 0 ~ 1,
-      label_score_agroecology_module == 1 ~ 2,
-      label_score_agroecology_module == 2 ~ 3,
-      label_score_agroecology_module == 3 ~ 3,
-      label_score_agroecology_module == 4 ~ 4,
-      label_score_agroecology_module == 5 ~ 4,
-      label_score_agroecology_module> 5 ~ 5,
+    # 10_knowlege: In the last 12 months, how many times has your household exchanged information with the following food system stakeholders to create new or improved solutions to your or others' farming problems?
+      label_score_agroecology_module == 0 ~ 1, #Never
+      label_score_agroecology_module == 1 ~ 2, #1 time per year.
+      label_score_agroecology_module == 2 ~ 3, #2 to 3 times per year.
+      label_score_agroecology_module == 3 ~ 3, #2 to 3 times per year.
+      label_score_agroecology_module == 4 ~ 4, #4 times per year.
+      label_score_agroecology_module == 5 ~ 4, #5 or more times per year.
+      label_score_agroecology_module> 5 ~ 5,   #5 or more times per year.
       TRUE ~ score_agroecology_module))%>%
   mutate(label_score_agroecology_module= paste(name_choice, "times per year"))
    
@@ -336,7 +329,17 @@ agroecology_module_score<-   rbind(select_one,
 names(select_one)  
 names(select_multiple3)
 sort(unique(integer$label_score_agroecology_module))
+sort(unique(integer$name_question))
 
-view(dfSummary(select_one))
+list_crops<- pre_processing%>%
+  filter(name_question_recla=="_3_4_3_1_1_2")%>%
+  select(name_choice)%>%
+  unique(.)
+
+write.csv(list_crops,file='tun/tun_crops_list.csv',row.names=FALSE)
+write.csv(list_crops,file='zwe/zwe_crops_list.csv',row.names=FALSE)
+
+
+view(dfSummary(integer))
 
 write.csv(agroecology_module_score,file='zwe/zwe_agroecology_score.csv',row.names=FALSE)
