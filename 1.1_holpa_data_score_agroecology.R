@@ -75,36 +75,6 @@ tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/ana
 tun_agroecology_data <- read.csv(tun.data.path)
 
 #### AGROECOLOGY: SCORING ------
-### type_question: select_one
-## The scores to the answers from select one questions are in doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: choices, column: score_agroecology_module
-# 1_recycling: "_2_8_1_1"  "_2_8_2_1"  "_2_8_3_1" "_2_8_5_1" "_2_8_4_5" = 5/5
-# 2_input_reduction: "_3_4_4_2" = 1/6
-# 4_animal_health: "_2_10_1_1" = 1/3
-# 5_biodiversity:  "_3_3_1_2_1" "_3_3_1_2_2" "_3_3_1_2_3" "_3_3_1_2_4" "_3_3_1_2_6" "_3_3_1_2_7" "_3_3_1_2_8" "_3_3_1_6" = 8/arreglar el total
-# 9_social_values:"_2_5_1_1"  "_2_5_1_2"   "_2_5_1_3"   "_2_5_1_4"  = 4/4
-# 10_fairness: "_2_6_1_4_1" "_2_6_1_4_2" "_2_6_1_4_3" "_2_6_1_4_4" "_2_6_1_4_5" "_2_6_1_4_6" = 6/6
-# 12_governance: "_2_2_1_1" "_2_2_1_2" "_2_2_1_3" = 3/3
-# 13_participation: "_2_3_1_4" = 1/1
-#total = 29 questions
-
-### type_question: select_multiple
-## The scores to the answers from select one questions are in doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: agroecology_look_up, column: score_agroecology_module
-# 2_input_reduction:"_1_4_3_1", "_1_4_3_5",   "_2_8_5_3","_1_4_3_8", "_1_4_3_9" = 5/6
-# 11_connectivity: "_2_7_1_1","_2_7_1_2","_2_7_1_3","_2_7_1_4", "_2_7_1_5","_2_7_1_6""_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4" = 12/12
-
-## type_question: counting
-# 3- soil_health: "_2_9_1_1" = 1/1
-# 4_animal_health: "_2_10_1_2","_3_3_3_4" = 2/3
-# 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2
-# 6- synergy: "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1" = 6/6
-# 7- economic_diversification: "_2_4_1" = 1/1
-
-## type_question: integer
-# 8 - knowledge: "_2_1_1_1" "_2_1_1_2" "_2_1_1_3" "_2_1_1_4" "_2_1_1_5" "_2_1_1_6" "_2_1_1_7" = 7/7
-#Total = 7 questions
-
-sort(unique(zwe_agroecology_data$theme))
-
 pre_processing<- zwe_agroecology_data%>%
   #Extra questions we need to score produced crops/livestock/honey/wood but did not sell them 11_connectivity
   mutate(type_question = case_when(
@@ -127,24 +97,38 @@ pre_processing<- zwe_agroecology_data%>%
   
 sort(unique(pre_processing$label_choice))
 
-## type_question: select_one
-# Put score to answers from select_one questions (see doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: choices, column: score_agroecology_module)
+## type_question: select_one----
+## The scores to the answers from select one questions are in doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: choices, column: score_agroecology_module
+# 1_recycling: "_2_8_1_1"  "_2_8_2_1"  "_2_8_3_1" "_2_8_5_1" "_2_8_4_5" = 5/5
+# 2_input_reduction: "_3_4_4_2" = 1/6
+# 4_animal_health: "_2_10_1_1" = 1/3
+# 5_biodiversity:  "_3_3_1_2_1" "_3_3_1_2_2" "_3_3_1_2_3" "_3_3_1_2_4" "_3_3_1_2_6" "_3_3_1_2_7" "_3_3_1_2_8" "_3_3_1_6" = 8/arreglar el total
+# 9_social_values:"_2_5_1_1"  "_2_5_1_2"   "_2_5_1_3"   "_2_5_1_4"  = 4/4
+# 10_fairness: "_2_6_1_4_1" "_2_6_1_4_2" "_2_6_1_4_3" "_2_6_1_4_4" "_2_6_1_4_5" "_2_6_1_4_6" = 6/6
+# 12_governance: "_2_2_1_1" "_2_2_1_2" "_2_2_1_3" = 3/3
+# 13_participation: "_2_3_1_4" = 1/1
+#total = 29 questions
+#Zimbabwe = 26 questions (missing: _2_8_5_1, _2_6_1_4_3, _2_6_1_4_4)
 select_one<- pre_processing%>%
   filter(type_question == "select_one")%>%
   mutate(name_label_choice=if_else(type_question=="select_one", paste(name_choice,"_",label_choice,sep=""),NA))%>%
-  dplyr::left_join(select(country_global_agroecology_choices,c(list_name,name_choice,label_choice,score_agroecology_module )), 
+  dplyr::left_join(select(zwe_global_agroecology_choices,c(list_name,name_choice,label_choice,score_agroecology_module )), 
                    by= c("list_name"="list_name",
                          "name_choice"="name_choice",
                          "label_choice"="label_choice"))%>%
   select(!name_label_choice)%>%
   mutate(label_score_agroecology_module= label_choice)
 
-## type_question: select_multiple
-# Put score to answers from select_multiple questions (see doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: agroecology_look_up, column: score_agroecology_module)
+view(dfSummary(select_one))
+
+## type_question: select_multiple ----
+## The scores to the answers from select one questions are in doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: agroecology_look_up, column: score_agroecology_module
+# 2_input_reduction:"_1_4_3_1", "_1_4_3_5",   "_2_8_5_3","_1_4_3_8", "_1_4_3_9" = 5/6
+# 11_connectivity: "_2_7_1_1","_2_7_1_2","_2_7_1_3","_2_7_1_4", "_2_7_1_5","_2_7_1_6""_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4" = 12/12
+# total = 17 questions
+# zimbabwe = 11 questions (missing: "_2_8_5_3", "_1_4_3_9","_2_7_1_3","_2_7_1_4", "_1_4_2_4_3", "_1_4_2_5_5")
 select_multiple<- pre_processing%>%
-  filter(theme=="11_connectivity")%>%
   filter(type_question == "select_multiple")%>%
-  #filter(name_question_recla=="_1_4_3_8")
   filter(!(name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") & name_choice != 0))
   
   sort(unique(select_multiple$name_question_recla))
@@ -171,8 +155,38 @@ select_multiple3<- select_multiple%>%
          name_choice= multiple_responses_name_choice)%>%
   select(-multiple_responses_label_choice,-multiple_responses_name_choice)
 
+view(dfSummary(select_multiple3))
+sort(unique(select_multiple3$name_question_recla))
 
-#Counting----
+## type_question: integer ----
+# 8 - knowledge: "_2_1_1_1" "_2_1_1_2" "_2_1_1_3" "_2_1_1_4" "_2_1_1_5" "_2_1_1_6" "_2_1_1_7" = 7/7
+#Total = 7 questions
+#Zimbabwe = 7 questions
+integer<- pre_processing%>%
+  filter(type_question == "integer")%>%
+  mutate(label_score_agroecology_module=name_choice,
+         score_agroecology_module=NA,
+         label_score_agroecology_module=as.numeric(label_score_agroecology_module))%>%
+  mutate(score_agroecology_module= case_when(
+    # 10_knowlege: In the last 12 months, how many times has your household exchanged information with the following food system stakeholders to create new or improved solutions to your or others' farming problems?
+    label_score_agroecology_module == 0 ~ 1, #Never
+    label_score_agroecology_module == 1 ~ 2, #1 time per year.
+    label_score_agroecology_module == 2 ~ 3, #2 to 3 times per year.
+    label_score_agroecology_module == 3 ~ 3, #2 to 3 times per year.
+    label_score_agroecology_module == 4 ~ 4, #4 times per year.
+    label_score_agroecology_module == 5 ~ 4, #5 or more times per year.
+    label_score_agroecology_module> 5 ~ 5,   #5 or more times per year.
+    TRUE ~ score_agroecology_module))%>%
+  mutate(label_score_agroecology_module= paste(name_choice, "times per year"))
+
+view(dfSummary(integer))
+
+## type_question: counting----
+# 3- soil_health: "_2_9_1_1" = 1/1
+# 4_animal_health: "_2_10_1_2","_3_3_3_4" = 2/3
+# 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2
+# 6- synergy: "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1" = 6/6
+# 7- economic_diversification: "_2_4_1" = 1/1
 area <- pre_processing %>%
   #Retain questions related to area of land for crop, livestock and fish production and total area of land managed by household
   filter(name_question_recla %in% c("_3_4_2_1_1", "_3_4_2_2_1_1", "_3_4_2_2_1_2", "_3_4_2_3_2",
@@ -188,7 +202,7 @@ area <- pre_processing %>%
     #Rename total area of owned, leased or shared land  to get total land managed by household
     name_question_recla %in%c( "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3")~ "_1_4_1_1_4",
     TRUE ~ name_question_recla))%>%
-  group_by(kobo_farmer_id,name_question_recla) %>%
+  group_by(kobo_farmer_id,name_question_recla,theme) %>%
   summarize(production_area_ha = sum(name_choice, na.rm = TRUE))%>%
   ungroup()%>%
   mutate(name_question_recla= case_when(
@@ -202,7 +216,7 @@ area_total<- area%>%
 sort(unique(area$name_question_recla))
 
 counting<- pre_processing%>%
-  filter(type_question == "count")
+  filter(type_question == "counting")
 #Check if there are duplicate crops or livestock species for each farmer
   #distinct(across(-c(name_question)), .keep_all = TRUE)
   
@@ -304,42 +318,22 @@ counting5<- counting%>%
   rbind(counting4)
   filter(is.na(score_agroecology_module))
 
-#Integer
-integer<- pre_processing%>%
-    filter(type_question == "integer")%>%
-  mutate(label_score_agroecology_module=name_choice,
-         score_agroecology_module=NA,
-         label_score_agroecology_module=as.numeric(label_score_agroecology_module))%>%
-  mutate(score_agroecology_module= case_when(
-    # 10_knowlege: In the last 12 months, how many times has your household exchanged information with the following food system stakeholders to create new or improved solutions to your or others' farming problems?
-      label_score_agroecology_module == 0 ~ 1, #Never
-      label_score_agroecology_module == 1 ~ 2, #1 time per year.
-      label_score_agroecology_module == 2 ~ 3, #2 to 3 times per year.
-      label_score_agroecology_module == 3 ~ 3, #2 to 3 times per year.
-      label_score_agroecology_module == 4 ~ 4, #4 times per year.
-      label_score_agroecology_module == 5 ~ 4, #5 or more times per year.
-      label_score_agroecology_module> 5 ~ 5,   #5 or more times per year.
-      TRUE ~ score_agroecology_module))%>%
-  mutate(label_score_agroecology_module= paste(name_choice, "times per year"))
-   
+
+  
 agroecology_module_score<-   rbind(select_one,
                                    select_multiple3,
                                    counting5,
                                    integer)
+
+view(dfSummary(agroecology_module_score))
 names(select_one)  
 names(select_multiple3)
 sort(unique(integer$label_score_agroecology_module))
 sort(unique(integer$name_question))
 
-list_crops<- pre_processing%>%
-  filter(name_question_recla=="_3_4_3_1_1_2")%>%
-  select(name_choice)%>%
-  unique(.)
-
-write.csv(list_crops,file='tun/tun_crops_list.csv',row.names=FALSE)
-write.csv(list_crops,file='zwe/zwe_crops_list.csv',row.names=FALSE)
-
-
-view(dfSummary(integer))
 
 write.csv(agroecology_module_score,file='zwe/zwe_agroecology_score.csv',row.names=FALSE)
+
+
+
+
