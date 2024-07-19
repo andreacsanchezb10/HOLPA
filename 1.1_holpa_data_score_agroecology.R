@@ -86,7 +86,7 @@ pre_processing<- zwe_agroecology_data%>%
       "_2_9_1_1", #3_soil_health
       "_2_10_1_2","_3_3_3_4", #4_animal_health
       "_3_4_3_1_1_2", "_3_4_3_3_1",#5_biodiversity
-      "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1", #6_synergy
+      "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1", #6_synergy
       "_2_4_1" #7_economic_diversification
     ) ~ "counting",
      TRUE ~ type_question))
@@ -145,8 +145,8 @@ select_multiple2<-select_multiple%>%
     TRUE ~ as.numeric(score_agroecology_module)))
   filter(is.na(score_agroecology_module))
   
-  sort(unique(select_multiple2$label_score_agroecology_module))
-  sort(unique(select_multiple2$multiple_responses_label_choice))
+sort(unique(select_multiple2$label_score_agroecology_module))
+sort(unique(select_multiple2$multiple_responses_label_choice))
   
 select_multiple3<- select_multiple%>%
   left_join(select_multiple2, by=c("kobo_farmer_id", "theme","list_name","name_question_recla" ))%>%
@@ -185,8 +185,10 @@ view(dfSummary(integer))
 # 3- soil_health: "_2_9_1_1" = 1/1
 # 4_animal_health: "_2_10_1_2","_3_3_3_4" = 2/3
 # 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2
-# 6- synergy: "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1" = 6/6
+# 6- synergy: "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1" = 6/6
 # 7- economic_diversification: "_2_4_1" = 1/1
+# Total = 10 questions (2 duplicated across principles)
+#zimbabwe = 9 questions (missing: _3_3_3_4)
 area <- pre_processing %>%
   #Retain questions related to area of land for crop, livestock and fish production and total area of land managed by household
   filter(name_question_recla %in% c("_3_4_2_1_1", "_3_4_2_2_1_1", "_3_4_2_2_1_2", "_3_4_2_3_2",
@@ -217,38 +219,46 @@ sort(unique(area$name_question_recla))
 
 counting<- pre_processing%>%
   filter(type_question == "counting")
-#Check if there are duplicate crops or livestock species for each farmer
-  #distinct(across(-c(name_question)), .keep_all = TRUE)
-  
+
 sort(unique(counting$name_choice))
 
 counting2<-counting%>%
   filter(!(name_choice%in%c("None","none","No action taken")))%>%
   arrange(label_choice) %>%
   group_by(kobo_farmer_id, name_question_recla, theme) %>%
-  summarise(multiple_responses = paste(label_choice, collapse = "//"),
-            label_score_agroecology_module = n_distinct(name_choice))%>% 
+  summarise(multiple_responses_label_choice = paste(label_choice, collapse = "//"),
+            label_score_agroecology_module = n_distinct(name_choice))%>%
   ungroup()%>%
   #Left join area of land for crop, livestock, fish production for calculation (number of species/ha)
-  left_join(area, by= c("kobo_farmer_id", "name_question_recla"))%>%
+  left_join(area, by= c("kobo_farmer_id", "name_question_recla","theme"))%>%
   #Retain the rows with production_area_ha==NA (farmer did not know the area of land)
   filter((name_question_recla %in%c("_3_4_3_1_1_2","_3_4_3_3_1")& is.na(production_area_ha)))%>%
   select(-production_area_ha)%>%
   #Replace NA in production_area_ha by total land managed by household
-  left_join(area_total, by="kobo_farmer_id")%>%
+  left_join(area_total, by=c("kobo_farmer_id","theme"))%>%
   select(-name_question_recla.y)%>%
   rename("name_question_recla"="name_question_recla.x")
 names(counting2)
 
 counting3<-counting%>%
-  filter(!(name_choice%in%c("None","none","No action taken")))%>%
   arrange(label_choice) %>%
   group_by(kobo_farmer_id, name_question_recla, theme) %>%
-    summarise(multiple_responses = paste(label_choice, collapse = "//"),
+    summarise(multiple_responses_label_choice = paste(label_choice, collapse = "//"),
               label_score_agroecology_module = n_distinct(name_choice))%>% 
   ungroup()%>%
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"None")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>% #this code is particularly for zwe (error in completing the database)
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"none")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>% #this code is particularly for zwe (error in completing the database)
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"No action taken")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>% #this code is particularly for zwe (error in completing the database)
+  
+  #Remove from the counting unsustainable practices from questions c(_3_3_3_1_calculate_2, _3_3_3_3
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"Monoculture with annual crops")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>%
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"Monoculture with perennial crops")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>%
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"Burning crop residues")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>%
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"Land clearing for agriculture")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>%
+  mutate(label_score_agroecology_module= case_when(str_detect(multiple_responses_label_choice,"Overgrazing")~(label_score_agroecology_module-1),TRUE ~ label_score_agroecology_module))%>%
+  
   #Left join area of land for crop, livestock, fish production for calculation (number of species/ha)
-  left_join(area, by= c("kobo_farmer_id", "name_question_recla"))%>%
+  left_join(area, by= c("kobo_farmer_id", "name_question_recla","theme"))%>%
   #Filter the rows with production_area_ha==NA (because farmer did not know the area of land for production)
   filter(!(name_question_recla %in%c("_3_4_3_1_1_2","_3_4_3_3_1")& is.na(production_area_ha)))%>%
   #Rbind total area managed by household for farmers that did not know the area of land for production
@@ -259,18 +269,21 @@ counting3<-counting%>%
   mutate(score_agroecology_module= case_when(
     # 4_animal_health
     name_question_recla %in% c("_2_10_1_2", "_3_3_3_4") ~ case_when(
+      label_score_agroecology_module == 0 ~ 1,
       label_score_agroecology_module == 1 ~ 2,
       label_score_agroecology_module == 2 ~ 3,
       label_score_agroecology_module == 3 ~ 4,
       label_score_agroecology_module >= 4 ~ 5),
     # 5_biodiversity
     name_question_recla %in% c("_3_4_3_1_1_2", "_3_4_3_3_1") ~ case_when(
+      is.na(label_score_agroecology_module) ~ 1, #zwe has a farmer that does not provide any farmland and cropland size
       label_score_agroecology_module <= 1 ~ 1,
       label_score_agroecology_module > 1 & label_score_agroecology_module <= 2 ~ 2.33333,
       label_score_agroecology_module > 2 & label_score_agroecology_module <= 3 ~ 3.66666,
       label_score_agroecology_module > 3 ~ 5),
-    # 6_synergy
-    name_question_recla %in% c("_3_3_3_1", "_2_9_1_1", "_3_3_1_7", "_3_3_3_3", "_3_3_3_4", "_2_12_1") ~ case_when(
+    # 6_synergy and 3_soil_health
+    name_question_recla %in% c("_3_3_3_1_calculate_2", "_2_9_1_1", "_3_3_1_7", "_3_3_3_3", "_3_3_3_4", "_2_12_1") ~ case_when(
+      label_score_agroecology_module == 0 ~ 1,
       label_score_agroecology_module == 1 ~ 2,
       label_score_agroecology_module == 2 ~ 3,
       label_score_agroecology_module == 3 ~ 4,
@@ -285,41 +298,80 @@ counting3<-counting%>%
     TRUE ~ score_agroecology_module))%>%
   select(-production_area_ha)
     
-counting4<-counting%>%
-  #Retain farmers that applied None practices for .....
-  filter(name_choice%in%c("None","none","No action taken"))%>%
-  mutate(score_agroecology_module=1,
-         label_score_agroecology_module="No practices taken")
+view(dfSummary(counting3))
 
-sort(unique(counting4$name_choice))
-sort(unique(counting3$name_question_recla))
-names(counting3)
+#_2_9_1_1: Get farmers that did not implement any ecological practice to improve soil fertility of cropland in question _1_4_3_1
+counting_1_4_3_1 <- select_multiple3 %>%
+  filter(name_question_recla == "_1_4_3_1") %>%
+  filter(!str_detect(label_choice, "Use of Ecological practices \\(e\\.g\\., cover crops, legume intercropping, mulching, etc\\.\\)\\."))%>%
+  mutate(name_question_recla= "_2_9_1_1",
+        label_question= "Which ecological practices do you use on cropland to improve soil quality and health?",
+        type_question= "counting",
+        label_score_agroecology_module= "0 practices implemented",
+        score_agroecology_module= 1)
+
+#_3_3_1_7: Get farmers that did not implement any ecological practice to  to manage pest in  cropland in question  _3_3_1_7
+counting_3_3_1_7 <- pre_processing %>%
+  filter(name_question_recla=="_3_4_3_1_1_2")%>%
+  select(kobo_farmer_id,country, sheet_id,module,type_question,parent_table_name,parent_index) %>%
+  anti_join(
+    counting3 %>%
+      filter(name_question_recla == "_3_3_1_7") %>%
+      select(kobo_farmer_id,),
+    by = "kobo_farmer_id")%>%
+  distinct()%>%
+  mutate(index=NA,
+         name_question= "_3_3_1_7",
+         label_question= "What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?",
+         name_question_recla= "_3_3_1_7",
+         theme="6_synergy",
+         indicator="6_synergy",
+         name_choice= 0,
+         label_choice= "0 practices implemented",
+         type= "select_multiple",
+         list_name= "3_3_1_7",
+         label_score_agroecology_module= "0 practices implemented",
+         score_agroecology_module= 1)
+         
+names(counting_1_4_3_5)
+sort(unique(counting_1_4_3_5$name_question_recla))
+sort(unique(counting_1_4_3_5$label_score_agroecology_module))
+sort(unique(counting_1_4_3_5$label_choice))
 
 counting5<- counting%>%
-  filter(!(name_choice %in% c("None","none","No action taken")))%>%
   left_join(counting3, by=c("kobo_farmer_id", "theme","name_question_recla" ))%>%
-  distinct(across(-c(name_question, name_choice, label_choice)), .keep_all = TRUE)%>%
-  mutate(label_choice= multiple_responses,
+  distinct(across(c(kobo_farmer_id, module, theme, indicator, label_question, type_question, name_question_recla,
+                    multiple_responses_label_choice, label_score_agroecology_module, score_agroecology_module)), .keep_all = TRUE)%>%
+  mutate(label_choice= multiple_responses_label_choice,
          name_choice= label_score_agroecology_module)%>%
-  select(-multiple_responses)%>%
+  select(-multiple_responses_label_choice)%>%
   mutate(label_score_agroecology_module = as.character(label_score_agroecology_module))%>%
   mutate(label_score_agroecology_module= case_when(
     name_question_recla %in% 
       #4_animal_health
       c("_2_10_1_2","_3_3_3_4",
         #6_synergy
-        "_3_3_3_1","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1")~ paste(name_choice, "practices implemented"),
+        "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1")~ paste(name_choice, "practices implemented"),
     #5_biodiversity
     name_question_recla %in% c("_3_4_3_1_1_2")~paste(name_choice, "crop species per ha"),
     name_question_recla %in% c("_3_4_3_3_1")~paste(name_choice, "livestock species per ha"),
     #7_economic_diversification
     name_question_recla %in% c("_2_4_1")~ paste(name_choice, "sources of income"),
     TRUE ~ label_score_agroecology_module))%>%
-  rbind(counting4)
-  filter(is.na(score_agroecology_module))
+  #_2_9_1_1: add farmers that did not implement any ecological practice to improve soil fertility of cropland in question _1_4_3_1
+  # 3_soil_health
+  rbind(counting_1_4_3_1)%>%
+    mutate(theme= case_when(theme == "2_input_reduction"~ "3_soil_health",TRUE ~ theme))%>%
+  mutate(indicator= case_when(theme == "2_input_reduction"~ "3_soil_health",TRUE ~ indicator))%>%
+  # 6_synergy
+  rbind(counting_1_4_3_1)%>%
+  mutate(theme= case_when(theme == "2_input_reduction"~ "6_synergy",TRUE ~ theme))%>%
+  mutate(indicator= case_when(theme == "2_input_reduction"~ "6_synergy",TRUE ~ indicator))%>%
+  #_3_3_1_7: add farmers that did not implement any ecological practice to  to manage pest in  cropland in question  _3_3_1_7
+  rbind(counting_3_3_1_7)
 
+view(dfSummary(counting5))
 
-  
 agroecology_module_score<-   rbind(select_one,
                                    select_multiple3,
                                    counting5,

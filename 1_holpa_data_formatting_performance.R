@@ -580,7 +580,7 @@ sort(unique(tun_performance_data$indicator))
 ### THEME: AGRICULTURAL----
 ## Indicator: Crop health
 # Remove rows NA for other practices
-filter(!(name_question %in% c("_3_4_2_1_8_2","_3_4_2_1_8_3") & is.na(name_choice)))%>%
+filter(!(name_question %in% c("_3_4_2_1_8_2","_3_4_2_1_8_3") & is.na(name_choice)))%>% #remove line
 ## Indicator: Nutrient use
   mutate(label_choice=case_when(
     name_question %in% c("_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "zimbabwe"~"in acres",
@@ -592,7 +592,7 @@ filter(!(name_question %in% c("_3_4_2_1_8_2","_3_4_2_1_8_3") & is.na(name_choice
     name_question_recla=="_1_4_3_3_1_calculate"~ "_1_4_3_3_1",
     name_question_recla=="_1_4_3_4_1_calculate"~"_1_4_3_4_1",
     TRUE ~ name_question_recla))%>%
-  # Remove rows NA for other practices
+  # Remove rows NA for other practices remove line
   filter(!(name_question %in% c("_1_4_3_2_1_calculate","_1_4_3_3_1_calculate","_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_1_calculate","_1_4_3_4_2","_1_4_3_4_3") & is.na(name_choice)))%>%
 
 ### THEME: ENVIRONMENTAL----
@@ -606,6 +606,8 @@ mutate(label_choice = case_when(
     name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10") ~ "_3_4_3_3_1",
     TRUE ~ name_question_recla))%>%
+  #Remove _3_4_3_3_1/other
+  filter(name_question!="_3_4_3_3_1/other")%>%
   mutate(name_choice = case_when(
     str_detect(name_question,"_3_4_3_3_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of the livestock
     TRUE ~ name_choice))%>%
