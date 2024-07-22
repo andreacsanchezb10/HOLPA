@@ -98,7 +98,7 @@ zwe_global_choices<-global_choices%>%
 
 
 ### TUNISIA -----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_CLEAN_2024.04.02.xlsx" #path: Andrea
+tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/HOLPA_Tunisia_household_survey_20230919_V2_FIX_-_all_versions_-_English_en_-_2024-04-03-10-29-52.xlsx" #path: Andrea
 
 tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
   #Remove respondents that did not wanted to complete the survey
@@ -405,9 +405,9 @@ tun_agroecology_data<-rbind(
 
 
 ## If the farmers doesn't know the answer put 9999-----
-  #result2<- tun_agroecology_data%>%
+  result2<- tun_agroecology_data%>%
   
-      result2<- zwe_agroecology_data%>%
+    #  result2<- zwe_agroecology_data%>%
   
   #Indicator: 5_biodiversity
   mutate(name_question_recla  = case_when(
