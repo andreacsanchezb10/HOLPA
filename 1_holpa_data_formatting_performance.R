@@ -472,7 +472,7 @@ fun_performance_3_3_4_1_3_begin_repeat<- function(country_global_choices,country
   country_performance_columns_3_3_4_1_3_begin_repeat <- intersect(country_performance_question_columns, colnames(country_survey_3_3_4_1_3_begin_repeat))
   mismatched_columns_3_3_4_1_3_begin_repeat <- setdiff(country_performance_question_columns, country_performance_columns_3_3_4_1_3_begin_repeat)
   
-  country_performance_3_3_4_1_3_begin_repeat <- zwe_survey_3_3_4_1_3_begin_repeat %>%
+  country_performance_3_3_4_1_3_begin_repeat <- country_survey_3_3_4_1_3_begin_repeat %>%
     select(all_of(country_performance_columns_3_3_4_1_3_begin_repeat))%>%
     mutate_all(as.character)
   
@@ -575,7 +575,7 @@ sort(unique(tun_performance_data$indicator))
 ## If the farmers doesn't know the answer put 9999-----
 result2<- tun_performance_data%>%
   
-#   result2<- zwe_performance_data%>%
+  #  result2<- zwe_performance_data%>%
 
 ### THEME: AGRICULTURAL----
 ## Indicator: Crop health
@@ -758,29 +758,44 @@ main_crop_yield<- result2%>%
   filter(indicator=="productivity_crops")%>%
   filter(name_question_recla=="_3_4_3_1_3_calculate"|
            name_question_recla== "_3_4_2_1_5_1_calculate"|
-           name_question_recla=="_3_4_2_1_5_2")%>%
+           name_question_recla=="_3_4_2_1_5_2"|
+           name_question_recla=="_3_4_2_1_3")%>%
   mutate(merge_id = case_when(sheet_id=="Final HOLPA_Zimbabwe_Household"~paste(kobo_farmer_id,sheet_id,index,sep = "_"),
                               TRUE ~paste(kobo_farmer_id,parent_table_name,parent_index,index,sep="_")))%>%
-  select(sheet_id,name_choice,name_question_recla,kobo_farmer_id)
+  select(sheet_id,name_choice,name_question_recla,kobo_farmer_id,index,country)
 
-x_3_4_3_1_3_calculate<-main_crop_yield_long%>%
+x_3_4_3_1_3_calculate<-main_crop_yield%>%
   filter(name_question_recla=="_3_4_3_1_3_calculate")
-x_3_4_2_1_5_1_calculate<- main_crop_yield_long%>%
+x_3_4_2_1_5_1_calculate<- main_crop_yield%>%
   filter(name_question_recla== "_3_4_2_1_5_1_calculate")
-x_3_4_2_1_5_2<-main_crop_yield_long%>%
+x_3_4_2_1_5_2<-main_crop_yield%>%
   filter(name_question_recla=="_3_4_2_1_5_2")
+x_3_4_2_1_3<-main_crop_yield%>%
+  filter(name_question_recla=="_3_4_2_1_3")%>%
+  mutate(name_choice= as.numeric(name_choice))%>%
+  mutate(name_choice= case_when(
+    country== "zimbabwe"~ (name_choice*0.404686),
+    TRUE ~name_choice))
 
-max_yield_crops<-left_join(x_3_4_3_1_3_calculate,x_3_4_2_1_5_1_calculate,by="sheet_id")%>%
-  left_join(x_3_4_2_1_5_2, by= "sheet_id")%>%
-  group_by(name_choice.x,name_choice.y) %>%
-  summarize(max_yiel_crop = max(name_choice, na.rm = TRUE))%>%
+max_yield_crops<-
+  dplyr::left_join(x_3_4_3_1_3_calculate,x_3_4_2_1_5_1_calculate,by=c("sheet_id","kobo_farmer_id","index","country"))%>%
+  left_join(x_3_4_2_1_5_2, by= c("sheet_id","kobo_farmer_id","index","country"))%>%
+  left_join(x_3_4_2_1_3, by= c("sheet_id","kobo_farmer_id","index","country"))%>%
+  rename("crop_name"="name_choice.x",
+         "crop_production_unit"="name_choice.y",
+         "crop_production"="name_choice.x.x",
+         "cropland_area"= "name_choice.y.y")%>%
+  mutate(crop_production=as.numeric(crop_production),
+         yield= crop_production/cropland_area)%>%
+  group_by(crop_name,crop_production_unit) %>%
+  summarize(max_crop_yield_ha = max(yield, na.rm = TRUE))%>%
   ungroup()
   
   
-sort(unique(main_crop_yield$label_question))
+sort(unique(max_yield_crops$label_question))
 sort(unique(main_crop_yield$name_question_recla))
 sort(unique(main_crop_yield$sheet_id))
 sort(unique(main_crop_yield$merge_id))
-write.csv(list_main_crops,file='tun/tun_crops_list.csv',row.names=FALSE)
-write.csv(list_main_crops,file='zwe/zwe_crops_list.csv',row.names=FALSE)
+write.csv(max_yield_crops,file='tun/tun_crops_list.csv',row.names=FALSE)
+write.csv(max_yield_crops,file='zwe/zwe_crops_list.csv',row.names=FALSE)
 

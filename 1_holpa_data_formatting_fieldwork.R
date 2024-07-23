@@ -89,8 +89,8 @@ names(tun_fieldwork_survey)
 
 #Add household survey kobo_farmer_id to fieldwork survey
 tun_fieldwork<- tun_household_survey%>%
-  select(kobo_farmer_id, household_id,"_1_2_1_4_1",	"_1_2_1_4_2"  )%>%
-  right_join(tun_fieldwork_survey,by=c("_1_2_1_4_1",	"_1_2_1_4_2"))%>%
+  select(kobo_farmer_id, tun_household_id )%>%
+  right_join(tun_fieldwork_survey,by=c("tun_household_id"))%>%
   rename("kobo_farmer_id"="kobo_farmer_id.x",
          "kobo_farmer_id.fieldwork"="kobo_farmer_id.y" )%>%
   #Remove the farmers that do not match in the household survey
@@ -98,11 +98,4 @@ tun_fieldwork<- tun_household_survey%>%
 
 names(tun_fieldwork)
 
-write.csv(zwe_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_fieldwork_format.csv",row.names=FALSE)
-
-tun_error_fieldwork<- tun_household_survey%>%
-  select(kobo_farmer_id, household_id,"_1_2_1_4_1",	"_1_2_1_4_2"  )%>%
-  right_join(tun_fieldwork_survey,by=c("_1_2_1_4_1",	"_1_2_1_4_2"))%>%
-  filter(is.na(kobo_farmer_id.x))
-
-write.csv(tun_error_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_error_fieldwork.csv",row.names=FALSE)
+write.csv(tun_fieldwork,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_fieldwork_format.csv",row.names=FALSE)
