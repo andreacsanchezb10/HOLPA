@@ -30,6 +30,8 @@ zwe_ae_scores <- read_csv("zwe/zwe_agroecology_score.csv",show_col_types = FALSE
 
 zwe_data <- zwe_data %>% left_join(zwe_ae_scores) %>% unique()
 
+
+
 ```
 ## Calculate agroecology indicator scores
 Indicator scores are pre-calculated in another code (which needs transferring to here).
