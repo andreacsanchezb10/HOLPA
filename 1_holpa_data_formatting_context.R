@@ -370,31 +370,30 @@ zwe_context_data<-fun_context_data(zwe_global_choices,
                                            zwe_survey_main,  ## Main survey 
                                            zwe_survey_1_4_2_7_begin_repeat  ##production_end_use for OTHER NON-FARM PRODUCT
                                           
-)%>%
+)
 
   filter(
-    indicator== "climate_resilience_adaptative_capacity")
+    theme== "farm_characteristics")
 
                                                
              
-[9] "climate_resilience_adaptative_capacity"  ""                                             
-                                                                                      
+
 sort(unique(zwe_context_data$indicator))
 sort(unique(zwe_context_data$theme))
 
 # Tunisia-----
-tun_context_data<-fun_context_data(tun_global_choices,
-                                           tun_survey_main, ## Main survey 
-                                           tun_survey_1_4_2_7_begin_repeat,  ##production_end_use for OTHER NON-FARM PRODUCT  
-)%>%
-  filter(
-    indicator==   "climate_resilience_assets" )
+#tun_survey_1_4_2_7_begin_repeat,  ## tunisia does not have this begin_repeat production_end_use for OTHER NON-FARM PRODUCT  
+tun_context_data<-    fun_context_main(tun_global_choices, tun_survey_main) ## Main survey
 
 sort(unique(tun_context_data$indicator))
+sort(unique(tun_context_data$theme))
+
 
 ## If the farmers doesn't know the answer put 9999-----
-result2<- zwe_context_data%>%
-  #Indicator: climate_drought and climate_flood
+#result2<- zwe_context_data%>%
+  result2<- tun_context_data%>%
+
+ #Indicator: climate_drought and climate_flood
   #Zimbabwe error: the choices options should be "4_2_1_3" (1=yes, 0=no, notsure), but the country put "4_2_1_1" (increased, nochange, decreased, notsure)
   #So I reclassified those options into 1=yes, 0=no, notsure
   mutate( name_choice=case_when(
@@ -408,6 +407,17 @@ result2<- zwe_context_data%>%
   #Indicator: "farmer_relation" 
   mutate(name_question_recla = case_when(name_question_recla== "_1_2_1_6_1"~ "_1_2_1_6",TRUE ~name_question_recla))%>%
   filter(!(name_question== "_1_2_1_6"& name_choice== "other"))%>%
+  #Indicator: context_all
+  mutate(label_choice= case_when(
+    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")&country== "zimbabwe"~"in acres",
+    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")&country== "tunisia"~"in hectares",
+    TRUE ~ label_choice))%>%
+  #Indicator: inputs
+  mutate(label_choice= case_when(
+    name_question %in% c("_1_4_3_2_3", "_1_4_3_3_3", "_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3")&country== "zimbabwe"~"in acres",
+    name_question %in% c("_1_4_3_2_3", "_1_4_3_3_3", "_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3")&country== "tunisia"~"in hectares",
+    TRUE ~ label_choice))%>%
+  
   #Indicator: "housing"
   mutate(name_question_recla = case_when(
     name_question_recla== "_3_2_1_3_1_1"~ "_3_2_1_3_1",
@@ -433,6 +443,7 @@ result2<- zwe_context_data%>%
   # Remove rows name_choice == NA
   filter(!is.na(name_choice))
 
+
 sort(unique(result2$label_question))
 sort(unique(result2$name_question))
 sort(unique(result2$name_question_recla))
@@ -440,3 +451,4 @@ sort(unique(result2$name_choice))
 sort(unique(result2$theme)) 
 
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context_format.csv",row.names=FALSE)
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_context_format.csv",row.names=FALSE)
