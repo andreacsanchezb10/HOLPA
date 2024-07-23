@@ -158,6 +158,7 @@ fun_context_survey<- function(global_survey) {
   context_survey$subindicator[str_detect(context_survey$subindicator,"inputs")]<- "inputs"
   context_survey$subindicator[str_detect(context_survey$subindicator,"production_systems")]<- "production_systems"
   context_survey$subindicator[str_detect(context_survey$subindicator,"production_end_use")]<- "production_end_use"
+  
   context_survey$subindicator[str_detect(context_survey$subindicator,"household_labour")]<- "household_labour"
   context_survey$subindicator[str_detect(context_survey$subindicator,"credit_access")]<- "credit_access"
   context_survey$subindicator[str_detect(context_survey$subindicator,"income")]<- "income"
@@ -190,12 +191,19 @@ fun_context_choices<- function(country_global_choices) {
   filter(str_detect(module, "context"))%>%
   mutate(module= "context")
 
+  #"production_end_use/production_systems" these question is part of two indicators
+  duplicate_rows <-  context_choices%>% filter(str_detect(subindicator, "production_end_use/production_systems"))
+  duplicate_rows$subindicator <- "production_end_use"
+  context_choices <- rbind(context_choices, duplicate_rows)
+  
   context_choices$subindicator[str_detect(context_choices$subindicator,"respondent_characteristics")]<- "respondent_characteristics"
   context_choices$subindicator[str_detect(context_choices$subindicator,"household_characteristic")]<- "household_characteristics"
   context_choices$subindicator[str_detect(context_choices$subindicator,"context_all")]<- "context_all"
   context_choices$subindicator[str_detect(context_choices$subindicator,"farm_characteristic")]<- "farm_characteristics"
   context_choices$subindicator[str_detect(context_choices$subindicator,"inputs")]<- "inputs"
   context_choices$subindicator[str_detect(context_choices$subindicator,"production_systems")]<- "production_systems"
+  context_choices$subindicator[str_detect(context_choices$subindicator,"production_end_use")]<- "production_end_use"
+  
   context_choices$subindicator[str_detect(context_choices$subindicator,"household_labour")]<- "household_labour"
   context_choices$subindicator[str_detect(context_choices$subindicator,"credit_access")]<- "credit_access"
   context_choices$subindicator[str_detect(context_choices$subindicator,"income")]<- "income"
@@ -365,24 +373,15 @@ zwe_context_data<-fun_context_data(zwe_global_choices,
 )%>%
 
   filter(
-    indicator== "membership")
-    theme== "climate_perception")
+    indicator== "climate_resilience_adaptative_capacity")
 
                                                
              
-[9] "climate_resilience_adaptative_capacity"  "hh_head_relation"                                             
+[9] "climate_resilience_adaptative_capacity"  ""                                             
                                                                                       
-                                           
-[29] "name"                                   "personal_factors"                       "primary_occupation"                     "production_end_use"                    
-[33] "production_end_use/11_connectivity"     "production_systems"                     "project_involvement"                    "secondary_occupation"                  
-[37] "societal_factor"                        "structure"                              "training"                          
-
-
-         "context_all"                "economic"       "farm_characteristics"            "farm_characteristics"       "general"                    "household_characteristics" 
-[7] "inputs"                     "motivations_agroecology"    "respondent_characteristics"
-
-
 sort(unique(zwe_context_data$indicator))
+sort(unique(zwe_context_data$theme))
+
 # Tunisia-----
 tun_context_data<-fun_context_data(tun_global_choices,
                                            tun_survey_main, ## Main survey 
@@ -418,7 +417,12 @@ result2<- zwe_context_data%>%
    #Indicator: "membership"
   mutate(name_question_recla = case_when(name_question_recla==  "_2_3_1_1_1"~"_2_3_1_1",TRUE ~name_question_recla))%>%
   filter(!(name_question%in% c("_2_3_1_1_1/other")))%>%
-  
+  #Inicator: primary_occupation
+  mutate(name_question_recla = case_when(name_question_recla==  "_1_2_1_13_1_1"~"_1_2_1_13_1",TRUE ~name_question_recla))%>%
+  filter(!(name_question=="_1_2_1_13_1"&name_choice=="other"))%>%
+  #Inicator: secondary_occupation
+  mutate(name_question_recla = case_when(name_question_recla==  "_1_2_1_13_2_2_1"~"_1_2_1_13_2_2",TRUE ~name_question_recla))%>%
+  filter(!(name_question=="_1_2_1_13_2_2/other"))%>%
   #all indicators
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
@@ -435,227 +439,4 @@ sort(unique(result2$name_question_recla))
 sort(unique(result2$name_choice)) 
 sort(unique(result2$theme)) 
 
-
-
-  mutate(
-    name_question_recla = case_when(
-      #Indicator: "hh_head_relation"
-      name_question_recla== "_1_2_1_5_1" ~ "_1_2_1_5",
-      
-      
-      #Indicator: "membership"
-      name_question_recla=="_2_3_1_1_1"~"_2_3_1_1/other",
-      #Indicator: "primary_occupation"
-      name_question_recla=="_1_2_1_13_1_1"~ "_1_2_1_13_1",
-      #Indicator: "secondary_occupation"
-      name_question_recla=="_1_2_1_13_2_2_1"~ "_1_2_1_13_2_2/other",
-      #Indicator: "inputs"
-      str_detect(name_question_recla,"_1_4_3_1/")~"_1_4_3_1",
-      str_detect(name_question_recla, "_1_4_3_5/")~"_1_4_3_5",
-      # Indicator: "production_systems"
-      str_detect(name_question_recla,"_1_4_2_1/")~ "_1_4_2_1",
-      name_question_recla=="_1_4_2_7_calculate"~ "_1_4_2_1",
-      # Indicator:climate_rainfall_timing
-      str_detect(name_question_recla,"_4_2_1_2_1/")~"_4_2_1_2_1",
-      TRUE ~name_question_recla))%>%
-  
-  mutate(label_question = case_when(
-    #Indicator: "hh_head_relation"
-    name_question_recla== "_1_2_1_5" ~  "What is your relationship with the head of household",
-    #Indicator: "farmer_relation"
-    name_question_recla== "_1_2_1_6" ~  "What is your relationship with the person responsible for making decision on farm activities?",
-    #Indicator: "housing"
-    name_question_recla== "_3_2_1_3_1/other" ~  "Please observe the farmer's main household and ask, what material is the roof of the house made of?",
-    name_question_recla== "_3_2_1_3_2/other" ~  "Please observe the farmer's main household and ask, what material are the walls of the house made of?",
-    #Indicator: "membership"
-    name_question_recla==  "_2_3_1_1/other"~"Select all the associations/organizations of which you or other HH members are part of",
-    #Indicator: "primary_occupation"
-    name_question_recla=="_1_2_1_13_1"~"What was your main occupation in the last 12 months?",
-    #Indicator: "secondary_occupation"
-    name_question_recla=="_1_2_1_13_2_2/other"~ "What was your other occupation(s) in the last 12 months?",
-    TRUE ~ label_question))%>%
-  
-  #Indicator: "hh_head_relation"
-  filter(!(name_question %in%c("_1_2_1_5")& name_choice=="other relative"))%>%
-  #Indicator: "farmer_relation"
-  filter(!(name_question %in%c("_1_2_1_6")& name_choice=="other"))%>%
-  #Indicator: "housing"
-  filter(!(name_question %in%c("_3_2_1_3_1/other")))%>%
-  filter(!(name_question %in%c("_3_2_1_3_2/other")))%>%
-  #Indicator: "primary_occupation"
-  filter(!(name_question %in%c("_1_2_1_13_1")& name_choice=="other"))%>%
-  #Indicator: "secondary_occupation"
-  filter(!(name_question %in% c("_1_2_1_13_2_2/other")))%>%
-  
-  mutate(label_choice = case_when(
-    #Indicator: "housing"
-    name_question %in% c("_3_2_1_3_1_1","_3_2_1_3_2_1","_2_3_1_1_1","_1_2_1_13_1_1","_1_2_1_13_2_2_1") ~ "other",
-    #Indicator: "location"
-    name_question %in% c("_1_3")~ "latitude longitude altitude",
-    #Indicator: "inputs"
-    name_question %in% c( 
-      #Indicator: "inputs"
-      "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3",
-      #Indicator: "context_all"
-      "_1_4_1_1_1")~"acres",
-    # Indicator: "production_systems"
-    name_question %in%c("_1_4_2_7_calculate")~"other",
-    
-    TRUE ~ label_choice))%>%
-  filter(!is.na(name_choice))%>%
-  #filter(!(name_question%in% c("_1_2_1_5_1","_1_2_1_6_1","_3_2_1_3_1_1","_3_2_1_3_2_1","_1_3_1","_2_3_1_1_1",
-  #                             "_1_2_1_13_1_1","_1_2_1_13_2_2_1","_1_2_1_15_1","_3_2_1_2_1",
-  #                            "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2",
-  #                            "_1_4_3_4_3","_1_4_3_6_4","_1_4_3_6_2","_1_4_3_6_3","_1_4_3_6_1_calculate",
-  #                            "_4_1_1_4_4_1","_1_4_2_2_6_1","_1_4_2_3_7_1",
-  #                            "_3_4_1_1_4_1","_3_4_1_1_6_2","_3_4_1_1_6_1","_3_4_1_1_5_2","_3_4_1_1_5_1","_3_4_1_1_4_2","_3_4_1_1_3_2",
-  #                            "_3_4_1_1_3_1") & is.na(name_choice)))%>%
-  filter(!(str_detect(name_question, "hh_photo") & is.na(name_choice))) #Remove the rows with **Specify other:** == NA 
-
-write.csv(zwe_context_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context_format.csv",row.names=FALSE)
-
-
-
-
-  
-  
-  
-#___________________________
-result_zwe_context <- zwe_context%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
-  #Indicator: climate_drought and climate_flood
-  #Error: the choices options should be "4_2_1_3" (1=yes, 0=no, notsure), but the country put "4_2_1_1" (increased, nochange, decreased, notsure)
-  #So I reclassified those options into 1=yes, 0=no, notsure
-  mutate(
-    name_choice=case_when(name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice%in% c("increase","decrease") ~ "1",TRUE ~ name_choice),
-    name_choice=case_when(name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice%in% c("nochange") ~ "0",TRUE ~ name_choice))%>%
-  context_left_join(context_choices,.)%>%
-  mutate(name_question_recla= name_question)%>%
-  mutate(parent_table_name= NA,
-         parent_index=NA)
-names(result_zwe_context)
-sort(unique(result_zwe_context$name_choice))
-
-## _1_4_2_7_begin_repeat: production_end_use for OTHER NON-FARM PRODUCT  ----
-zwe_context_columns_1_4_2_7_begin_repeat <- intersect(context_questions_columns, colnames(zwe_survey_1_4_2_7_begin_repeat))
-zwe_context_columns_1_4_2_7_begin_repeat
-context_questions_columns
-mismatched_columns_1_4_2_7_begin_repeat <- setdiff(context_questions_columns, zwe_context_columns_1_4_2_7_begin_repeat)
-print(mismatched_columns_1_4_2_7_begin_repeat)
-
-zwe_context_1_4_2_7_begin_repeat <- zwe_survey_1_4_2_7_begin_repeat %>%
-  select(all_of(zwe_context_columns_1_4_2_7_begin_repeat))%>%
-  mutate_all(as.character)
-
-view(dfSummary(zwe_context_1_4_2_7_begin_repeat))
-
-# Identify columns with only NA values
-na_columns_1_4_2_7_begin_repeat <- colSums(is.na(zwe_context_1_4_2_7_begin_repeat)) == nrow(zwe_context_1_4_2_7_begin_repeat)
-na_columns_1_4_2_7_begin_repeat
-
-# Remove columns with only NA values
-zwe_context_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat[, !na_columns_1_4_2_7_begin_repeat]
-
-view(dfSummary(zwe_context_1_4_2_7_begin_repeat))
-
-result_zwe_context_1_4_2_7_begin_repeat <- zwe_context_1_4_2_7_begin_repeat%>%
-  gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-  context_left_join(context_choices,.)%>%
-  mutate(name_question_recla= name_question)
-
-
-# Combine all----
-zwe_context_all<- rbind(
-  result_zwe_context,
-  # Indicator: production_end_use for OTHER NON-FARM PRODUCT
-  result_zwe_context_1_4_2_7_begin_repeat
-   )%>%
-
-  mutate(
-    name_question_recla = case_when(
-      #Indicator: "hh_head_relation"
-      name_question_recla== "_1_2_1_5_1" ~ "_1_2_1_5",
-      #Indicator: "farmer_relation" 
-      name_question_recla== "_1_2_1_6_1"~ "_1_2_1_6",
-      #Indicator: "housing"
-      name_question_recla== "_3_2_1_3_1_1"~ "_3_2_1_3_1/other",
-      name_question_recla== "_3_2_1_3_2_1"~ "_3_2_1_3_2/other",
-      #Indicator: "membership"
-      name_question_recla=="_2_3_1_1_1"~"_2_3_1_1/other",
-      #Indicator: "primary_occupation"
-      name_question_recla=="_1_2_1_13_1_1"~ "_1_2_1_13_1",
-      #Indicator: "secondary_occupation"
-      name_question_recla=="_1_2_1_13_2_2_1"~ "_1_2_1_13_2_2/other",
-      #Indicator: "inputs"
-      str_detect(name_question_recla,"_1_4_3_1/")~"_1_4_3_1",
-      str_detect(name_question_recla, "_1_4_3_5/")~"_1_4_3_5",
-      # Indicator: "production_systems"
-      str_detect(name_question_recla,"_1_4_2_1/")~ "_1_4_2_1",
-      name_question_recla=="_1_4_2_7_calculate"~ "_1_4_2_1",
-      # Indicator:climate_rainfall_timing
-      str_detect(name_question_recla,"_4_2_1_2_1/")~"_4_2_1_2_1",
-      TRUE ~name_question_recla))%>%
-  
-  mutate(label_question = case_when(
-    #Indicator: "hh_head_relation"
-    name_question_recla== "_1_2_1_5" ~  "What is your relationship with the head of household",
-    #Indicator: "farmer_relation"
-    name_question_recla== "_1_2_1_6" ~  "What is your relationship with the person responsible for making decision on farm activities?",
-    #Indicator: "housing"
-    name_question_recla== "_3_2_1_3_1/other" ~  "Please observe the farmer's main household and ask, what material is the roof of the house made of?",
-    name_question_recla== "_3_2_1_3_2/other" ~  "Please observe the farmer's main household and ask, what material are the walls of the house made of?",
-    #Indicator: "membership"
-    name_question_recla==  "_2_3_1_1/other"~"Select all the associations/organizations of which you or other HH members are part of",
-    #Indicator: "primary_occupation"
-    name_question_recla=="_1_2_1_13_1"~"What was your main occupation in the last 12 months?",
-    #Indicator: "secondary_occupation"
-    name_question_recla=="_1_2_1_13_2_2/other"~ "What was your other occupation(s) in the last 12 months?",
-    TRUE ~ label_question))%>%
-  
-  #Indicator: "hh_head_relation"
-  filter(!(name_question %in%c("_1_2_1_5")& name_choice=="other relative"))%>%
-  #Indicator: "farmer_relation"
-  filter(!(name_question %in%c("_1_2_1_6")& name_choice=="other"))%>%
-    #Indicator: "housing"
-  filter(!(name_question %in%c("_3_2_1_3_1/other")))%>%
-  filter(!(name_question %in%c("_3_2_1_3_2/other")))%>%
-  #Indicator: "primary_occupation"
-  filter(!(name_question %in%c("_1_2_1_13_1")& name_choice=="other"))%>%
-  #Indicator: "secondary_occupation"
-  filter(!(name_question %in% c("_1_2_1_13_2_2/other")))%>%
-           
-  mutate(label_choice = case_when(
-    #Indicator: "housing"
-    name_question %in% c("_3_2_1_3_1_1","_3_2_1_3_2_1","_2_3_1_1_1","_1_2_1_13_1_1","_1_2_1_13_2_2_1") ~ "other",
-    #Indicator: "location"
-    name_question %in% c("_1_3")~ "latitude longitude altitude",
-    #Indicator: "inputs"
-    name_question %in% c( 
-      #Indicator: "inputs"
-      "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3",
-      #Indicator: "context_all"
-      "_1_4_1_1_1")~"acres",
-    # Indicator: "production_systems"
-    name_question %in%c("_1_4_2_7_calculate")~"other",
-    
-    TRUE ~ label_choice))%>%
-  filter(!is.na(name_choice))%>%
-  #filter(!(name_question%in% c("_1_2_1_5_1","_1_2_1_6_1","_3_2_1_3_1_1","_3_2_1_3_2_1","_1_3_1","_2_3_1_1_1",
-  #                             "_1_2_1_13_1_1","_1_2_1_13_2_2_1","_1_2_1_15_1","_3_2_1_2_1",
-  #                            "_1_4_3_2_2","_1_4_3_2_3","_1_4_3_3_2","_1_4_3_3_3","_1_4_3_4_2",
-  #                            "_1_4_3_4_3","_1_4_3_6_4","_1_4_3_6_2","_1_4_3_6_3","_1_4_3_6_1_calculate",
-  #                            "_4_1_1_4_4_1","_1_4_2_2_6_1","_1_4_2_3_7_1",
-  #                            "_3_4_1_1_4_1","_3_4_1_1_6_2","_3_4_1_1_6_1","_3_4_1_1_5_2","_3_4_1_1_5_1","_3_4_1_1_4_2","_3_4_1_1_3_2",
-  #                            "_3_4_1_1_3_1") & is.na(name_choice)))%>%
-  filter(!(str_detect(name_question, "hh_photo") & is.na(name_choice))) #Remove the rows with **Specify other:** == NA 
-  
-write.csv(zwe_context_all,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context_format.csv",row.names=FALSE)
-
-sort(unique(result2$indicator))
-
-sort(unique(result2$label_question))
-sort(unique(result2$name_question))
-sort(unique(result2$name_question_recla))
-sort(unique(result2$name_choice)) 
-sort(unique(result2$theme)) 
-
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context_format.csv",row.names=FALSE)
