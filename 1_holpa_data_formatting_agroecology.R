@@ -98,8 +98,7 @@ zwe_global_choices<-global_choices%>%
 
 
 ### TUNISIA -----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/holpa_household_CLEAN_2024.04.02.xlsx" #path: Andrea
-
+tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun_holpa_household_survey_clean.xlsx" #path: Andrea
 tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")
@@ -405,16 +404,23 @@ tun_agroecology_data<-rbind(
 
 
 ## If the farmers doesn't know the answer put 9999-----
-  #result2<- tun_agroecology_data%>%
+  result2<- tun_agroecology_data%>%
   
-      result2<- zwe_agroecology_data%>%
+    #  result2<- zwe_agroecology_data%>%
   
   #Indicator: 5_biodiversity
   mutate(name_question_recla  = case_when(
     name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
-    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8") ~ "_3_4_3_3_1",
+    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8","l9","l10") ~ "_3_4_3_3_1",
     TRUE ~ name_question_recla))%>%
-    
+    filter(name_question!="_3_4_3_3_1/other")%>%
+    mutate(label_choice= case_when(
+      name_question_recla %in% c("_3_4_3_1_1_2","_3_4_3_3_1")~ name_choice,
+      TRUE ~label_choice))%>%
+    #Indicator: 6_synergy
+  mutate(label_choice= case_when(
+    name_question_recla %in% c("_3_3_3_1_calculate_2")~ name_choice,
+    TRUE ~label_choice))%>%
 # Indicator: all principles
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
@@ -442,60 +448,6 @@ sort(unique(result2$name_question))
 
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_format.csv",row.names=FALSE)
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_agroecology_format.csv",row.names=FALSE)
-  
-  
-  #______old________________
-  
-    #Indicator: "6_synergy"
-  filter(!(name_question %in% c("_3_3_1_7/other", "_3_3_3_3/other","_2_12_1/other__please_specify")))%>% #Remove the rows with "_3_3_1_7/other" "_3_3_3_3/other"
-  filter(!(name_question %in% c("_3_3_1_7_1","_3_3_3_3_1","_2_12_1_1","_3_3_3_3/none","_2_12_1/none") & is.na(name_choice)))%>% # Remove rows NA for other practices
-  mutate(label_choice = case_when(
-    name_question %in% c("_3_3_1_7_1","_3_3_3_3_1","_2_12_1_1" )~"Specify other practice:",
-    TRUE ~ label_choice))%>%
-  mutate(label_question = case_when( #replace label_question of specify other for the label_question of the main question
-    name_question == "_3_3_1_7_1"  ~ "What ecological practices did you apply in the last 12 months [add country meaning] on the farm to manage crop pests?",
-    name_question == "_3_3_3_3_1"  ~ "On the grazing land (owned, leased or shared), did you apply in the last 12 months any of the following practices?", 
-    name_question == "_2_12_1_1"  ~ "In addition to actions you mentioned previously, is there anything else you do on your farm to make sure their are positive relationships between animals, crops, trees, soil and water?", 
-    TRUE ~ label_question))%>%
-  mutate(name_question_recla = case_when(
-    str_detect(name_question_recla,"_2_12_1/")~str_replace(name_question_recla, "/.*", ""),
-    str_detect(name_question_recla,"_3_3_1_7/")~str_replace(name_question_recla, "/.*", ""),
-    str_detect(name_question_recla,"_3_3_3_1/")~str_replace(name_question_recla, "/.*", ""),
-    str_detect(name_question_recla,"_3_3_3_3/")~str_replace(name_question_recla, "/.*", ""),
-    name_question_recla=="_3_3_3_1_1"~"_3_3_3_1",
-    name_question_recla=="_3_3_3_3_1"~"_3_3_3_3",
-    name_question_recla=="_2_12_1_1"~"_2_12_1",
-    TRUE ~ name_question_recla))%>%
-  mutate(name_choice = case_when(
-     str_detect(name_question,"_3_3_3_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
-     str_detect(name_question,"_3_3_1_7/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
-    str_detect(name_question,"_3_3_3_3/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
-    str_detect(name_question,"_2_12_1/")~label_choice, # replace name_question by the name of practice
-    TRUE ~ name_choice))%>%
-  # Indicator: "7_economic_diversification"
-  mutate(name_question_recla = case_when(
-    str_detect(name_question_recla,"_2_4_1/")~str_replace(name_question_recla, "/.*", ""),
-    TRUE ~ name_question_recla))%>%
-  filter(!(name_question %in% c("_2_4_1/other")))%>% #Remove the rows with "_2_4_1/other"
-  filter(!(name_question %in% c("_2_4_1_2") & is.na(name_choice)))%>% # Remove rows NA for other practices
-  mutate(label_choice = case_when(
-    name_question %in% c("_2_4_1_2" )~"Specify other sources:",
-    TRUE ~ label_choice))%>%
-  mutate(label_question = case_when( #replace label_question of specify other for the label_question of the main question
-    name_question == "_2_4_1_2"  ~ "Please select all the sources of income for your household?",
-    TRUE ~ label_question))%>%
-  mutate(name_choice = case_when(
-    str_detect(name_question,"_2_4_1/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of practice
-    TRUE ~ name_choice))%>%
-  
-
-  
-
-
-table(zwe_agroecology_all$label_question,zwe_agroecology_all$name_question_recla)
-unique(zwe_agroecology_all$sheet_id)
-names(zwe_agroecology_all)
-view(dfSummary(zwe_agroecology_all))
 
 
 
