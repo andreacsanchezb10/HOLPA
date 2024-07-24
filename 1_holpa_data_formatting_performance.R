@@ -682,7 +682,7 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
   )%>%
   filter(
     indicator==   "income" )
-
+ 
 ## If the farmers doesn't know the answer put 9999-----
 #result2<- tun_performance_data%>%
   
