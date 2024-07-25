@@ -191,7 +191,8 @@ sen_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_
 sen_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
 sen_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
 sen_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
-sen_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: area of land per agricultural practice
+sen_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: area of land per agricultural practice
+  slice(-1)
 sen_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Irrigation
   slice(-1)
 
@@ -293,10 +294,10 @@ fun_performance_choices<- function(country_global_choices) {
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_abundance")]<- "biodiversity_abundance"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_diversity")]<- "biodiversity_diversity"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "landscape_complexity")]<- "landscape_complexity"
+    performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "water")]<- "water"
     
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_practices")]<- "biodiversity_practices"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "climate_mitigation")]<- "biodiversity_climate_mitigation"
-    performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "water")]<- "water"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "environmental_all")]<- "environmental_all"
       
     
@@ -548,7 +549,7 @@ filter(
   theme=="environmental"
 )%>%
   filter(
-    indicator==   "water" )
+    indicator==   "biodiversity_climate_mitigation" )
 
 [1] "1_recycling"                            "2_input_reduction"                      "agricultural_all"                      
 [4] ""                          ""                 ""         
@@ -573,12 +574,14 @@ farmer_agency
 land_tenure_security
 wellbeing
 social_all
-energy
 income
+
+energy
 biodiversity_agrobiodiversity #it is not ready for senegal falta crops
 biodiversity_cover
 landscape_complexity
 water
+
 sort(unique(ken_performance_data$indicator))
 # Senegal -----
 # crop_health missing indicator
@@ -602,15 +605,15 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
     theme=="environmental"
   )%>%
   filter(
-    indicator==   "water" )
+    indicator==   "biodiversity_climate_mitigation" )
  
 ## If the farmers doesn't know the answer put 9999-----
 #result2<- tun_performance_data%>%
   
   #  result2<- zwe_performance_data%>%
 
-result2<- ken_performance_data%>%
-  #   result2<- sen_performance_data%>%
+# result2<- ken_performance_data%>%
+   result2<- sen_performance_data%>%
    
 ### THEME: AGRICULTURAL----
 ## Indicator: nutrient_use
@@ -652,21 +655,16 @@ mutate(label_choice = case_when(
 
   ## Indicator: biodiversity_climate_mitigation
 mutate(label_choice=case_when(
-  name_question %in% c("_3_3_3_2_2")& country== "zimbabwe"~"in acres",
-  name_question%in% c( "_3_3_3_2_2")& country== "tunisia"~"in hectares",
+  name_question %in% c("_3_3_3_2_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
+  name_question%in% c("_3_3_3_2_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
+  name_question%in% c("_3_3_3_2_2")& country %in%c("zimbabwe","kenya")~"acres",
+  name_question%in% c("_3_3_3_2_2")& country %in% c("tunisia","senegal")~"hectares",
   TRUE ~ label_choice))%>%
   mutate(name_question_recla = case_when(
     name_question_recla=="_3_3_3_3_1"~ "_3_3_3_3",
     TRUE ~ name_question_recla))%>%
-  mutate(name_choice = case_when(
-    str_detect(name_question,"_3_3_3_3/")~str_extract(name_question, "(?<=/).*"), # replace name_question by the name of the practice
-    TRUE ~ name_choice))%>%
-## Indicator: water
-  mutate(name_choice = case_when(
-    str_detect(name_question,"_3_3_4_3_1/")~ label_choice, # replace name_question by the name of the month
-    str_detect(name_question,"_3_3_4_3_2/")~ label_choice, # replace name_question by the name of the month
-    str_detect(name_question,"_3_3_4_3_3/")~ label_choice, # replace name_question by the name of the month
-    TRUE ~ name_choice))%>%
+  mutate(label_choice = case_when(name_question%in% c("_3_3_3_3_1")~"other", TRUE ~ label_choice))%>%
+  
 ## Indicator: energy
   mutate(name_question_recla = case_when(
     str_detect(name_question_recla,"_2_8_4_1_1")~"_2_8_4_1",
