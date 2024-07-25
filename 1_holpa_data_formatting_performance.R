@@ -560,8 +560,7 @@ filter(
 [22] ""                                 "labour_productivity"                    "land_tenure"                           
 [25] ""                   ""                   "membership"                            
 [28] ""                           ""                              "productivity_crops"                    
-[31] "productivity_livestock"                 ""                             "soil_health"                           
-[34] "water"                                  ""                               ""          
+[31] "productivity_livestock"                 ""                             ""                           
 
 crop_health
 animal_health
@@ -579,6 +578,7 @@ income
 biodiversity_agrobiodiversity #it is not ready for senegal falta crops
 biodiversity_cover
 landscape_complexity
+water
 sort(unique(ken_performance_data$indicator))
 # Senegal -----
 # crop_health missing indicator
@@ -609,8 +609,8 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
   
   #  result2<- zwe_performance_data%>%
 
-#result2<- ken_performance_data%>%
-       result2<- sen_performance_data%>%
+result2<- ken_performance_data%>%
+  #   result2<- sen_performance_data%>%
    
 ### THEME: AGRICULTURAL----
 ## Indicator: nutrient_use
