@@ -23,11 +23,10 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
     rename("kobo_farmer_id" := !!column_id_rename,
            "index" := !!index) %>%
     slice(-1)
-  
   # Automatically rename columns for begin_repeat groups
   if (grepl("begin_repeat", tolower(sheet_name))) {
     survey_data <- survey_data %>%
-      rename("parent_table_name" = "_parent_table_name",
+      dplyr::rename("parent_table_name" = "_parent_table_name",
              "parent_index" = "_parent_index")
   }
   
@@ -156,6 +155,7 @@ ken_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_
 ken_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
 ken_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: area of land per agricultural practice
 ken_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Irrigation
+ken_survey_3_4_2_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Fish production
 
 ken_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_monitoring/holpa_household_form.xlsx",
                           sheet = "choices")%>%
@@ -238,6 +238,7 @@ fun_performance_choices<- function(country_global_choices) {
     # Update subindicator values
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "income")]<- "income"
     
+    
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_social_network")]<- "climate_resilience_social_network"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_assets")]<- "climate_resilience_assets"
@@ -247,7 +248,6 @@ fun_performance_choices<- function(country_global_choices) {
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_basic_services")]<- "climate_resilience_basic_services"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "labour_productivity")]<- "labour_productivity"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "economic_all")]<- "economic_all"
-    
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_crops")]<- "productivity_crops"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_livestock")]<- "productivity_livestock"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_fish")]<- "productivity_fish"
@@ -295,9 +295,9 @@ fun_performance_choices<- function(country_global_choices) {
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_diversity")]<- "biodiversity_diversity"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "landscape_complexity")]<- "landscape_complexity"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "water")]<- "water"
+    performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "climate_mitigation")]<- "biodiversity_climate_mitigation"
     
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "biodiversity_practices")]<- "biodiversity_practices"
-    performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "climate_mitigation")]<- "biodiversity_climate_mitigation"
     performance_env_choices$subindicator[str_detect(performance_env_choices$subindicator, "environmental_all")]<- "environmental_all"
       
     
@@ -476,7 +476,8 @@ fun_performance_data<- function(country_global_choices,
                                 country_survey_3_4_1_2_1_1_begin_repeat, #_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers
                                 country_survey_3_4_1_2_1_2_begin_repeat, #_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
                                 country_survey_3_4_1_2_1_2_1_begin_repeat,  #_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
-                                country_survey_3_3_3_2_begin_repeat #area of land per agricultural practice
+                                country_survey_3_3_3_2_begin_repeat, #area of land per agricultural practice
+                                country_survey_3_4_2_3_2_begin_repeat #_3_4_2_3_2_repeat_group: Fish production
                                 ) {
   performance_data<- rbind(
     fun_performance_main(country_global_choices, country_survey_main), ## Main survey
@@ -490,8 +491,10 @@ fun_performance_data<- function(country_global_choices,
     fun_performance_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_1_begin_repeat), ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers ----
     fun_performance_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_begin_repeat), ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 ----
     fun_performance_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_1_begin_repeat), ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
-    fun_performance_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat) ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
-  )
+    fun_performance_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat), ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
+    fun_performance_begin_repeat(country_global_choices, country_survey_3_4_2_3_2_begin_repeat) ##_3_4_2_3_2_repeat_group:  Fish production ----
+    
+    )
   return(performance_data)
 }
 
@@ -542,18 +545,20 @@ ken_performance_data<-fun_performance_data(ken_global_choices,
                                            ken_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
                                            ken_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            ken_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
-                                           ken_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           ken_survey_3_3_3_2_begin_repeat, ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           ken_survey_3_4_2_3_2_begin_repeat ##_3_4_2_3_2_repeat_group:  Fish production 
+                                           
 )%>%
 
 filter(
-  theme=="environmental"
+  theme=="economic"
 )%>%
   filter(
-    indicator==   "biodiversity_climate_mitigation" )
+    indicator==   "productivity_fish" )
 
 [1] "1_recycling"                            "2_input_reduction"                      "agricultural_all"                      
 [4] ""                          ""                 ""         
-[7] "biodiversity_climate_mitigation"        ""                     ""                
+[7] ""        ""                     ""                
 [10] "biodiversity_practices"                 "climate_resilience"                     "climate_resilience_adaptative_capacity"
 [13] "climate_resilience_assets"              "climate_resilience_basic_services"      "climate_resilience_shocks"             
 [16] "climate_resilience_social_network"      ""                            "economic_all"                          
@@ -581,6 +586,7 @@ biodiversity_agrobiodiversity #it is not ready for senegal falta crops
 biodiversity_cover
 landscape_complexity
 water
+biodiversity_climate_mitigation
 
 sort(unique(ken_performance_data$indicator))
 # Senegal -----
@@ -602,18 +608,18 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
 )%>%
   
   filter(
-    theme=="environmental"
+    theme=="economic"
   )%>%
   filter(
-    indicator==   "biodiversity_climate_mitigation" )
+    indicator==   "productivity_livestock" )
  
 ## If the farmers doesn't know the answer put 9999-----
 #result2<- tun_performance_data%>%
   
   #  result2<- zwe_performance_data%>%
 
-# result2<- ken_performance_data%>%
-   result2<- sen_performance_data%>%
+ result2<- ken_performance_data%>%
+  #  result2<- sen_performance_data%>%
    
 ### THEME: AGRICULTURAL----
 ## Indicator: nutrient_use
