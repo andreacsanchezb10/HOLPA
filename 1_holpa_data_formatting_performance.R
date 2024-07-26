@@ -155,7 +155,7 @@ ken_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_
 ken_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
 ken_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: area of land per agricultural practice
 ken_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Irrigation
-ken_survey_3_4_2_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Fish production
+ken_survey_3_4_2_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: Fish production 1
 
 ken_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_monitoring/holpa_household_form.xlsx",
                           sheet = "choices")%>%
@@ -183,8 +183,11 @@ sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", 
   slice(-1)
 
 sen_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: Crop production
-sen_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: Livestock production 1
-sen_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: Livestock production 2
+sen_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Livestock production 1
+  slice(-1)
+
+sen_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Livestock production 2
+  slice(-1)
 sen_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section:labour household members permanent workers
 sen_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: labour household members seasonal workers 1
 sen_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: labour household members seasonal workers 2
@@ -194,6 +197,10 @@ sen_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_
 sen_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: area of land per agricultural practice
   slice(-1)
 sen_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Irrigation
+  slice(-1)
+sen_survey_3_4_2_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Fish production 1
+  slice(-1)
+sen_survey_3_4_2_3_2_4_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_4_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Fish production 2
   slice(-1)
 
 sen_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/holpa_household_form_clean.xlsx",
@@ -237,6 +244,7 @@ fun_performance_choices<- function(country_global_choices) {
     
     # Update subindicator values
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "income")]<- "income"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_livestock")]<- "productivity_livestock"
     
     
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
@@ -249,7 +257,6 @@ fun_performance_choices<- function(country_global_choices) {
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "labour_productivity")]<- "labour_productivity"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "economic_all")]<- "economic_all"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_crops")]<- "productivity_crops"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_livestock")]<- "productivity_livestock"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_fish")]<- "productivity_fish"
 
   ## Theme: Social ----
@@ -546,7 +553,7 @@ ken_performance_data<-fun_performance_data(ken_global_choices,
                                            ken_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            ken_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
                                            ken_survey_3_3_3_2_begin_repeat, ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
-                                           ken_survey_3_4_2_3_2_begin_repeat ##_3_4_2_3_2_repeat_group:  Fish production 
+                                           ken_survey_3_4_2_3_2_begin_repeat ##_3_4_2_3_2_repeat_group:  Fish production 1
                                            
 )%>%
 
@@ -554,19 +561,20 @@ filter(
   theme=="economic"
 )%>%
   filter(
-    indicator==   "productivity_fish" )
+    indicator==   "labour_productivity" )
 
-[1] "1_recycling"                            "2_input_reduction"                      "agricultural_all"                      
-[4] ""                          ""                 ""         
-[7] ""        ""                     ""                
-[10] "biodiversity_practices"                 "climate_resilience"                     "climate_resilience_adaptative_capacity"
-[13] "climate_resilience_assets"              "climate_resilience_basic_services"      "climate_resilience_shocks"             
-[16] "climate_resilience_social_network"      ""                            "economic_all"                          
-[19] ""                                 "environmental_all"                      ""                         
-[22] ""                                 "labour_productivity"                    "land_tenure"                           
-[25] ""                   ""                   "membership"                            
-[28] ""                           ""                              "productivity_crops"                    
-[31] "productivity_livestock"                 ""                             ""                           
+[1] "1_recycling"                            "2_input_reduction"                      "agricultural_all"                       ""                         
+[5] ""                 ""          ""        ""                    
+[9] ""                 "biodiversity_practices"                 "climate_resilience"                     "climate_resilience_adaptative_capacity"
+[13] "climate_resilience_assets"              "climate_resilience_basic_services"      "climate_resilience_shocks"              "climate_resilience_social_network"     
+[17] ""                            ""                           ""                                 "environmental_all"                     
+[21] ""                          ""                                 ""                    "land_tenure"                           
+[25] ""                   ""                   "membership"                             ""                          
+
+#Cosas para hacer lunes:
+# arreglar los codigos de senegal si me mandan la cuenta de kobo
+# arreglar el codigo para importar c1c2c3 desde el repeat group para senegal
+# arreglar el codigo para que fish production sea agregado solo si el pais es kenya y senegal #priority
 
 crop_health
 animal_health
@@ -580,6 +588,11 @@ land_tenure_security
 wellbeing
 social_all
 income
+productivity_livestock #it is not ready for senegal
+productivity_fish #it is not ready for senegal
+productivity_crops #it is not ready for senegal
+economic_all
+labour_productivity
 
 energy
 biodiversity_agrobiodiversity #it is not ready for senegal falta crops
@@ -603,7 +616,9 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
                                            sen_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
                                            sen_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            sen_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
-                                           sen_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           sen_survey_3_3_3_2_begin_repeat, ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           sen_survey_3_4_2_3_2_begin_repeat ##_3_4_2_3_2_repeat_group:  Fish production 1
+                                           
 
 )%>%
   
@@ -619,17 +634,8 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
   #  result2<- zwe_performance_data%>%
 
  result2<- ken_performance_data%>%
-  #  result2<- sen_performance_data%>%
+  #   result2<- sen_performance_data%>%
    
-### THEME: AGRICULTURAL----
-## Indicator: nutrient_use
-  mutate(label_choice=case_when(
-    name_question%in% c( "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
-    name_question%in% c( "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
-    name_question%in% c( "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country %in%c("zimbabwe","kenya")~"acres",
-    name_question%in% c( "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country %in% c("tunisia","senegal")~"hectares",
-    TRUE ~ label_choice))%>%
-
 ### THEME: ENVIRONMENTAL----
 ## Indicator: biodiversity_abundance
 mutate(label_choice = case_when(
@@ -691,44 +697,24 @@ mutate(label_choice=case_when(
     name_question%in% c( "_1_4_4_4_1")& country %in%c("zimbabwe","kenya")~"acres",
     name_question%in% c( "_1_4_4_4_1")& country %in% c("tunisia","senegal")~"hectares",
     TRUE ~ label_choice))%>%
-### THEME: ECONOMIC----
-## Indicator: productivity_crops
-mutate(label_choice=case_when(
-  name_question %in% c("_3_4_2_1_3")& country== "zimbabwe"~"in acres",
-  name_question%in% c( "_3_4_2_1_3")& country== "tunisia"~"in hectares",
-  TRUE ~ label_choice))%>%
-  ##Indicator: labour_productivity
-  mutate(name_question_recla = case_when(
-    str_detect(name_question_recla,"_3_4_1_1_7_1_3_1")~"_3_4_1_1_7_1_3",
-    str_detect(name_question_recla,"_3_4_1_1_7_1_4_1")~"_3_4_1_1_7_1_4",
-    str_detect(name_question_recla,"_3_4_1_1_7_1_5_1")~"_3_4_1_1_7_1_5",
-    str_detect(name_question_recla,"_3_4_1_1_7_1_6_1")~"_3_4_1_1_7_1_6",
-    str_detect(name_question_recla,"_3_4_1_1_7_1_7_1")~"_3_4_1_1_7_1_7",
-    str_detect(name_question_recla,"_3_4_1_2_7_2_6_1")~"_3_4_1_2_7_2_6",
-    str_detect(name_question_recla,"_3_4_1_2_7_2_7_1")~"_3_4_1_2_7_2_7",
-    str_detect(name_question_recla,"_3_4_1_2_7_2_8_1")~"_3_4_1_2_7_2_8",
-    str_detect(name_question_recla,"_3_4_1_2_7_2_9_1")~"_3_4_1_2_7_2_9",
-    str_detect(name_question_recla,"_3_4_1_2_7_2_10_1")~"_3_4_1_2_7_2_10",
-    str_detect(name_question_recla,"_3_4_1_2_1_1_3_1_1")~"_3_4_1_2_1_1_3_1",
-    str_detect(name_question_recla,"_3_4_1_2_1_1_3_2_1")~"_3_4_1_2_1_1_3_2",
-    str_detect(name_question_recla,"_3_4_1_2_1_1_3_3_1")~"_3_4_1_2_1_1_3_3",
-    str_detect(name_question_recla,"_3_4_1_2_1_1_3_4_1")~"_3_4_1_2_1_1_3_4",
-    str_detect(name_question_recla,"_3_4_1_2_1_1_3_5_1")~"_3_4_1_2_1_1_3_5",
-    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_1_1")~"_3_4_1_2_1_2_1_5_1",
-    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_2_1")~"_3_4_1_2_1_2_1_5_2",
-    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_3_1")~"_3_4_1_2_1_2_1_5_3",
-    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_4_1")~"_3_4_1_2_1_2_1_5_4",
-    str_detect(name_question_recla,"_3_4_1_2_1_2_1_5_5_1")~"_3_4_1_2_1_2_1_5_5",
-    TRUE ~ name_question_recla))%>%
+
+  ### THEME: ECONOMIC----
+##Indicator: productivity_livestock
+#For the countries that translated the name of the crops, livestock and fish to English separated with "//"
+  mutate(name_choice= case_when(
+    country %in% c("senegal")&name_question_recla %in%c("_3_4_2_2_2_calculate","_3_4_2_2_5_2_calculate" )& grepl("//", name_choice)~ sub(".*//", "", name_choice),
+    TRUE ~ name_choice))%>%
+  
 ### THEME: ENVIRONMENTAL, AGRONOMIC, SOCIAL, ECONOMIC----
-  ##Indicator: environmental_all, economic_all
+  ##Indicator: environmental_all, economic_all, productivity_crops, nutrient_use
+#Put the unit of area for all necessary questions
 mutate(label_choice= case_when(
-  name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
-  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
-  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")& country %in%c("zimbabwe","kenya")~"acres",
-  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")& country %in% c("tunisia","senegal")~"hectares",
+  name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
+  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
+  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country %in%c("zimbabwe","kenya")~"acres",
+  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3")& country %in% c("tunisia","senegal")~"hectares",
   TRUE ~ label_choice))%>%
-  mutate(name_question_recla = case_when(
+mutate(name_question_recla = case_when(
   type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
   TRUE ~ name_question_recla))%>%
   mutate(name_choice = case_when(
