@@ -62,6 +62,7 @@ global_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_sur
   rename("label_choice" = "label::English ((en))")%>%
   rename("name_choice" = "name")
 
+
 ### ZIMBABWE ----
 zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe_holpa_household_survey_clean.xlsx" #path: Andrea
 
@@ -245,19 +246,16 @@ fun_performance_choices<- function(country_global_choices) {
     # Update subindicator values
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "income")]<- "income"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_livestock")]<- "productivity_livestock"
-    
-    
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_social_network")]<- "climate_resilience_social_network"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_assets")]<- "climate_resilience_assets"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_food_security")]<- "climate_resilience_food_security"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "credit_access/climate_resilience")]<- "climate_resilience"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "credit_access")]<- "credit_access"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_basic_services")]<- "climate_resilience_basic_services"
-    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "labour_productivity")]<- "labour_productivity"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "economic_all")]<- "economic_all"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_crops")]<- "productivity_crops"
     performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "productivity_fish")]<- "productivity_fish"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_adaptative_capacity")]<- "climate_resilience_adaptative_capacity"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_social_network")]<- "climate_resilience_social_network"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_assets")]<- "climate_resilience_assets"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "climate_resilience_basic_services")]<- "climate_resilience_basic_services"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "labour_productivity")]<- "labour_productivity"
+    performance_eco_choices$subindicator[str_detect(performance_eco_choices$subindicator, "labour_productivity_extra")]<- "labour_productivity_extra"
+   
 
   ## Theme: Social ----
   # Filter and mutate the data frame
@@ -483,8 +481,7 @@ fun_performance_data<- function(country_global_choices,
                                 country_survey_3_4_1_2_1_1_begin_repeat, #_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers
                                 country_survey_3_4_1_2_1_2_begin_repeat, #_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
                                 country_survey_3_4_1_2_1_2_1_begin_repeat,  #_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
-                                country_survey_3_3_3_2_begin_repeat, #area of land per agricultural practice
-                                country_survey_3_4_2_3_2_begin_repeat #_3_4_2_3_2_repeat_group: Fish production
+                                country_survey_3_3_3_2_begin_repeat #area of land per agricultural practice
                                 ) {
   performance_data<- rbind(
     fun_performance_main(country_global_choices, country_survey_main), ## Main survey
@@ -498,8 +495,7 @@ fun_performance_data<- function(country_global_choices,
     fun_performance_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_1_begin_repeat), ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers ----
     fun_performance_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_begin_repeat), ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 ----
     fun_performance_begin_repeat(country_global_choices, country_survey_3_4_1_2_1_2_1_begin_repeat), ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 ----
-    fun_performance_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat), ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
-    fun_performance_begin_repeat(country_global_choices, country_survey_3_4_2_3_2_begin_repeat) ##_3_4_2_3_2_repeat_group:  Fish production ----
+    fun_performance_begin_repeat(country_global_choices, country_survey_3_3_3_2_begin_repeat) ##_3_3_3_2_begin_repeat:  area of land per agricultural practice ----
     
     )
   return(performance_data)
@@ -522,6 +518,7 @@ zwe_performance_data<-fun_performance_data(zwe_global_choices,
                                            zwe_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )
 
+
 # Tunisia-----
 tun_performance_data<-fun_performance_data(tun_global_choices,
                                            tun_survey_main, ## Main survey 
@@ -538,8 +535,9 @@ tun_performance_data<-fun_performance_data(tun_global_choices,
                                            tun_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )
 
-
 # Kenya -----
+#ERROR: climate_resilience_adaptative_capacity question _4_1_2_2
+#ERROR: missing _3_4_2_3_2_4_begin_repeat: productivity_fish
 ken_performance_data<-fun_performance_data(ken_global_choices,
                                            ken_survey_main,  ## Main survey 
                                            ken_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
@@ -552,54 +550,16 @@ ken_performance_data<-fun_performance_data(ken_global_choices,
                                            ken_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
                                            ken_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            ken_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
-                                           ken_survey_3_3_3_2_begin_repeat, ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
-                                           ken_survey_3_4_2_3_2_begin_repeat ##_3_4_2_3_2_repeat_group:  Fish production 1
-                                           
+                                           ken_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
 )%>%
+  rbind(fun_performance_begin_repeat(ken_global_choices,
+                                     ken_survey_3_4_2_3_2_begin_repeat)) ##_3_4_2_3_2_repeat_group:  Fish production 
 
-filter(
-  theme=="economic"
-)%>%
-  filter(
-    indicator==   "labour_productivity" )
 
-[1] "1_recycling"                            "2_input_reduction"                      "agricultural_all"                       ""                         
-[5] ""                 ""          ""        ""                    
-[9] ""                 "biodiversity_practices"                 "climate_resilience"                     "climate_resilience_adaptative_capacity"
-[13] "climate_resilience_assets"              "climate_resilience_basic_services"      "climate_resilience_shocks"              "climate_resilience_social_network"     
-[17] ""                            ""                           ""                                 "environmental_all"                     
-[21] ""                          ""                                 ""                    "land_tenure"                           
-[25] ""                   ""                   "membership"                             ""                          
-
-#Cosas para hacer lunes:
+#Cosas para hacer :
 # arreglar los codigos de senegal si me mandan la cuenta de kobo
 # arreglar el codigo para importar c1c2c3 desde el repeat group para senegal
 # arreglar el codigo para que fish production sea agregado solo si el pais es kenya y senegal #priority
-
-crop_health
-animal_health
-soil_health
-nutrient_use
-biodiversity_diversity
-biodiversity_abundance
-nutrition
-farmer_agency
-land_tenure_security
-wellbeing
-social_all
-income
-productivity_livestock #it is not ready for senegal
-productivity_fish #it is not ready for senegal
-productivity_crops #it is not ready for senegal
-economic_all
-labour_productivity
-
-energy
-biodiversity_agrobiodiversity #it is not ready for senegal falta crops
-biodiversity_cover
-landscape_complexity
-water
-biodiversity_climate_mitigation
 
 sort(unique(ken_performance_data$indicator))
 # Senegal -----
@@ -623,17 +583,17 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
 )%>%
   
   filter(
-    theme=="economic"
+    theme=="environmental"
   )%>%
   filter(
-    indicator==   "productivity_livestock" )
+    indicator==   "biodiversity_agrobiodiversity" )
  
 ## If the farmers doesn't know the answer put 9999-----
 #result2<- tun_performance_data%>%
   
-  #  result2<- zwe_performance_data%>%
+  # result2<- zwe_performance_data%>%
 
- result2<- ken_performance_data%>%
+   result2<- ken_performance_data%>%
   #   result2<- sen_performance_data%>%
    
 ### THEME: ENVIRONMENTAL----
@@ -729,13 +689,15 @@ sort(unique(result2$name_question))
 sort(unique(result2$name_question_recla))
 sort(unique(result2$name_choice))
 sort(unique(result2$theme))
+sort(unique(result2$indicator))
+
 sort(unique(result2$type_question))
 
   
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_performance_format.csv",row.names=FALSE)
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_performance_format.csv",row.names=FALSE)
-write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/sen/sen_performance_format.csv",row.names=FALSE)
 write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/ken/ken_performance_format.csv",row.names=FALSE)
+write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/sen/sen_performance_format.csv",row.names=FALSE)
 
 
 #calculate max yield per main crop
@@ -745,8 +707,10 @@ main_crop_yield<- result2%>%
            name_question_recla== "_3_4_2_1_5_1_calculate"|
            name_question_recla=="_3_4_2_1_5_2"|
            name_question_recla=="_3_4_2_1_3")%>%
-  mutate(merge_id = case_when(sheet_id=="Final HOLPA_Zimbabwe_Household"~paste(kobo_farmer_id,sheet_id,index,sep = "_"),
-                              TRUE ~paste(kobo_farmer_id,parent_table_name,parent_index,index,sep="_")))%>%
+  mutate(merge_id = case_when(
+    #sheet_id=="Final HOLPA_Zimbabwe_Household"~paste(kobo_farmer_id,sheet_id,index,sep = "_"), #Zimbabwe
+    sheet_id=="Final Holpa_global_household_surve"~paste(kobo_farmer_id,sheet_id,index,sep = "_"), #Kenya
+    TRUE ~paste(kobo_farmer_id,parent_table_name,parent_index,index,sep="_")))%>%
   select(sheet_id,name_choice,name_question_recla,kobo_farmer_id,index,country)
 
 x_3_4_3_1_3_calculate<-main_crop_yield%>%
@@ -759,8 +723,11 @@ x_3_4_2_1_3<-main_crop_yield%>%
   filter(name_question_recla=="_3_4_2_1_3")%>%
   mutate(name_choice= as.numeric(name_choice))%>%
   mutate(name_choice= case_when(
-    country== "zimbabwe"~ (name_choice*0.404686),
+    country =="kenya" & kobo_farmer_id == "286844609"~ (name_choice*1),
+    country %in% c("zimbabwe","kenya")~ (name_choice*0.404686),
     TRUE ~name_choice))
+
+#country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
 
 max_yield_crops<-
   dplyr::left_join(x_3_4_3_1_3_calculate,x_3_4_2_1_5_1_calculate,by=c("sheet_id","kobo_farmer_id","index","country"))%>%
@@ -770,12 +737,26 @@ max_yield_crops<-
          "crop_production_unit"="name_choice.y",
          "crop_production"="name_choice.x.x",
          "cropland_area"= "name_choice.y.y")%>%
+  mutate(crop_production_factor= case_when(
+    str_detect(crop_production_unit, "(?i)kg") ~ as.numeric(str_extract(crop_production_unit, "\\d+")),
+   str_detect(crop_production_unit, "tonnes") ~ as.numeric(str_extract(crop_production_unit, "\\d+")),
+    str_detect(crop_production_unit, "Tonnes") ~ 1000,
+    TRUE ~ 1))%>%
   mutate(crop_production=as.numeric(crop_production),
-         yield= crop_production/cropland_area)%>%
+         crop_production2=(crop_production*crop_production_factor ),
+         yield= crop_production2/cropland_area)%>%
+  mutate(crop_production_unit= case_when(
+    str_detect(crop_production_unit, "(?i)kg") ~ "Kilograms",
+    str_detect(crop_production_unit, "(?i)tonnes") ~ "Kilograms",
+
+    TRUE ~ crop_production_unit))%>%
+  
   group_by(crop_name,crop_production_unit) %>%
   summarize(max_crop_yield_ha = max(yield, na.rm = TRUE))%>%
   ungroup()
+    
   
+  sort(unique(max_yield_crops$crop_production_unit))
   
 sort(unique(max_yield_crops$label_question))
 sort(unique(main_crop_yield$name_question_recla))
@@ -783,4 +764,5 @@ sort(unique(main_crop_yield$sheet_id))
 sort(unique(main_crop_yield$merge_id))
 write.csv(max_yield_crops,file='tun/tun_crops_list.csv',row.names=FALSE)
 write.csv(max_yield_crops,file='zwe/zwe_crops_list.csv',row.names=FALSE)
+write.csv(max_yield_crops,file='ken/ken_crops_list.csv',row.names=FALSE)
 
