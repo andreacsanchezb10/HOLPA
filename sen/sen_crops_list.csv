@@ -1,0 +1,51 @@
+"crop_name","crop_production_unit","max_crop_yield_ha"
+"None","Kilograms",-Inf
+"baobab","Plant de baobab",10000
+"basil","Nombres",8
+"bitter eggplant","Kilograms",750
+"bitter eggplant","Sac",250
+"bitter tomato","Kilograms",3000
+"cashew nut","Plants",40000
+"cassava","Kilograms",2000
+"chilly","Kilograms",3000
+"chilly","Sac",160
+"cowpea","Bidons de 10L",8.57142857142857
+"cowpea","Charrettes",16
+"cowpea","Kilograms",1000
+"ditakh","Nombre d'arbres",10000
+"groundnut","Charrettes",2.98507462686567
+"groundnut","Kilograms",4000
+"groundnut","Sac",23.5
+"lemon","Kilograms",15000
+"lettuce","Planches",312.5
+"maize","Kilograms",300
+"mangoes","Bassine",40
+"mangoes","Kilograms",20000
+"melon","Nombre fruits",400
+"mint","Kilograms",16000
+"mint","Planches",16.6666666666667
+"okra","Kilograms",3000
+"onion","Kilograms",10000
+"onion","Sac",40
+"papaya","Kilograms",2000
+"papaya","Nombres",1.2
+"pearl millet","Charrettes",1
+"pearl millet","Kilograms",2250
+"potato","Kilograms",3333.33333333333
+"rice","Kilograms",3000
+"roselle","Bassine",100
+"roselle","Kilograms",2000
+"roselle","Planches (légume feuille)",80
+"roselle","Sac",5000
+"roselle","Tas",1600
+"sorghum","Kilograms",250
+"sweet eggplant","Sac",36
+"tomato","Casier",50
+"tomato","Cassette",180
+"tomato","Kilograms",4200
+"tomato","Par Caisse",160
+"tomato","Seaux",500
+"watermelon","Camion",4
+"watermelon","Charge de camionnette",0.6
+"watermelon","Charrettes",10
+"watermelon","Kilograms",2000
