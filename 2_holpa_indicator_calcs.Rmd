@@ -44,14 +44,18 @@ Indicator scores are pre-calculated in another code (which needs transferring to
 #### Overall agroecology score ####
 d <- zwe_data
 
+table(d$indicator,d$module)
+
 d <- d %>%
-  mutate(subindicator = label_question) %>%
+  mutate(module = ifelse(indicator %in% c("extra_economic_diversification/economic","extra_participation"), "performance", module)) %>%
+  mutate(subindicator = NA) %>%
   mutate(subindicator_label = NA) %>%
   mutate(score = ifelse(score_agroecology_module=="no_answer",NA,score_agroecology_module)) %>%
   mutate(score = as.numeric(score)) %>% 
   mutate(score_label = label_score_agroecology_module) %>%
   mutate(indicator_order = ifelse(module=="agroecology",sub('_.*', "", indicator),NA)) %>%
-  mutate(indicator_order = as.numeric(indicator_order))
+  mutate(indicator_order = as.numeric(indicator_order)) %>%
+  select(-c(score_agroecology_module,label_score_agroecology_module))
 
 d_ae_summary <- d %>%
   filter(module == "agroecology") %>%
@@ -61,9 +65,6 @@ d_ae_summary <- d %>%
          indicator_order=14)
 
 d <- d %>% full_join(d_ae_summary) 
-
-#d <- d %>% 
-#  mutate(score = ifelse(module != "agroecology" & type %in% #c("integer","decimal"),as.numeric(name_choice),score)) 
 
 ```
 ## Calculate Key Performance Indicator scores
@@ -80,21 +81,23 @@ Indicator scores need to be calculated from survey responses.
 
 d <- d %>% 
   mutate(subindicator = ifelse(label_question == "What percentage of the total crop production was lost or damaged in the last 12 months [add country meaning]","crop_loss",
-                               ifelse(label_question=="What was the main cause of crop loss or damage?","crop_loss_cause",subindicator))) %>%
+                               ifelse(label_question=="What was the main cause of crop loss or damage?", "crop_loss_cause", subindicator))) %>%
+  
   #mutate(subindicator = ifelse(name_question =="_3_4_2_1_8_2","crop_loss",
   #                             ifelse(name_question == "_3_4_2_1_8_3","crop_loss_cause",subindicator))) %>%
-  mutate(subindicator_label = ifelse(subindicator=="crop_loss","Total crop production lost or damaged in last 12 months (%)",subindicator_label)) %>%
+  
+  mutate(subindicator_label = ifelse(subindicator=="crop_loss", "Total crop production lost or damaged in last 12 months (%)", subindicator_label)) %>%
+  
   mutate(indicator = ifelse(subindicator=="crop_loss","kpi1_crop_health",indicator),
-         indicator_order = ifelse(indicator =="kpi1_crop_health",1,indicator_order))
+         indicator_order = ifelse(subindicator =="crop_loss",1,indicator_order))
 
 # Remove out of bounds responses
-d <- d %>% mutate(score = ifelse(indicator =="kpi1_crop_health",as.numeric(name_choice),score)) %>% mutate(score = ifelse(score>100,NA,score))
+d <- d %>% mutate(score = ifelse(indicator == "kpi1_crop_health", as.numeric(name_choice),score)) %>% mutate(score = ifelse(indicator == "kpi1_crop_health" & score>100,NA,score))
 
 ggplot(d %>% filter(indicator=="kpi1_crop_health"),aes(x=score))+
   geom_histogram()
 
 ### Performance KPI1b Crop health from fieldwork ####
-
 
 ### Performance KPI2 animal health ####
 #sort(unique(d$indicator))
@@ -126,7 +129,6 @@ d <- d %>%
 ggplot(d %>% filter(indicator=="kpi2_animal_health"),aes(x=score))+
   geom_histogram()
 
-
 ### Performance KPI3 soil health ####
 #temp <- d %>% filter(indicator =="soil_health")
 #table(temp$label_question)
@@ -154,15 +156,14 @@ d <- d %>%
 # combine soil erosion and fertility scores
 temp_kpi_calc <- d %>% filter(subindicator %in% c("soil_erosion","soil_fertility")) %>%
   mutate(score = as.numeric(score)) %>%
-  group_by(kobo_farmer_id, country) %>%
+  group_by(kobo_farmer_id,country) %>%
   summarise(score = median(score,na.rm=TRUE)) %>%
-  mutate(indicator = "soil_health",
+  mutate(indicator = "kpi3_soil_health",
          subindicator = "soil_health_overall")
 
 d <- d %>% full_join(temp_kpi_calc) %>%
-  mutate(indicator = ifelse(subindicator=="soil_health_overall","kpi3_soil_health",indicator),
-         subindicator_label = ifelse(subindicator=="soil_health_overall","Perceived soil erosion and fertility from 1 (infertile and major soil erosion) to 3 (highly fertile with no soil erosion)",subindicator_label),
-         indicator_order = ifelse(subindicator =="soil_health_overall",3,indicator_order))
+  mutate(subindicator_label = ifelse(subindicator=="soil_health_overall","Perceived soil erosion and fertility from 1 (infertile and major soil erosion) to 3 (highly fertile with no soil erosion)",subindicator_label)) %>%
+  mutate(indicator_order = ifelse(indicator =="kpi3_soil_health",3,indicator_order))
 
 ggplot(d %>% filter(indicator %in% c("kpi3_soil_health")),aes(x=score))+
   geom_histogram()
@@ -197,6 +198,7 @@ d <- d %>%
 # Put into wide format to align associated data
 temp_kpi_calc <- d %>% filter(indicator =="nutrient_use") %>%
   dcast(kobo_farmer_id+country+sheet_id+index+module+theme+indicator ~subindicator,value.var="name_choice") 
+
 
 # check which units are present
 sort(unique(temp_kpi_calc$nut_chem_unit)) 
@@ -240,7 +242,6 @@ d <- d %>%
 
 ggplot(d %>% filter(indicator %in% c("kpi4_nutrient_use")),aes(x=score))+
   geom_histogram()
-
 
 ### Performance KPI5a biodiversity - animals ####
 
@@ -294,10 +295,10 @@ temp_kpi_calc <- temp_kpi_calc %>%
   mutate(agency_hh = median(c(agency_hh_f,agency_hh_m),na.rm=T)) %>%
   mutate(indicator = "kpi16_farmer_agency",subindicator = "agency_hh",score = agency_hh)
 
-d <- d %>% full_join(
-  temp_kpi_calc %>% 
+temp_kpi_calc <-   temp_kpi_calc %>% 
     select(kobo_farmer_id,country,sheet_id,index,module,theme,indicator,subindicator,score)
-  )
+
+d <- d %>% full_join(temp_kpi_calc)
 
 ggplot(d %>% filter(indicator %in% c("kpi16_farmer_agency")),aes(x=score))+
   geom_histogram()
@@ -363,13 +364,14 @@ temp_kpi_calc <- temp_kpi_calc %>%
 
 d <- d %>% full_join(temp_kpi_calc)
 
-d <- d %>%   mutate(indicator = ifelse(subindicator=="land_security_perceived_weighted","kpi17_land_tenure",indicator),
-         subindicator_label = ifelse(indicator=="kpi17_land_tenure","Perceived land tenure security from 1 (Not at all likely to lose access to any land) to 5 (Extremely likely to lose access to all land)",subindicator_label),
-         indicator_order = ifelse(indicator =="kpi17_land_tenure",17.1,indicator_order)) %>%
+d <- d %>%
+  mutate(indicator = ifelse(subindicator == "land_security_perceived_weighted", "kpi17_land_tenure", indicator)) %>%
+  mutate(subindicator_label = ifelse(indicator=="kpi17_land_tenure","Perceived land tenure security from 1 (Not at all likely to lose access to any land) to 5 (Extremely likely to lose access to all land)",subindicator_label)) %>%
+  mutate(indicator_order = ifelse(indicator =="kpi17_land_tenure",17.1,indicator_order)) %>%
   
-  mutate(indicator = ifelse(subindicator=="land_owned_share","kpi17b_land_tenure",indicator),
-         subindicator_label = ifelse(indicator=="kpi17b_land_tenure","Share of household land that is owned (%)",subindicator_label),
-         indicator_order = ifelse(indicator =="kpi17b_land_tenure",17.2,indicator_order))
+  mutate(indicator = ifelse(subindicator=="land_owned_share","kpi17b_land_tenure",indicator)) %>%
+  mutate(subindicator_label = ifelse(indicator=="kpi17b_land_tenure","Share of household land that is owned (%)",subindicator_label)) %>%
+  mutate(indicator_order = ifelse(indicator =="kpi17b_land_tenure",17.2,indicator_order))
   
 ggplot(d %>% filter(indicator %in% c("kpi17_land_tenure")),aes(x=score))+
   geom_histogram()  
@@ -409,9 +411,9 @@ temp_kpi_calc <- d %>% filter(indicator=="wellbeing") %>%
   mutate(subindicator = "wellbeing_average")
 
 d <- d %>% full_join(temp_kpi_calc) %>%
-  mutate(indicator = ifelse(subindicator=="wellbeing_average","kpi18_human_wellbeing",indicator),
-         subindicator_label = ifelse(indicator=="kpi18_human_wellbeing","Perceived life satisfaction from 1 (Completely dissatisfied) to 5 (Completely satisfied)",subindicator_label),
-         indicator_order = ifelse(indicator =="kpi18_human_wellbeing",18,indicator_order))
+  mutate(indicator = ifelse(subindicator=="wellbeing_average","kpi18_human_wellbeing",indicator)) %>%
+  mutate(subindicator_label = ifelse(indicator=="kpi18_human_wellbeing","Perceived life satisfaction from 1 (Completely dissatisfied) to 5 (Completely satisfied)",subindicator_label)) %>%
+  mutate(indicator_order = ifelse(indicator =="kpi18_human_wellbeing",18,indicator_order))
 
 ggplot(d %>% filter(indicator %in% c("kpi18_human_wellbeing")),aes(x=score))+
   geom_histogram()  
@@ -422,7 +424,10 @@ ggplot(d %>% filter(indicator %in% c("kpi18_human_wellbeing")),aes(x=score))+
 ### Transfrom KPIs to unform 1 to 100 scale
 ```{r KPI scaling, include=TRUE, echo=FALSE}
 
+temp <- d %>% filter(module=="performance")
+sort(unique(temp$subindicator))
 sort(unique(d$indicator))
+table(d$indicator,d$module)
 data = d
 ind="kpi18_human_wellbeing"
 method="set"
