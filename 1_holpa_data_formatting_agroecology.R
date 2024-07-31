@@ -386,21 +386,7 @@ ken_agroecology_data<-rbind(
     fun_agroecology_main(ken_global_choices, ken_survey_main), ## Main survey 
     fun_agroecology_begin_repeat(ken_global_choices, ken_survey_3_3_3_2_begin_repeat) # Section: area of land per agricultural practice
   )
-  filter(
-    #theme=="1_recycling"
-    #theme=="2_input_reduction"
-    #theme=="3_soil_health"
-    #theme=="4_animal_health"
-    #theme=="5_biodiversity"
-    #theme=="6_synergy"
-    #theme=="7_economic_diversification"
-    #theme=="8_knowledge"
-    #theme=="9_social_values"
-    #theme=="10_fairness"
-    #theme=="11_connectivity"
-    #theme=="12_governance"
-    theme=="13_participation"
-  )
+  
 
 # SENEGAL -----
   sen_agroecology_data<-fun_agroecology_data(sen_global_choices,

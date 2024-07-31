@@ -17,8 +17,6 @@ zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
 # Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
 # a choices worksheet with the response options for multiple choice questions (single or multiple).
 # These need to be imported and combined.
-
-
 #### Global databases ####----
 global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #andrea
 global_agroecology_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx"),
@@ -58,7 +56,7 @@ country_agroecology_choices<- data.frame(
   stringsAsFactors = FALSE)
 
 ### Country databases ####----
-#Zimbabwe----
+#ZIMBABWE----
 zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_format.csv" #andrea
 zwe_agroecology_data <- read.csv(zwe.data.path)
 
@@ -70,13 +68,18 @@ zwe_agroecology_choices <- add_row_to_database(zwe_agroecology_choices, "2_8_1_1
 
 zwe_global_agroecology_choices<-rbind(global_agroecology_choices,zwe_agroecology_choices)
 
-#Tunisia----
+#TUNISIA----
 tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_agroecology_format.csv" #andrea
 tun_agroecology_data <- read.csv(tun.data.path)
 
+#KENYA----
+ken.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/ken/ken_agroecology_format.csv" #andrea
+ken_agroecology_data <- read.csv(ken.data.path)
+
 #### AGROECOLOGY: SCORING ------
 pre_processing<- #zwe_agroecology_data%>%
-  tun_agroecology_data%>%
+  #tun_agroecology_data%>%
+  ken_agroecology_data%>%
   #Extra questions we need to score produced crops/livestock/honey/wood but did not sell them 11_connectivity
   mutate(type_question = case_when(
     name_question_recla %in%c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4")~"select_multiple",
@@ -86,20 +89,15 @@ pre_processing<- #zwe_agroecology_data%>%
       name_question_recla %in% c(
       "_2_9_1_1", #3_soil_health
       "_2_10_1_2","_3_3_3_4", #4_animal_health
-      "_3_4_3_1_1_2", "_3_4_3_3_1",#5_biodiversity
+      "_3_4_3_1_1_2", "_3_4_3_3_1","_3_4_3_4_1",#5_biodiversity
       "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1", #6_synergy
       "_2_4_1" #7_economic_diversification
     ) ~ "counting",
      TRUE ~ type_question))
-    # mutate(label_choice= case_when(
-    #label_choice%in%c("Specify other practice:", "Other (please specify)")~name_choice,
-    #name_question_recla%in%c("_3_4_3_1_1_2", "_3_4_3_3_1")~name_choice,
-    #TRUE ~ label_choice))
-  
+
 sort(unique(pre_processing$label_choice))
 
 ## type_question: select_one----
-## The scores to the answers from select one questions are in doc:HOLPA_global_household_survey_20231204_mapped_to_indicators_master, sheet: choices, column: score_agroecology_module
 # 1_recycling: "_2_8_1_1"  "_2_8_2_1"  "_2_8_3_1" "_2_8_5_1" "_2_8_4_5" = 5/5
 # 2_input_reduction: "_3_4_4_2" = 1/6
 # 4_animal_health: "_2_10_1_1" = 1/3
@@ -111,15 +109,20 @@ sort(unique(pre_processing$label_choice))
 #total = 29 questions
 #Zimbabwe = 26 questions (missing: "_2_8_5_1", "_2_6_1_4_3", "_2_6_1_4_4")
 #Tunisia = 25 questions (missing: "_2_8_5_1","_2_6_1_4_1","_2_6_1_4_3","_2_6_1_4_6")
+#Kenya = 28 questions (missing: "_2_6_1_4_6")
 select_one<- pre_processing%>%
   filter(type_question == "select_one")%>%
   mutate(name_label_choice=if_else(type_question=="select_one", paste(name_choice,"_",label_choice,sep=""),NA))%>%
-  dplyr::left_join(select(zwe_global_agroecology_choices,c(list_name,name_choice,label_choice,score_agroecology_module )), 
-                   by= c("list_name"="list_name",
-                         "name_choice"="name_choice",
-                         "label_choice"="label_choice"))%>%
   select(!name_label_choice)%>%
-  mutate(label_score_agroecology_module= label_choice)
+  mutate(score_agroecology_module= name_choice,
+         label_score_agroecology_module= label_choice)%>%
+  mutate(score_agroecology_module= case_when(
+    name_question %in%c("_3_3_1_2_1","_3_3_1_2_2","_3_3_1_2_3","_3_3_1_2_4","_3_3_1_2_6","_3_3_1_2_7","_3_3_1_2_8","_3_3_1_6")&score_agroecology_module=="none"~"1",
+    name_question %in%c("_3_3_1_2_1","_3_3_1_2_2","_3_3_1_2_3","_3_3_1_2_4","_3_3_1_2_6","_3_3_1_2_7","_3_3_1_2_8","_3_3_1_6")&score_agroecology_module=="low"~"2.34",
+    name_question %in%c("_3_3_1_2_1","_3_3_1_2_2","_3_3_1_2_3","_3_3_1_2_4","_3_3_1_2_6","_3_3_1_2_7","_3_3_1_2_8","_3_3_1_6")&score_agroecology_module=="medium"~"3.67",
+    name_question %in%c("_3_3_1_2_1","_3_3_1_2_2","_3_3_1_2_3","_3_3_1_2_4","_3_3_1_2_6","_3_3_1_2_7","_3_3_1_2_8","_3_3_1_6")&score_agroecology_module=="high"~"5",
+    name_question==  "_2_3_1_4" &score_agroecology_module== "i-dont-know"~"1",
+    TRUE ~ score_agroecology_module))
 
 view(dfSummary(select_one))
 sort(unique(select_one$name_question_recla))
@@ -131,34 +134,85 @@ sort(unique(select_one$name_question_recla))
 #Total = 17 questions
 #Zimbabwe = 11 questions (missing: "_2_8_5_3", "_1_4_3_9","_2_7_1_3","_2_7_1_4", "_1_4_2_4_3", "_1_4_2_5_5")
 #Tunisia = 10 questions (missing: "_2_8_5_3","_1_4_3_9","_2_7_1_1","_2_7_1_3","_1_4_2_4_3","_1_4_2_7_4","_2_7_1_6")
+#Kenya = 15 questions (missing:"_2_7_1_6", "_1_4_2_7_4")
 select_multiple<- pre_processing%>%
   filter(type_question == "select_multiple")%>%
   filter(!(name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") & name_choice != 0))
-  
-  sort(unique(select_multiple$name_question_recla))
   
 select_multiple2<-select_multiple%>%
   arrange(label_choice) %>%
   group_by(kobo_farmer_id, theme, name_question_recla) %>%
   summarise(multiple_responses_label_choice = paste(label_choice, collapse = "//", sep=""),
             multiple_responses_name_choice = paste(name_choice, collapse = "//", sep="")) %>%
-  ungroup()%>%
-  left_join(agroecology_global_score, by=c("name_question_recla",  "multiple_responses_label_choice"))%>%
-  mutate(score_agroecology_module = case_when(
-    name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") ~ 1,
-    TRUE ~ as.numeric(score_agroecology_module)))
-  filter(is.na(score_agroecology_module))
-  
-sort(unique(select_multiple2$label_score_agroecology_module))
-sort(unique(select_multiple2$multiple_responses_label_choice))
+  ungroup()
   
 select_multiple3<- select_multiple%>%
-  left_join(select_multiple2, by=c("kobo_farmer_id", "theme","list_name","name_question_recla" ))%>%
+  left_join(select_multiple2, by=c("kobo_farmer_id", "theme","name_question_recla" ))%>% #"list_name",
   distinct(across(-c(name_question, name_choice, label_choice)), .keep_all = TRUE)%>%
   mutate(label_choice= multiple_responses_label_choice,
          name_choice= multiple_responses_name_choice)%>%
-  select(-multiple_responses_label_choice,-multiple_responses_name_choice)
+  select(-multiple_responses_label_choice,-multiple_responses_name_choice)%>%
+  mutate(label_agroecology_module= label_choice)%>%
+  mutate(label_agroecology_module = str_replace_all(label_agroecology_module, "[()]", ""))%>%
+  mutate(label_agroecology_module = str_replace_all(label_agroecology_module, 
+                                         c("Application of Chemical fertilizers." = "chemical", 
+                                           "Chemical fungicides/pesticides/herbicides." = "chemical",
+                                           "Prepared chemical feeds (i.e., feeds that contain specific chemical compounds or additives)"= "chemical",
+                                           "Antibiotics"= "chemical",
+                                           "Vaccination"= "chemical",
+                                           "Application of Organic fertilizers or Manure."= "organic",
+                                           "Non-chemical fungicides/pesticides/herbicides."="organic",
+                                           "Herbal remedies or traditional medicine"="organic",
+                                           "Organic treatments"="organic",
+                                           "Prepared organic feeds (i.e., feeds that are produced using natural ingredients)"="organic",
+                                           "Use of Ecological practices (e.g., cover crops, legume intercropping, mulching, etc.)."="ecological",
+                                           "Ecological practices (e.g., crop rotation, planting repelling plants)."="ecological",
+                                           "Genetic selection for disease resistance"="ecological",
+                                           "Quarantine measures"="ecological",
+                                           "No ecological practices, chemical or organic fertilizer were applied."="none",
+                                           "No ecological practices, chemical or non-chemical pesticides were applied."="none",
+                                           "No action taken"="none",
+                                           "None"="none")))%>%
+  mutate(score_agroecology_module= case_when(
+    name_question_recla %in% c("_1_4_3_1","_1_4_3_5","_1_4_3_8","_1_4_3_9")&label_agroecology_module=="none"~ 5,
+    label_agroecology_module%in%c("ecological")~ 5,
+    label_agroecology_module%in%c("organic","organic//organic")~ 4,
+    grepl("chemical", label_agroecology_module) & grepl("organic", label_agroecology_module) &grepl("ecological", label_agroecology_module) ~ 3,
+    grepl("organic", label_agroecology_module) & grepl("ecological", label_agroecology_module) ~ 4,
+    grepl("chemical", label_agroecology_module) & grepl("ecological", label_agroecology_module) ~ 3,
+    grepl("chemical", label_agroecology_module) & grepl("organic", label_agroecology_module) ~ 2,
+    grepl("chemical", label_agroecology_module) & grepl("Other please specify", label_agroecology_module) ~ 1,
+    label_agroecology_module %in% c("chemical","chemical//chemical","Other please specify")~ 1,
+    
+    grepl("Directly to consumers.", label_agroecology_module) ~ 5,
+    grepl("Farmers organization/cooperative", label_agroecology_module) ~ 4,
+    grepl("Trader or supermarket.", label_agroecology_module) ~ 3,
+    country=="kenya" & name_question_recla == "_2_7_1_1"& label_agroecology_module=="Other please, specify"~ 4,
+    label_agroecology_module=="none"&name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") ~ 1,
+    TRUE ~ NA))%>%
+  mutate(label_agroecology_module= case_when(
+    name_question_recla %in% c("_1_4_3_1","_1_4_3_5","_1_4_3_8","_1_4_3_9")&label_agroecology_module=="none"~ "No action taken",
+    label_agroecology_module%in%c("ecological")~"Only ecological practices/treatments applied",
+    label_agroecology_module%in%c("organic","organic//organic")~ "Only organic inputs/treatments applied",
+    grepl("chemical", label_agroecology_module) & grepl("organic", label_agroecology_module) &grepl("ecological", label_agroecology_module) ~ "Combination of chemical and organic inputs/treatments, and ecological practices/treatments applied",
+    grepl("organic", label_agroecology_module) & grepl("ecological", label_agroecology_module) ~ "Combination of organic inputs/treatments, and ecological practices/treatments applied",
+    grepl("chemical", label_agroecology_module) & grepl("ecological", label_agroecology_module) ~ "Combination of chemical inputs/treatments, and ecological practices/treatments applied",
+    grepl("chemical", label_agroecology_module) & grepl("organic", label_agroecology_module) ~ "Combination of chemical and organic inputs/treatments",
+    grepl("chemical", label_agroecology_module) & grepl("Other please specify", label_agroecology_module) ~ "Only chemical inputs/treatments applied",
+    label_agroecology_module %in% c("chemical","chemical//chemical","Other please specify")~ "Only chemical inputs/treatments applied",
+    
+    grepl("Directly to consumers.", label_agroecology_module) ~ "Sold on-farm production directly to consumers",
+    grepl("Farmers organization/cooperative", label_agroecology_module) ~ "Sold on-farm production to farmers organization/cooperative",
+    grepl("Trader or supermarket.", label_agroecology_module) ~ "Sold on-farm production to trader or supermarket",
+    country=="kenya" & name_question_recla == "_2_7_1_1"& label_agroecology_module=="Other please, specify"~ "Sold on-farm production to schools",
+    label_agroecology_module=="none"&name_question_recla %in% c("_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4") ~ "Produce on-farm production but did not sold them",
+    TRUE ~ NA))
+  filter(name_question_recla=="_2_7_1_5")
+  
+  filter(is.na(score_agroecology_module))
 
+sort(unique(select_multiple3$label_agroecology_module))
+sort(unique(select_multiple3$label_choice))
 view(dfSummary(select_multiple3))
 sort(unique(select_multiple3$name_question_recla))
 
@@ -167,6 +221,7 @@ sort(unique(select_multiple3$name_question_recla))
 #Total = 7 questions
 #Zimbabwe = 7 questions
 #Tunisia =  7 questions
+#Kenya =  7 questions
 integer<- pre_processing%>%
   filter(type_question == "integer")%>%
   mutate(label_score_agroecology_module=name_choice,
@@ -196,15 +251,23 @@ view(dfSummary(integer))
 #Zimbabwe = 9 questions (missing: _3_3_3_4)
 #Tunisia = 9 questions (missing: _3_3_3_4)
 
+# 3- soil_health: "_2_9_1_1" = 1/1
+# 4_animal_health: "_2_10_1_2","_3_3_3_4" = 2/3
+# 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2
+# 6- synergy: "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1" = 6/6
+# 7- economic_diversification: "_2_4_1" = 1/1
+
 area <- pre_processing %>%
   #Retain questions related to area of land for crop, livestock and fish production and total area of land managed by household
-  filter(name_question_recla %in% c("_3_4_2_1_1", "_3_4_2_2_1_1", "_3_4_2_2_1_2", "_3_4_2_3_2",
-                                    "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3")) %>%
+  filter(name_question_recla %in% c("_3_4_2_1_1", #cropland area
+                                    "_3_4_2_2_1_1", "_3_4_2_2_1_2", #livestock production land area
+                                    "_3_4_2_3_2", #fish production land area
+                                    "_1_4_1_1_1","_1_4_1_1_2","_1_4_1_1_3")) %>% #farmland area
   mutate(name_choice = as.numeric(name_choice))%>% 
   # Remove rows with 9999, or 0
   filter(!(name_choice %in% c(9999, 0))) %>%
   # Convert acres to hectares
-  mutate(name_choice = case_when(label_choice == "in acres" ~ name_choice * 0.404686, TRUE ~ name_choice))%>%
+  mutate(name_choice = case_when(label_choice == "acres" ~ name_choice * 0.404686, TRUE ~ name_choice))%>%
   mutate(name_question_recla= case_when(
     #Rename area of owned and leased land for livestock production to get total land for livestock production
     name_question_recla %in%c("_3_4_2_2_1_1", "_3_4_2_2_1_2")~ "_3_4_2_2_1_3",
@@ -221,7 +284,6 @@ area <- pre_processing %>%
 
 area_total<- area%>%
   filter(name_question_recla %in% c("_1_4_1_1_4"))
- 
 sort(unique(area$name_question_recla))
 
 counting<- pre_processing%>%
@@ -352,7 +414,7 @@ counting5<- counting%>%
   mutate(label_choice= multiple_responses_label_choice,
          name_choice= label_score_agroecology_module)%>%
   select(-multiple_responses_label_choice)%>%
-  mutate(label_score_agroecology_module = as.character(label_score_agroecology_module))%>%
+  mutate(label_score_agroecology_module = as.character(label_score_agroecology_module))
   mutate(label_score_agroecology_module= case_when(
     name_question_recla %in% 
       #4_animal_health
