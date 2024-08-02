@@ -13,22 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 library(magrittr) # for piping
 library(tidyverse) #for formatting data
 library(ggplot2) # for plots
-library(readr)
-library(reshape2)
+library(readr) 
+library(reshape2) # for changing data layout
+library(stringr) # for wrapping text
 
+# replace these file paths with the location where your data are saved:
 global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
-zwe.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
+zwe.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/zwe/"
 #data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/"
 
-zwe_ae <- read_csv("zwe/zwe_agroecology_format.csv",show_col_types = FALSE)
-zwe_cn <- read_csv("zwe/zwe_context_format.csv",show_col_types = FALSE)
-zwe_pf <- read_csv("zwe/zwe_performance_format.csv",show_col_types = FALSE)
-
-names(zwe_ae)
-names(zwe_cn)
-names(zwe_pf)
-
-table(zwe_pf$indicator)
+# import data
+zwe_ae <- read_csv("zwe_agroecology_format.csv",show_col_types = FALSE)
+zwe_cn <- read_csv("zwe_context_format.csv",show_col_types = FALSE)
+zwe_pf <- read_csv("zwe_performance_format.csv",show_col_types = FALSE)
 
 zwe_data <- zwe_ae %>% full_join(zwe_cn) %>% full_join(zwe_pf)
 
@@ -38,12 +35,16 @@ zwe_data <- zwe_data %>% left_join(zwe_ae_scores) %>% unique()
 
 ### Set parameters ####
 
+# Alter these parameters as needed for your country/landscape of analysis
+
 # for KPI4 nutrient use, to convert L/ha to kg/ha, set Specific Gravity value
 #https://icl-growingsolutions.com/en-gb/turf-landscape/knowledge-hub/nutrient-calculations/ 
 nut_conversion_l_to_kg <- 1.23 
+
+
 ```
 ## Calculate agroecology indicator scores
-Indicator scores are pre-calculated in another code (which needs transferring to here).
+Agroecology adherence indicator scores are pre-calculated in another code (which needs transferring to here).
 
 ```{r agroecology indicator calcs, include=TRUE, echo=FALSE}
 #### Overall agroecology score ####
@@ -73,7 +74,7 @@ d <- d %>% full_join(d_ae_summary,by=c("kobo_farmer_id","module","indicator","in
 
 ```
 ## Calculate Key Performance Indicator scores
-Indicator scores need to be calculated from survey responses.
+Key performance indicator scores are calculated here from survey responses.
 
 ```{r KPI calcs, include=TRUE, echo=FALSE}
 
@@ -431,21 +432,13 @@ d <- d %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "country", "indicat
 ggplot(d %>% filter(indicator %in% c("kpi18_human_wellbeing")),aes(x=score))+
   geom_histogram()  
 
-table(d$indicator,d$module)
-
 ```
 
 
 ### Transfrom KPIs to unform 1 to 100 scale
 ```{r KPI scaling, include=TRUE, echo=FALSE}
 
-table(d$indicator,d$module)
-data = d
-ind="kpi2_animal_health"
-method="none"
-method="set"
-min=1
-max=5
+table(d$indicator)
 
 #data_output <- d[0,]
 data_output <- data.frame("kobo_farmer_id"=as.numeric(NA), "indicator"=as.character(NA),score_scaled=as.numeric(NA)) 
@@ -467,33 +460,34 @@ indicator_scaling <- function(data, ind, method, min,max){
   data_subset$score_scaled <- (data_subset$score - ind_min)/(ind_max - ind_min)*100
   }
   data_subset <- data_subset %>% select(c("kobo_farmer_id","indicator", "score_scaled"))
-  #data_output <- data_output %>% rbind(data_subset)
-  #assign("data_output",data_output,envir = globalenv())
-  
-  data <- data %>% left_join(data_subset,by=c("kobo_farmer_id","indicator"),keep=NULL) ### PROBLEM WITH THIS LINE
+  data_output <- data_output %>% rbind(data_subset)
+  assign("data_output",data_output,envir = globalenv())
+
 }
 
-data_output <- indicator_scaling(data = d, ind="kpi1_crop_health",method="none")
-data_output <- indicator_scaling(data = data_output, ind="kpi2_animal_health",method="none")
-data_output <- indicator_scaling(data = data_output, ind="kpi3_soil_health",method="set",min=1,max=5)
-data_output <- indicator_scaling(data = data_output, ind="kpi4_nutrient_use", method="data_driven", min=NA,max=NA)
-data_output <- indicator_scaling(data = data_output, ind="kpi18_human_wellbeing", method="set",min=1, max=5)
-
-library(stringr)
+indicator_scaling(data = d, ind="kpi1_crop_health",method="none")
+indicator_scaling(data = d, ind="kpi2_animal_health", method="set", min=1,max=5)
+indicator_scaling(data = d, ind="kpi3_soil_health",method="set",min=1,max=5)
+indicator_scaling(data = d, ind="kpi4_nutrient_use", method="data_driven", min=NA,max=NA)
+indicator_scaling(data = d, ind="kpi18_human_wellbeing", method="set",min=1, max=5)
 
 data_output <- data_output %>%
   mutate(theme_short = ifelse(indicator %in% c("kpi1_crop_health","kpi2_animal_health","kpi3_soil_health","kpi4_nutrient_use"),"AGR",
                         ifelse(indicator %in% (c("kpi16","kpi17","kpi17b","kpi18_human_wellbeing")),"SOC","CHECK")))
 
 ggplot(data_output %>% filter(!is.na(score_scaled)),
-       aes(x=reorder(indicator,indicator_order),y=score_scaled,colour=theme))+
+       aes(x=indicator,,y=score_scaled,colour=theme_short))+
   geom_boxplot()+
   #coord_polar()+
   scale_colour_viridis_d()+
   theme_bw()+
   theme(axis.text.x=element_text(angle=90))
 
+# Add scaled scores to main dataset
+# [TO DO]
+
 ```
+
 
 ## Extract context indicators of interest 
 
@@ -539,8 +533,8 @@ d <- d %>%
   mutate(subindicator = ifelse(label_question == "Do you know what Agroecology means?","Ae_understanding",subindicator)) %>%
   mutate(label_choice_short = ifelse(name_choice=="0" & subindicator == "Ae_understanding","No",
                                      ifelse(name_choice=="1" & subindicator == "Ae_understanding","Some",
-                                            ifelse(name_choice=="2" & subindicator == "Ae_understanding","Yes",label_choice_short)))) %>%
-    mutate(score = ifelse(subindicator=="Ae_understanding",as.numeric(name_choice),score)) 
+                                            ifelse(name_choice=="2" & subindicator == "Ae_understanding","Yes",label_choice)))) %>%
+    mutate(score = ifelse(subindicator=="Ae_understanding",as.numeric(name_choice), score)) 
 
 #### Insurance against losses ####
 #temp <- d[d$indicator =="climate_resilience",] 
@@ -586,30 +580,11 @@ d_cn_wide <- d %>%
 
 d_wide <- d %>% filter(!(module=="context")) %>% left_join(d_cn_wide,by="kobo_farmer_id",relationship="many-to-many") 
 
-d <- d %>% mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
-levels(d_wide$indicator)
 d_wide <- d_wide %>% mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
 
-```
-
-## Agroecology adherence of farm-households
-
-Agroecology adherence assessed using Likert scale responses from 1 (low adherence) to 5 (high adherence).
-
-```{r basic figures, include=TRUE, echo=FALSE}
-
-ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_economic_diversification/economic","extra_participation"))), aes(x=indicator,y=score,fill=indicator))+
-  geom_boxplot()+
-  ggtitle(paste0("Agroecology adherence across n= ",length(unique(d_wide$kobo_farmer_id))," farm-households"))+
-  labs(x="",y="Score\n(1 = low adherence, 5 = high adherence)")+
-  #geom_violin()+
-  scale_fill_viridis_d()+
-  facet_wrap(~District,ncol=1)+
-  theme_bw()+
-  theme(axis.text.x=element_text(angle=90,hjust=1),
-        plot.title=element_text(hjust=0.5))
-
+# Save data for re-use in next script
+write.csv(d,paste0(zwe.data.path,"zwe_indicators.csv"),row.names=FALSE)
+write.csv(d_wide,paste0(zwe.data.path,"zwe_indicators_wide.csv"),row.names=FALSE)
 
 ```
-
 

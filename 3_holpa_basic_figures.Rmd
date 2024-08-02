@@ -1,0 +1,45 @@
+---
+title: "3_holpa_basic_figures"
+output: html_document
+date: "2024-08-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(magrittr) # for piping
+library(tidyverse) #for formatting data
+library(ggplot2) # for plots
+library(readr) 
+library(reshape2) # for changing data layout
+library(stringr) # for wrapping text
+
+# replace these file paths with the location where your data are saved:
+global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
+zwe.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/zwe/"
+#data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/"
+
+# import data
+d <- read_csv("zwe_indicators.csv",show_col_types = FALSE)
+d_wide <- read_csv("zwe_indicators_wide.csv",show_col_types = FALSE)
+
+```
+
+## Agroecology adherence of farm-households
+
+Agroecology adherence assessed using Likert scale responses from 1 (low adherence) to 5 (high adherence).
+
+```{r basic figures, include=TRUE, echo=FALSE}
+
+ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_economic_diversification/economic","extra_participation"))), aes(x=indicator,y=score,fill=indicator))+
+  geom_boxplot()+
+  ggtitle(paste0("Agroecology adherence across n= ",length(unique(d_wide$kobo_farmer_id))," farm-households"))+
+  labs(x="",y="Score\n(1 = low adherence, 5 = high adherence)")+
+  #geom_violin()+
+  scale_fill_viridis_d()+
+  facet_wrap(~District,ncol=1)+
+  theme_bw()+
+  theme(axis.text.x=element_text(angle=90,hjust=1),
+        plot.title=element_text(hjust=0.5))
+
+
+```
