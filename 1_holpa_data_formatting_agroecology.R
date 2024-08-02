@@ -334,7 +334,6 @@ fun_agroecology_left_join <- function(agroecology_choices, gathered_data ) {
   return(result)
 }
 
-### Function to get answers from the following sections ---- # I can combine all this functions, but lets see
 ## Main survey ----
 fun_agroecology_main<- function(country_global_choices,country_survey_main){
   country_agroecology_choices<-  fun_agroecology_choices(country_global_choices)
