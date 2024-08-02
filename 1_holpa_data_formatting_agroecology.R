@@ -360,7 +360,7 @@ fun_agroecology_main<- function(country_global_choices,country_survey_main){
            parent_index=NA)
   return(result_main_survey)
 }
-
+ 
 ## begin_repeat ----
 fun_agroecology_begin_repeat<- function(country_global_choices,country_survey_begin_repeat){
   

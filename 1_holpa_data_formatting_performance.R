@@ -572,7 +572,7 @@ mutate(label_choice = case_when(
   filter(name_question!="_3_3_3_3/other")%>%
   
   ## Indicator: energy
-  mutate(name_question_recla = case_when(
+  mutate(name_question_recla = case_when( 
     str_detect(name_question_recla,"_2_8_4_1_1")~"_2_8_4_1",
     str_detect(name_question_recla,"_2_8_4_2_1")~"_2_8_4_2",
     str_detect(name_question_recla,"_2_8_4_3_1")~"_2_8_4_3",

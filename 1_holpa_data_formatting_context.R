@@ -364,7 +364,7 @@ fun_context_main<- function(country_global_choices,country_survey_main){
            parent_index=NA)
   return(result_main_survey)
 }
-
+ 
 ## begin_repeat: questions located in begin_repeat groups  ---- 
 fun_context_begin_repeat<- function(country_global_choices,country_survey_begin_repeat){
   country_context_choices<-  fun_context_choices(country_global_choices)
