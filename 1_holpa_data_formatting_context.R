@@ -5,18 +5,8 @@ library(readxl)
 library(dplyr)
 library(summarytools)
  
-#### Set file paths ####
-# TO CHECK: I need to connect directly to the share point, I already asked Sebastien for permision
-#For now I will leave it like this to continue working
 
-#Sarah
-global.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/"
-zwe.data.path <- "D:/02_Bioversity/46_Agroecology_Initiative/holpa_results/zwe/"
-
-#### Import data ####
-# Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
-# a choices worksheet with the response options for multiple choice questions (single or multiple).
-# These need to be imported and combined.
+#INSTRUCTION: run the following code
 
 ### Country databases ####
 # Read excel files----
@@ -38,8 +28,15 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
   return(survey_data)
 }
 
+
 #### GLOBAL DATABASES ----
-global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #Andrea
+#global_survey contains the global form with questions
+#global_choices contains the global form with choices
+
+#INSTRUCTIONS: Please download HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
+#Replace global.data.path path with your path and run the code
+
+global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
 
 global_survey <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx"),
                             sheet = "survey")%>%
@@ -67,17 +64,27 @@ global_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_sur
   rename("label_choice" = "label::English ((en))")%>%
   rename("name_choice" = "name")
 
+
+#### Import data ####
+#country_holpa_household_survey_clean contains the clean household survey with the questions and responses 
+#country_holpa_household_form_clean contains the clean household form with the questions (this form is similar to the one uploaded in koboCollect, but some changes were made to match the global survey [e.g. some countries changed the code of some global questions])
+#INTRUCTION: Go to your country section
+
 ### ZIMBABWE ----
-zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe_holpa_household_survey_clean.xlsx" #path: Andrea
+#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
 
-zwe_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", zwe.data.path,"zimbabwe","_index")%>%
-  #Remove respondents that are not farmers
-  filter(kobo_farmer_id!="274186917")
-zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: Crop production
-filter(kobo_farmer_id!="274186917")
+zwe_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/" #path andrea
 
-zwe_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe_holpa_household_form_clean.xlsx",
-                          sheet = "choices")%>%
+zwe_h_survey_file <- paste0(zwe_data_path, "zwe_holpa_household_survey_clean.xlsx")
+zwe_h_choices_file <- paste0(zwe_data_path, "zwe_holpa_household_form_clean.xlsx")
+
+zwe_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", zwe_h_survey_file,"zimbabwe","_index")%>%
+  filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
+zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", zwe_h_survey_file,"zimbabwe","_index")%>% # Section: Crop production
+  filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
+
+zwe_choices <- read_excel(zwe_h_choices_file,sheet = "choices")%>%
   mutate(country= "zimbabwe")%>%
   select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
@@ -90,9 +97,8 @@ zwe_global_choices<-global_choices%>%
   arrange(desc(country == "global")) %>%
   #Removing duplicates
   distinct(list_name,name_choice, .keep_all = TRUE) %>%
-  right_join(global_survey,by="list_name",relationship="many-to-many")
-
-names(zwe_global_choices)
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
 
 #Indicator: climate_drought and climate_flood
 #Zimbabwe error: the choices options should be "4_2_1_3" (1=yes, 0=no, notsure), but the country put "4_2_1_1" (increased, nochange, decreased, notsure)
@@ -113,19 +119,20 @@ zwe_global_choices.x<- zwe_global_choices%>%
     
 zwe_global_choices<-rbind(zwe_global_choices,zwe_global_choices.x)
 
-
 ### TUNISIA -----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun_holpa_household_survey_clean.xlsx" #path: Andrea
+#link to tun data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean?csf=1&web=1&e=07Lc0e
+#INSTRUCTION: Replace tun_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
 
-tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
-  #Remove respondents that did not wanted to complete the survey
-  filter(consent_2!="No")
+tun_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/" #path andrea
+
+tun_h_survey_file <- paste0(tun_data_path, "tun_holpa_household_survey_clean.xlsx")
+tun_h_choices_file <- paste0(tun_data_path, "tun_holpa_household_form_clean.xlsx")
+
+tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun_h_survey_file,"tunisia","_index")%>%
+  filter(consent_2!="No") #Remove respondents that did not wanted to complete the survey
 
 #does not exist for tunisia tun_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Crop production
-
-
-tun_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun_holpa_household_form_clean.xlsx",
-                          sheet = "choices")%>%
+tun_choices <- read_excel(tun_h_choices_file, sheet = "choices")%>%
   mutate(country= "tunisia")%>%
   select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
@@ -138,52 +145,76 @@ tun_global_choices<-global_choices%>%
   arrange(desc(country == "global")) %>%
   #Removing duplicates
   distinct(list_name,name_choice, .keep_all = TRUE) %>%
-  right_join(global_survey,by="list_name",relationship="many-to-many")
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
+### KENYA ----
+#link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean?csf=1&web=1&e=D7sIkb
+#INSTRUCTION: Replace ken_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+
+ken_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/" #path andrea
+
+ken_h_survey_file <- paste0(ken_data_path, "ken_holpa_household_survey_clean.xlsx")
+ken_h_choices_file <- paste0(ken_data_path, "ken_holpa_household_form_clean.xlsx")
+
+ken_survey_main <- read_and_process_survey_xlsx("Holpa_global_household_surve", "_id", ken_h_survey_file,"kenya","_index")%>%
+  filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
+
+#does not exist for kenya ken_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", ken_h_survey_file,"tunisia","_index") # Section: Crop production
+ken_choices <- read_excel(ken_h_choices_file,sheet = "choices")%>%
+  mutate(country= "kenya")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+ken_global_choices<-global_choices%>%
+  rbind(ken_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
+### SENEGAL ----
+#link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
+#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+
+sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
+
+sen_h_survey_file <- paste0(sen_data_path, "sen_holpa_household_survey_clean.xlsx")
+sen_h_choices_file <- paste0(sen_data_path, "sen_holpa_household_form_clean.xlsx")
+
+sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", "_id", sen_h_survey_file,"senegal","_index")%>%
+  filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
+
+sen_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: Crop production
+  filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
+
+sen_choices <- read_excel(sen_h_choices_file,sheet = "choices")%>%
+  mutate(country= "senegal")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+sen_global_choices<-global_choices%>%
+  rbind(sen_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  left_join(sen_choices,by=c("list_name","name_choice"))%>%
+  rename("label_choice"="label_choice.x",
+         "label_choice.country"="label_choice.y",
+         "country"="country.x")%>%
+  select(-country.y)
+
 
 #### CONTEX MODULE ####
-fun_context_survey<- function(global_survey) {
-  context_survey <-  global_survey %>%
-  filter(str_detect(indicator, "context"))%>%
-  mutate(indicator= "context")
-  
-  #"production_end_use/production_systems" these question is part of two indicators
-  duplicate_rows <-  context_survey%>% filter(str_detect(subindicator, "production_end_use/production_systems"))
-  duplicate_rows$subindicator <- "production_end_use"
-  context_survey <- rbind(context_survey, duplicate_rows)
-
-  context_survey$subindicator[str_detect(context_survey$subindicator,"respondent_characteristics")]<- "respondent_characteristics"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"household_characteristic")]<- "household_characteristics"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"context_all")]<- "context_all"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"farm_characteristic")]<- "farm_characteristics"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"inputs")]<- "inputs"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"production_systems")]<- "production_systems"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"production_end_use")]<- "production_end_use"
-  
-  context_survey$subindicator[str_detect(context_survey$subindicator,"household_labour")]<- "household_labour"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"credit_access")]<- "credit_access"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"income")]<- "income"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"household_labour")]<- "household_labour"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"training")]<- "training"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"education")]<- "education"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"literacy")]<- "literacy"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"membership")]<- "membership"
-  context_survey$subindicator[str_detect(context_survey$subindicator,"accessibility")]<- "accessibility"
-  
-  context_survey$indicator[str_detect(context_survey$indicator,"farm_characteristics")]<- "farm_characteristics"
-  context_survey$indicator[str_detect(context_survey$indicator,"farm_characteristic")]<- "farm_characteristics"
-  context_survey$indicator[str_detect(context_survey$indicator,"household_characteristic")]<- "household_characteristics"
-  context_survey$indicator[str_detect(context_survey$indicator,"household_characteristics")]<- "household_characteristics"
-  context_survey$indicator[str_detect(context_survey$indicator,"respondent_characteristics")]<- "respondent_characteristics"
-  context_survey$indicator[str_detect(context_survey$indicator,"inputs")]<- "inputs"
-  context_survey$indicator[str_detect(context_survey$indicator,"context_all")]<- "context_all"
-  
-  context_survey <-context_survey%>%
-    rename(theme = indicator,
-           indicator = subindicator)%>%
-  filter(!str_detect(indicator, "end_repeat"))
-  
-  return(context_survey)
-}
+#INSTRUCTION: Continue running the code from here
 
 fun_context_choices<- function(country_global_choices) {
   # Filter and mutate the data frame
@@ -279,7 +310,8 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
                      c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
               by = c("name_question"="name_question", "name_choice"="name_choice"))%>%
     filter(type_question=="select_one")%>%
-    filter(country=="zimbabwe")
+    filter(country=="zimbabwe"|
+             country=="kenya")
   
   # Left join for "select_one" for country== "tun"
   select_one2 <- gathered_data  %>%
@@ -291,7 +323,16 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
     filter(type_question=="select_one")%>%
     filter(country=="tunisia")
   
-  result<- rbind(continuous,select_multiple,select_one1,select_one2)
+  select_one3 <- gathered_data  %>%
+    left_join(select(context_choices,
+                     c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name,label_choice.country)), 
+              by = c("name_question"="name_question", "name_choice"="label_choice.country"))%>%
+    select(-name_choice)%>%
+    dplyr::rename("name_choice"="name_choice.y")%>%
+    filter(type_question=="select_one")%>%
+    filter(country== "senegal")
+  
+  result<- rbind(continuous,select_multiple,select_one1,select_one2,select_one3)
   
   return(result)
 }
@@ -348,8 +389,6 @@ fun_context_begin_repeat<- function(country_global_choices,country_survey_begin_
   return(result_begin_repeat)
 }
 
-
-
 ### Function to combine answers from all context sections ---- 
 fun_context_data<- function(country_global_choices,
                                 country_survey_main, #main survey
@@ -358,73 +397,35 @@ fun_context_data<- function(country_global_choices,
   context_data<- rbind(
     fun_context_main(country_global_choices, country_survey_main), ## Main survey
     fun_context_begin_repeat(country_global_choices, country_survey_1_4_2_7_begin_repeat)  ##production_end_use for OTHER NON-FARM PRODUCT
-
   )
   return(context_data)
 }
 
-
-## CONTEXT DATA FORMAT BY COUNTRY -----
-# Zimbabwe -----
-zwe_context_data<-fun_context_data(zwe_global_choices,
-                                           zwe_survey_main,  ## Main survey 
-                                           zwe_survey_1_4_2_7_begin_repeat  ##production_end_use for OTHER NON-FARM PRODUCT
-                                          
-)
-
-  filter(
-    theme== "farm_characteristics")
-
-                                               
-             
-
-sort(unique(zwe_context_data$indicator))
-sort(unique(zwe_context_data$theme))
-
-# Tunisia-----
-#tun_survey_1_4_2_7_begin_repeat,  ## tunisia does not have this begin_repeat production_end_use for OTHER NON-FARM PRODUCT  
-tun_context_data<-    fun_context_main(tun_global_choices, tun_survey_main) ## Main survey
-
-sort(unique(tun_context_data$indicator))
-sort(unique(tun_context_data$theme))
-
-
-## If the farmers doesn't know the answer put 9999-----
-#result2<- zwe_context_data%>%
-  result2<- tun_context_data%>%
-
- #Indicator: climate_drought and climate_flood
+fun_context<- function(country_context_data){
+  
+  country_context<-country_context_data%>%
+  
+  #Indicator: climate_drought and climate_flood
   #Zimbabwe error: the choices options should be "4_2_1_3" (1=yes, 0=no, notsure), but the country put "4_2_1_1" (increased, nochange, decreased, notsure)
   #So I reclassified those options into 1=yes, 0=no, notsure
   mutate( name_choice=case_when(
-      country== "zimbabwe"& name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice%in% c("increase","decrease") ~ "1",
-      country== "zimbabwe"&name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice%in% c("nochange") ~ "0",
+    country== "zimbabwe"& name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice%in% c("increase","decrease") ~ "1",
+    country== "zimbabwe"&name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice%in% c("nochange") ~ "0",
     TRUE ~ name_choice))%>%
   mutate(label_choice=case_when(
-      country== "zimbabwe"& name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice=="1" ~ "Yes",
-      country== "zimbabwe"&name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice=="0" ~ "No",
-      TRUE ~ label_choice))%>%
+    country== "zimbabwe"& name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice=="1" ~ "Yes",
+    country== "zimbabwe"&name_question %in% c("_4_2_1_3_2","_4_2_1_3_1") & name_choice=="0" ~ "No",
+    TRUE ~ label_choice))%>%
   #Indicator: "farmer_relation" 
   mutate(name_question_recla = case_when(name_question_recla== "_1_2_1_6_1"~ "_1_2_1_6",TRUE ~name_question_recla))%>%
   filter(!(name_question== "_1_2_1_6"& name_choice== "other"))%>%
-  #Indicator: context_all
-  mutate(label_choice= case_when(
-    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")&country== "zimbabwe"~"in acres",
-    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3")&country== "tunisia"~"in hectares",
-    TRUE ~ label_choice))%>%
-  #Indicator: inputs
-  mutate(label_choice= case_when(
-    name_question %in% c("_1_4_3_2_3", "_1_4_3_3_3", "_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3")&country== "zimbabwe"~"in acres",
-    name_question %in% c("_1_4_3_2_3", "_1_4_3_3_3", "_1_4_3_4_3","_1_4_3_6_3","_1_4_3_7_3")&country== "tunisia"~"in hectares",
-    TRUE ~ label_choice))%>%
-  
   #Indicator: "housing"
   mutate(name_question_recla = case_when(
     name_question_recla== "_3_2_1_3_1_1"~ "_3_2_1_3_1",
     name_question_recla== "_3_2_1_3_2_1"~ "_3_2_1_3_2",
     TRUE ~name_question_recla))%>%
   filter(!(name_question%in% c("_3_2_1_3_1/other","_3_2_1_3_2/other")))%>%
-   #Indicator: "membership"
+  #Indicator: "membership"
   mutate(name_question_recla = case_when(name_question_recla==  "_2_3_1_1_1"~"_2_3_1_1",TRUE ~name_question_recla))%>%
   filter(!(name_question%in% c("_2_3_1_1_1/other")))%>%
   #Inicator: primary_occupation
@@ -434,21 +435,52 @@ sort(unique(tun_context_data$theme))
   mutate(name_question_recla = case_when(name_question_recla==  "_1_2_1_13_2_2_1"~"_1_2_1_13_2_2",TRUE ~name_question_recla))%>%
   filter(!(name_question=="_1_2_1_13_2_2/other"))%>%
   #all indicators
+  #Put the unit of area for all necessary questions
+  mutate(label_choice= case_when(
+    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
+    name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
+    name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country %in%c("zimbabwe","kenya")~"acres",
+    name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country %in% c("tunisia","senegal")~"hectares",
+    TRUE ~ label_choice))%>%
+  
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
     TRUE ~ name_question_recla))%>%
-    mutate(name_choice = case_when(
+  mutate(name_choice = case_when(
     type_question == "select_multiple"~ sub("^.*/", "", name_question), # replace name_question by the type of energy
     TRUE ~ name_choice))%>%
   # Remove rows name_choice == NA
   filter(!is.na(name_choice))
+  
+  return(country_context)
+}
+
+#INSTRUCTION: Go to your country section
+
+## CONTEXT DATA FORMAT BY COUNTRY -----
+## If the farmers doesn't know the answer put 9999-----
+# ZIMBABWE -----
+zwe_context_data<-fun_context_data(zwe_global_choices, #country_global_choices
+                                   zwe_survey_main,  #Main survey 
+                                   zwe_survey_1_4_2_7_begin_repeat)  #production_end_use for OTHER NON-FARM PRODUCT
+    
+zwe_context<-fun_context(zwe_context_data)
+write.csv(zwe_context,paste0(zwe_data_path,"/zwe/zwe_context_format.csv"),row.names=FALSE)
+
+# TUNISIA-----
+#tun_survey_1_4_2_7_begin_repeat,  ## tunisia does not have this begin_repeat production_end_use for OTHER NON-FARM PRODUCT  
+tun_context_data<-    fun_context_main(tun_global_choices, #country_global_choices
+                                       tun_survey_main) # Main survey
+
+tun_context<-fun_context(tun_context_data)
+write.csv(tun_context,paste0(tun_data_path,"/tun/tun_context_format.csv"),row.names=FALSE)
+
+# KENYA-----
+#ken_survey_1_4_2_7_begin_repeat,  ## kenya does not have this begin_repeat production_end_use for OTHER NON-FARM PRODUCT  
+ken_context_data<-    fun_context_main(ken_global_choices, #country_global_choices
+                                       ken_survey_main) # Main survey
 
 
-sort(unique(result2$label_question))
-sort(unique(result2$name_question))
-sort(unique(result2$name_question_recla))
-sort(unique(result2$name_choice)) 
-sort(unique(result2$theme)) 
+ken_context<-fun_context(ken_context_data)
+write.csv(ken_context,paste0(ken_data_path,"/ken/ken_context_format.csv"),row.names=FALSE)
 
-write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_context_format.csv",row.names=FALSE)
-write.csv(result2,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_context_format.csv",row.names=FALSE)

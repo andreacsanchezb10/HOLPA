@@ -5,15 +5,9 @@ library(readxl)
 library(dplyr)
 library(summarytools)
 
-#### Set file paths ####
-# TO CHECK: I need to connect directly to the share point, I already asked Sebastien for permision
-#For now I will leave it like this to continue working
-#### Import data ####
-# Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
-# a choices worksheet with the response options for multiple choice questions (single or multiple).
-# These need to be imported and combined.
 
-### Country databases ####
+#INSTRUCTION: run the following code
+
 # Read excel files
 read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name, index) {
   survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
@@ -34,7 +28,13 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
 }
 
 #### GLOBAL DATABASES ----
-global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #Andrea
+#global_survey contains the global form with questions
+#global_choices contains the global form with choices
+
+# INSTRUCTIONS: Please download HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
+#Replace global.data.path path with your path and run the code
+
+global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
 
 global_survey <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx"),
                             sheet = "survey")%>%
@@ -63,21 +63,29 @@ global_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_sur
   rename("name_choice" = "name")
 
 
+#### Import county survey and form ####
+#country_holpa_household_survey_clean contains the clean household survey with the questions and responses 
+#country_holpa_household_form_clean contains the clean household form with the questions (this form is similar to the one uploaded in koboCollect, but some changes were made to match the global survey [e.g. some countries changed the code of some global questions])
+#INTRUCTION: Go to your country section
+
 ### ZIMBABWE ----
-zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe_holpa_household_survey_clean.xlsx" #path: Andrea
+#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace zwe_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE ####
+zwe_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/" #path andrea
 
-zwe_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", zwe.data.path,"zimbabwe","_index")%>%
+zwe_h_survey_file <- paste0(zwe_data_path, "zwe_holpa_household_survey_clean.xlsx")
+zwe_h_choices_file <- paste0(zwe_data_path, "zwe_holpa_household_form_clean.xlsx")
+
+zwe_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", zwe_h_survey_file,"zimbabwe","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
-zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index")%>% # Section: Farm production OTHER
+zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", zwe_h_survey_file,"zimbabwe","_index")%>% # Section: Farm production OTHER
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
+zwe_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", zwe_h_survey_file,"zimbabwe","_index") # Section: area of land per agricultural practice
 
-zwe_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", zwe.data.path,"zimbabwe","_index") # Section: area of land per agricultural practice
 
-
-zwe_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe_holpa_household_form_clean.xlsx",
-                             sheet = "choices")%>%
+zwe_choices <- read_excel(zwe_h_choices_file, sheet = "choices")%>%
   mutate(country= "zimbabwe")%>%
   select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
@@ -95,16 +103,21 @@ zwe_global_choices<-global_choices%>%
 
 
 ### TUNISIA -----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun_holpa_household_survey_clean.xlsx" #path: Andrea
-tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun.data.path,"tunisia","_index")%>%
+#link to tun data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean?csf=1&web=1&e=07Lc0e
+#INSTRUCTION: Replace tun_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE ####
+tun_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/" #path andrea
+
+tun_h_survey_file <- paste0(tun_data_path, "tun_holpa_household_survey_clean.xlsx")
+tun_h_choices_file <- paste0(tun_data_path, "tun_holpa_household_form_clean.xlsx")
+
+tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun_h_survey_file,"tunisia","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")
 
 # Section: Farm production OTHER #Tunisia doesn't have this section
-tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: area of land per agricultural practice
+tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun_h_survey_file,"tunisia","_index") # Section: area of land per agricultural practice
 
-tun_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun_holpa_household_form_clean.xlsx",
-                          sheet = "choices")%>%
+tun_choices <- read_excel(tun_h_choices_file,sheet = "choices")%>%
   mutate(country= "tunisia")%>%
   select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
@@ -122,9 +135,15 @@ tun_global_choices<-global_choices%>%
 
 
 ### KENYA ----
-ken.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/holpa_household_name_2024.06.23.xlsx" #path: Andrea
+#link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean?csf=1&web=1&e=D7sIkb
+#INSTRUCTION: Replace ken_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE ####
+ken_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/" #path andrea
 
-ken_survey_main <- read_and_process_survey_xlsx("Holpa_global_household_surve", "_id", ken.data.path,"kenya","_index")%>%
+ken_h_survey_file <- paste0(ken_data_path, "ken_holpa_household_survey_clean.xlsx")
+ken_h_choices_file <- paste0(ken_data_path, "ken_holpa_household_form_clean.xlsx")
+
+
+ken_survey_main <- read_and_process_survey_xlsx("Holpa_global_household_surve", "_id", ken_h_survey_file,"kenya","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")%>%
   rename()%>%
@@ -135,10 +154,9 @@ ken_survey_main <- read_and_process_survey_xlsx("Holpa_global_household_surve", 
   rename("_2_1_1_7"="x_2_1_1_7")
 
 # Section: Farm production OTHER #Kenya doesn't have this section
-ken_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", ken.data.path,"kenya","_index") # Section: area of land per agricultural practice
+ken_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", ken_h_survey_file,"kenya","_index") # Section: area of land per agricultural practice
 
-ken_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_monitoring/holpa_household_form.xlsx",
-                          sheet = "choices")%>%
+ken_choices <- read_excel(ken_h_choices_file, sheet = "choices")%>%
   mutate(country= "kenya")%>%
   select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
@@ -155,24 +173,26 @@ ken_global_choices<-global_choices%>%
   mutate(label_choice.country=NA)
 
 ### SENEGAL ----
-sen.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/HOLPA_Senegal_BDD_v020724.xlsx" #path: Andrea
+#link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
+#INSTRUCTION: Replace sen_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE ####
+sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
 
-sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", "_id", sen.data.path,"senegal","_index")%>%
+sen_h_survey_file <- paste0(sen_data_path, "sen_holpa_household_survey_clean.xlsx")
+sen_h_choices_file <- paste0(sen_data_path, "sen_holpa_household_form_clean.xlsx")
+
+sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", "_id", sen_h_survey_file,"senegal","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")%>%
   slice(-1)
 
-sen_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: Crop production
+sen_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: Crop production
   slice(-1)
-sen_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", sen.data.path,"senegal","_index")%>% # Section: area of land per agricultural practice
+sen_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: area of land per agricultural practice
   slice(-1)
 
-sen_survey_3_4_3_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_3_1_1_begin_repeat", "_submission__id", sen.data.path,"senegal","_index") # Section: Crop list
+sen_survey_3_4_3_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_3_1_1_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index") # Section: Crop list
 
-
-
-sen_choices <- read_excel("C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/holpa_household_form_clean.xlsx",
-                          sheet = "choices")%>%
+sen_choices <- read_excel(sen_h_choices_file, sheet = "choices")%>%
   mutate(country= "senegal")%>%
   select("list_name","name","label::English ((en))","country")%>%
   rename("label_choice" = "label::English ((en))")%>%
@@ -194,6 +214,8 @@ sen_global_choices<-global_choices%>%
 
 
 #### AGROECOLOGY MODULE #### -----
+#INSTRUCTION: Continue running the code from here
+
 fun_agroecology_choices<- function(country_global_choices) {
   # Filter and mutate the data frame
   agroecology_choices <- country_global_choices %>%
@@ -427,6 +449,7 @@ return(country_agroecology)
   
 ## AGROECOLOGY DATA BY COUNTRY -----
 ## If the farmers doesn't know the answer put 9999-----
+# INTRUCTION: Go to your country section
 
 # ZIMBABWE -----
 zwe_agroecology_data<-fun_agroecology_data(zwe_global_choices,
@@ -435,7 +458,7 @@ zwe_agroecology_data<-fun_agroecology_data(zwe_global_choices,
                                            zwe_survey_3_3_3_2_begin_repeat) # Section: area of land per agricultural practice
                                            
 zwe_agroecology<-fun_agroecology(zwe_agroecology_data) 
-write.csv(zwe_agroecology,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_format.csv",row.names=FALSE)
+write.csv(zwe_agroecology,paste0(zwe_data_path,"/zwe/zwe_agroecology_format.csv"),row.names=FALSE)
 
 # TUNISIA-----
 ## Tunisia doesn't have this section _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics
@@ -444,7 +467,7 @@ tun_agroecology_data<-rbind(
   fun_agroecology_begin_repeat(tun_global_choices, tun_survey_3_3_3_2_begin_repeat)) # Section: area of land per agricultural practice
   
 tun_agroecology<-fun_agroecology(tun_agroecology_data) 
-write.csv(tun_agroecology,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_agroecology_format.csv",row.names=FALSE)
+write.csv(tun_agroecology,paste0(tun_data_path,"/tun/tun_agroecology_format.csv"),row.names=FALSE)
 
 # KENYA -----
 ken_agroecology_data<-rbind(
@@ -452,7 +475,7 @@ ken_agroecology_data<-rbind(
     fun_agroecology_begin_repeat(ken_global_choices, ken_survey_3_3_3_2_begin_repeat)) # Section: area of land per agricultural practice
 
 ken_agroecology<-fun_agroecology(ken_agroecology_data) 
-write.csv(ken_agroecology,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/ken/ken_agroecology_format.csv",row.names=FALSE)
+write.csv(ken_agroecology,paste0(ken_data_path,"/ken/ken_agroecology_format.csv"),row.names=FALSE)
 
 # SENEGAL -----
 sen_agroecology_data<-fun_agroecology_data(sen_global_choices,
@@ -464,82 +487,5 @@ sen_agroecology_data<-fun_agroecology_data(sen_global_choices,
   rbind(fun_agroecology_begin_repeat(sen_global_choices,sen_survey_3_4_3_1_1_begin_repeat)) ##_3_4_2_3_2_repeat_group:  Crop list 
 
 sen_agroecology<-fun_agroecology(sen_agroecology_data) 
-write.csv(sen_agroecology,file="C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/sen/sen_agroecology_format.csv",row.names=FALSE)
 
-
-
-#---old
-filter(
-  #theme=="1_recycling"
-  #theme=="2_input_reduction"
-  #theme=="3_soil_health"
-  #theme=="4_animal_health"
-  #theme=="5_biodiversity"
-  # theme=="6_synergy"
-  #theme=="7_economic_diversification"
-  #theme=="8_knowledge"
-  #theme=="9_social_values"
-  #theme=="10_fairness"
-  #theme=="11_connectivity"
-  theme=="12_governance"
-  #theme=="13_participation"
-)
-result2<- sen_agroecology_data%>%
-  #Indicator: 2_input_reduction
-  #mutate(name_question_recla  = case_when(name_question =="_1_4_3_8_1"~"_1_4_3_8",TRUE ~ name_question_recla))%>%
-  #Indicator: 3_soil_health and 6_synergy
-  #mutate(name_question_recla  = case_when(name_question =="_2_9_1_1_1"~"_2_9_1_1",TRUE ~ name_question_recla))%>% 
-  #Indicator: "4_animal_health"
-  #mutate(name_question_recla  = case_when(
-  # name_question =="_2_10_1_2_1"~"_2_10_1_2",
-  #name_question == "_3_3_3_4_1"~"_3_3_3_4",
-  #TRUE ~ name_question_recla))%>%
-  #Indicator: 5_biodiversity
-  mutate(name_question_recla  = case_when(
-    name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
-    name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8","l9","l10") ~ "_3_4_3_3_1",
-    name_question %in% c("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10") ~ "_3_4_3_4_2",
-    TRUE ~ name_question_recla))%>%
-  
-  #For the countries that translated the name of the crops, livestock and fish, agricultural to English separated with "//"
-  mutate(name_choice= case_when(
-    name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_3_1_calculate_2") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
-    TRUE ~ name_choice))%>%
-  mutate(label_choice= case_when(
-    name_question_recla %in% c("_3_4_3_1_1_2","_3_4_3_3_1")~ name_choice,
-    TRUE ~label_choice))%>%
-  #Indicator: 6_synergy
-  #mutate(name_question_recla  = case_when(
-  # name_question=="_3_3_1_7_1"~"_3_3_1_7", 
-  #  name_question=="_3_3_3_3_1"~"_3_3_3_3",
-  # name_question=="_2_12_1_1"~"_2_12_1",
-  #TRUE ~ name_question_recla))%>%
-  
-  
-  
-  #filter(!(name_question %in%c("_1_4_3_8/other","_2_9_1_1/other","_2_10_1_2/other","_3_3_3_4/other","_3_4_3_3_1/other","_2_9_1_1/other",
-  #                            "_3_3_1_7/other","_3_3_3_3/other","_2_12_1/other")))%>%
-
-mutate(label_choice= case_when(
-  name_question%in% c("_1_4_3_8_1","_2_9_1_1_1","_2_10_1_2_1","_3_3_3_4_1","_3_3_1_7_1","_3_3_3_3_1","_2_12_1_1")~ name_choice,
-  #Indicator: 6_synergy
-  name_question_recla %in% c("_3_3_3_1_calculate_2")~ name_choice,
-  TRUE ~label_choice))%>%
-  mutate(name_choice = case_when(
-    type_question == "select_multiple"&name_choice=="0"~ NA,
-    type_question == "select_multiple"& name_choice == "1" ~ sub("^.*/", "", name_question), # replace name_question by the type of energy
-    TRUE ~ name_choice))%>%
-  # Remove rows name_choice == NA
-  filter(!is.na(name_choice))%>%
-  mutate(name_question_recla  = case_when(
-    
-    # Indicator: all principles
-    type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
-    TRUE ~ name_question_recla))%>%
-  
-  mutate(label_choice= case_when(
-    name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
-    name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
-    name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in%c("zimbabwe","kenya")~"acres",
-    name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal")~"hectares",
-    TRUE ~ label_choice))
+write.csv(sen_agroecology,paste0(sen_data_path,"/sen/sen_agroecology_format.csv"),row.names=FALSE)
