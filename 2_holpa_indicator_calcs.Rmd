@@ -17,22 +17,6 @@ library(readr)
 library(reshape2) # for changing data layout
 library(stringr) # for wrapping text
 
-# replace these file paths with the location where your data are saved:
-global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
-zwe.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/zwe/"
-#data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/"
-
-# import data
-zwe_ae <- read_csv("zwe_agroecology_format.csv",show_col_types = FALSE)
-zwe_cn <- read_csv("zwe_context_format.csv",show_col_types = FALSE)
-zwe_pf <- read_csv("zwe_performance_format.csv",show_col_types = FALSE)
-
-zwe_data <- zwe_ae %>% full_join(zwe_cn) %>% full_join(zwe_pf)
-
-zwe_ae_scores <- read_csv("zwe/zwe_agroecology_score.csv",show_col_types = FALSE)
-
-zwe_data <- zwe_data %>% left_join(zwe_ae_scores) %>% unique()
-
 ### Set parameters ####
 
 # Alter these parameters as needed for your country/landscape of analysis
@@ -41,6 +25,56 @@ zwe_data <- zwe_data %>% left_join(zwe_ae_scores) %>% unique()
 #https://icl-growingsolutions.com/en-gb/turf-landscape/knowledge-hub/nutrient-calculations/ 
 nut_conversion_l_to_kg <- 1.23 
 
+#### Import data ####
+
+# replace these file paths with the location where your data are saved:
+global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
+zwe.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
+#global.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/"
+
+# import cleaned data
+zwe_ae <- read_csv(paste0(zwe.data.path,"zwe_agroecology_format.csv"),show_col_types = FALSE)
+zwe_cn <- read_csv(paste0(zwe.data.path,"zwe_context_format.csv"),show_col_types = FALSE)
+zwe_pf <- read_csv(paste0(zwe.data.path,"zwe_performance_format.csv"),show_col_types = FALSE)
+zwe_fw <- read_csv(paste0(zwe.data.path,"zwe_fieldwork_format.csv"),show_col_types = FALSE)
+zwe_ae_scores <- read_csv(paste0(zwe.data.path,"zwe_agroecology_score.csv"),show_col_types = FALSE)
+
+# reshape and classify fieldwork data to enable join with household
+zwe_fw <- melt(zwe_fw[,c(1,2,33:length(zwe_fw))],id.vars=c("kobo_farmer_id","household_id","country"),variable.name="name_question",value.name="name_choice")
+
+zwe_fw <- zwe_fw %>%
+  mutate(indicator = case_when(
+    grepl("tree", name_question) ~ "biodiversity",
+    grepl("biodiv", name_question) ~ "biodiversity",
+    grepl("1_201", name_question) ~ "biodiversity", # landscape complexity
+    grepl("1_202", name_question) ~ "biodiversity", # landscape complexity
+    grepl("1_203", name_question) ~ "biodiversity", # landscape complexity
+    grepl("1_301", name_question) ~ "crop health",
+    grepl("1_302", name_question) ~ "crop health",
+    grepl("1_303", name_question) ~ "crop health",
+    grepl("1_111", name_question) ~ "soil health", # practice
+    grepl("1_112", name_question) ~ "soil health",
+    grepl("1_113", name_question) ~ "soil health", # practice
+    grepl("1_114", name_question) ~ "soil health",
+    grepl("1_115", name_question) ~ "soil health", # practice
+    grepl("1_116", name_question) ~ "soil health",
+    .default = NA)) %>%
+    mutate(subindicator = case_when(
+      name_question %in% c("_1_202_1","_1_203_1","_1_204_1") ~ "landscape_pc_nat",
+      name_question %in% c("trees_count_1","trees_count_2","trees_count_3") ~ "tree_abundance",
+      name_question %in% c("trees_richness_1","trees_richness_2","trees_richness_3") ~ "tree_richness",
+      name_question %in% c("_1_111_2","_1_113_2","_1_115_3") ~ "fw_farm_practice",
+      name_question %in% c("_1_301_1","_1_302_1","_1_303_1") ~ "crop_appearance",
+      name_question %in% c("_1_301_2","_1_302_2","_1_303_2") ~ "crop_growth",
+      name_question %in% c("_1_301_3","_1_302_3","_1_303_3") ~ "crop_disease",
+      name_question %in% c("_1_301_4","_1_302_4","_1_303_4") ~ "crop_pest",
+      name_question %in% c("_1_301_5","_1_302_5","_1_303_5") ~ "crop_enemy",
+      name_question %in% c("_1_301_6","_1_302_6","_1_303_6") ~ "crop_weed",
+      name_question %in% c("_1_301_7","_1_302_7","_1_303_7") ~ "crop_natural",
+      name_question %in% c("_1_301_8","_1_302_8","_1_303_8") ~ "crop_management",
+      .default = NA))
+
+zwe_data <- zwe_ae %>% full_join(zwe_cn) %>% full_join(zwe_pf) %>% full_join(zwe_fw)  %>% left_join(zwe_ae_scores) %>% unique()
 
 ```
 ## Calculate agroecology indicator scores
