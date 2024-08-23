@@ -43,3 +43,20 @@ ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_econom
 
 
 ```
+
+## Key performance indicators of farm-households
+
+```{r}
+
+ggplot(indicators_scaled %>% filter(!is.na(score_scaled)),
+       aes(x=indicator,y=score_scaled,colour=theme_short))+
+  geom_boxplot()+
+  #coord_polar()+
+  scale_colour_viridis_d()+
+  theme_bw()+
+  theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))
+
+# Next, group households by agroecological scores 1-5, and show KPI scores per group as geom_tile or spider graph
+
+```
+
