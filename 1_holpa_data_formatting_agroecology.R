@@ -447,7 +447,7 @@ fun_agroecology<- function(country_agroecology_data){
   
   
 return(country_agroecology)
-}
+} 
   
 ## AGROECOLOGY DATA BY COUNTRY -----
 ## If the farmers doesn't know the answer put 9999-----
