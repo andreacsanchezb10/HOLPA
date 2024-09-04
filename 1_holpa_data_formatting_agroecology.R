@@ -415,7 +415,7 @@ fun_agroecology<- function(country_agroecology_data){
     
     #For the countries that translated the name of the crops, livestock and fish, agricultural to English separated with "//"
     mutate(name_choice= case_when(
-      name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_3_1_calculate_2") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+      name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_3_1_calculate_2","_3_3_1_7_1") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
       TRUE ~ name_choice))%>%
     
     mutate(label_choice= case_when(
@@ -499,7 +499,7 @@ lao_agroecology_data<-fun_agroecology_data(lao_global_choices,
                                            lao_survey_3_3_3_2_begin_repeat) # Section: area of land per agricultural practice
 
 lao_agroecology<-fun_agroecology(lao_agroecology_data) %>%
-  filter(name_question_recla=="_1_4_2_3_4")
+  filter(name_question_recla=="_3_3_3_4")
 
 
 
