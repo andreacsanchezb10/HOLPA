@@ -498,8 +498,7 @@ lao_agroecology_data<-fun_agroecology_data(lao_global_choices,
                                            lao_survey_1_4_2_7_begin_repeat, ## _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics 
                                            lao_survey_3_3_3_2_begin_repeat) # Section: area of land per agricultural practice
 
-lao_agroecology<-fun_agroecology(lao_agroecology_data) %>%
-  filter(name_question_recla=="_3_3_3_4")
+lao_agroecology<-fun_agroecology(lao_agroecology_data)
 
 
 

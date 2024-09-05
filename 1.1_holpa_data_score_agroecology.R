@@ -17,27 +17,30 @@ library("summarytools")
 # 12_governance: "_2_2_1_1" "_2_2_1_2" "_2_2_1_3" = 3/3
 # 13_participation: "_2_3_1_4" = 1/1
 #total = 29 questions
-#Zimbabwe = 26 questions (missing: "_2_8_5_1", "_2_6_1_4_3", "_2_6_1_4_4")
-#Tunisia = 25 questions (missing: "_2_8_5_1","_2_6_1_4_1","_2_6_1_4_3","_2_6_1_4_6")
-#Kenya = 28 questions (missing: "_2_6_1_4_6")
-#Kenya = 29 questions 
+#Zimbabwe = 26/29 questions (missing: "_2_8_5_1", "_2_6_1_4_3", "_2_6_1_4_4")
+#Tunisia = 25/29 questions (missing: "_2_8_5_1","_2_6_1_4_1","_2_6_1_4_3","_2_6_1_4_6")
+#Kenya = 28/29 questions (missing: "_2_6_1_4_6")
+#Senegal = 29/29 questions 
+#Laos = 26/29 questions (missing: "_2_6_1_4_1", "_2_6_1_4_4", "_2_6_1_4_5")
 
 ## type_question: select_multiple ----
 # 2_input_reduction:"_1_4_3_1", "_1_4_3_5",   "_2_8_5_3","_1_4_3_8", "_1_4_3_9" = 5/6
 # 11_connectivity: "_2_7_1_1","_2_7_1_2","_2_7_1_3","_2_7_1_4", "_2_7_1_5","_2_7_1_6","_1_4_2_2_3", "_1_4_2_3_4", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_6_3", "_1_4_2_7_4" = 12/12
 #Total = 17 questions
-#Zimbabwe = 11 questions (missing: "_2_8_5_3", "_1_4_3_9","_2_7_1_3","_2_7_1_4", "_1_4_2_4_3", "_1_4_2_5_5")
-#Tunisia = 10 questions (missing: "_2_8_5_3","_1_4_3_9","_2_7_1_1","_2_7_1_3","_1_4_2_4_3","_1_4_2_7_4","_2_7_1_6")
-#Kenya = 15 questions (missing:"_2_7_1_6", "_1_4_2_7_4")
-#Senegal= 16 questions (missing:"_1_4_2_7_4")
+#Zimbabwe = 11/17 questions (missing: "_2_8_5_3", "_1_4_3_9","_2_7_1_3","_2_7_1_4", "_1_4_2_4_3", "_1_4_2_5_5")
+#Tunisia = 10/17 questions (missing: "_2_8_5_3","_1_4_3_9","_2_7_1_1","_2_7_1_3","_1_4_2_4_3","_1_4_2_7_4","_2_7_1_6")
+#Kenya = 15/17 questions (missing:"_2_7_1_6", "_1_4_2_7_4")
+#Senegal= 16/17 questions (missing:"_1_4_2_7_4")
+#Laos = 11/17 questions ("_2_7_1_1","_2_7_1_4", "_2_7_1_5",_1_4_2_2_3", "_1_4_2_5_5", "_1_4_2_6_3")
 
 ## type_question: integer ----
 # 8 - knowledge: "_2_1_1_1" "_2_1_1_2" "_2_1_1_3" "_2_1_1_4" "_2_1_1_5" "_2_1_1_6" "_2_1_1_7" = 7/7
 #Total = 7 questions
-#Zimbabwe = 7 questions
-#Tunisia =  7 questions
-#Kenya =  7 questions
-#Senegal = 7 questions
+#Zimbabwe = 7/7 questions
+#Tunisia =  7/7 questions
+#Kenya =  7/7 questions
+#Senegal = 7/7 questions
+#Laos = 7/7 questions
 
 ## type_question: counting----
 # 3- soil_health: "_2_9_1_1" = 1/1
@@ -46,9 +49,11 @@ library("summarytools")
 # 6- synergy: "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1" = 6/6
 # 7- economic_diversification: "_2_4_1" = 1/1
 #Total = 10 questions (2 duplicated across principles)
-#Zimbabwe = 9 questions (missing: _3_3_3_4)
-#Tunisia = 9 questions (missing: _3_3_3_4)
-#Tunisia = 10 questions (missing: _3_3_3_4)
+#Zimbabwe = 9/10 questions (missing: _3_3_3_4)
+#Tunisia = 9/10 questions (missing: _3_3_3_4)
+#Kenya = 10/10 questions
+#Senegal = 10/10 questions
+#Laos = 10/10 questions
 
 #### AGROECOLOGY: SCORING FUNCTION ------
 fun_agroecology_data<- function(country_agroecology_data){
@@ -151,6 +156,7 @@ fun_agroecology_data<- function(country_agroecology_data){
       
       label_score_agroecology_module%in%c("natural")~ 5,
       country=="senegal" & name_question_recla=="_2_8_5_3" & name_choice== "other"~ 1,
+      country=="laos" & name_question_recla=="_2_8_5_3" & name_choice== "other"~ 5,
       
       grepl("Directly to consumers.", label_score_agroecology_module) ~ 5,
       grepl("Farmers organization/cooperative", label_score_agroecology_module) ~ 4,
@@ -178,6 +184,8 @@ fun_agroecology_data<- function(country_agroecology_data){
       
       label_score_agroecology_module%in%c("natural")~ "Only natural feeds used",
       country=="senegal" & name_question_recla=="_2_8_5_3" & name_choice== "other"~ "Farmer doesn't know",
+      country=="laos" & name_question_recla=="_2_8_5_3" & name_choice== "other"~ "Rice bran",
+      
       
       grepl("Directly to consumers.", label_score_agroecology_module) ~ "Sold on-farm production directly to consumers",
       grepl("Farmers organization/cooperative", label_score_agroecology_module) ~ "Sold on-farm production to farmers organization/cooperative",
@@ -399,17 +407,17 @@ fun_agroecology_data<- function(country_agroecology_data){
 # Data for each county is the outcome from 1_holpa_data_formatting_agroecology.R
 ### Country databases ####----
 #ZIMBABWE----
-zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/zwe/zwe_agroecology_format.csv" #andrea path
+zwe.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/zwe_agroecology_format.csv" #andrea path
 zwe_agroecology_data <- read.csv(zwe.data.path)
 
 zwe_agroecology<- fun_agroecology_data(zwe_agroecology_data)
 sort(unique(zwe_agroecology$theme))
 view(dfSummary(zwe_agroecology))
 
-write.csv(zwe_agroecology,file='zwe/zwe_agroecology_score.csv',row.names=FALSE)
+write.csv(zwe_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/zwe_agroecology_score.csv',row.names=FALSE)
 
 #TUNISIA----
-tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/tun/tun_agroecology_format.csv" #andrea path
+tun.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun/tun_agroecology_format.csv" #andrea path
 
 tun_agroecology_data <- read.csv(tun.data.path)
 
@@ -417,10 +425,10 @@ tun_agroecology<- fun_agroecology_data(tun_agroecology_data)
 sort(unique(tun_agroecology$theme))
 view(dfSummary(tun_agroecology))
 
-write.csv(tun_agroecology,file='tun/tun_agroecology_score.csv',row.names=FALSE)
+write.csv(tun_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/tun/tun_agroecology_score.csv',row.names=FALSE)
 
 #KENYA----
-ken.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/ken/ken_agroecology_format.csv" #andrea path
+ken.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/ken/ken_agroecology_format.csv" #andrea path
 
 ken_agroecology_data <- read.csv(ken.data.path)
 ken_agroecology<- fun_agroecology_data(ken_agroecology_data)
@@ -428,14 +436,26 @@ ken_agroecology<- fun_agroecology_data(ken_agroecology_data)
 sort(unique(ken_agroecology$theme))
 view(dfSummary(ken_agroecology))
 
-write.csv(ken_agroecology,file='ken/ken_agroecology_score.csv',row.names=FALSE)
+write.csv(ken_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/ken/ken_agroecology_score.csv',row.names=FALSE)
 
 #SENEGAL----
-sen.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/sen/sen_agroecology_format.csv" #andrea
+sen.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/sen/sen_agroecology_format.csv" #andrea
 sen_agroecology_data <- read.csv(sen.data.path)
 
 sen_agroecology<- fun_agroecology_data(sen_agroecology_data)
 sort(unique(sen_agroecology$theme))
 view(dfSummary(sen_agroecology))
 
-write.csv(sen_agroecology_data,file='sen/sen_agroecology_score.csv',row.names=FALSE)
+write.csv(sen_agroecology_data,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/sen/sen_agroecology_score.csv',row.names=FALSE)
+
+
+#LAOS----
+#PENDING: Waiting for Somphasith to answer what means ຮໍສin question _2_8_5_3/other
+lao.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/lao/lao_agroecology_format.csv" #andrea
+lao_agroecology_data <- read.csv(lao.data.path)
+
+lao_agroecology<- fun_agroecology_data(lao_agroecology_data)
+sort(unique(lao_agroecology$theme))
+view(dfSummary(lao_agroecology))
+
+write.csv(lao_agroecology_data,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/lao/lao_agroecology_score.csv',row.names=FALSE)
