@@ -68,7 +68,7 @@ global_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_sur
 
 ### ZIMBABWE ----
 #link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
-#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### PERFORMANCE MODULE ####
+#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 zwe_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/" #path andrea
 
 zwe_h_survey_file <- paste0(zwe_data_path, "zwe_holpa_household_survey_clean.xlsx")
@@ -110,7 +110,7 @@ zwe_global_choices<-global_choices%>%
 
 ### TUNISIA -----
 #link to tun data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean?csf=1&web=1&e=07Lc0e
-#INSTRUCTION: Replace tun_data_path path with your path, run the code and then go #### PERFORMANCE MODULE ####
+#INSTRUCTION: Replace tun_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 
 tun_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/" #path andrea
 
@@ -151,7 +151,7 @@ tun_global_choices<-global_choices%>%
 
 ### KENYA ----
 #link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean?csf=1&web=1&e=D7sIkb
-#INSTRUCTION: Replace ken_data_path path with your path, run the code and then go #### PERFORMANCE MODULE ####
+#INSTRUCTION: Replace ken_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 
 ken_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/" #path andrea
 
@@ -192,7 +192,7 @@ ken_global_choices<-global_choices%>%
 
 ### SENEGAL ----
 #link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
-#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### PERFORMANCE MODULE ####
+#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 
 sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
 
@@ -256,9 +256,48 @@ sen_global_choices<-global_choices%>%
   select(-country.y)
 
 
+
+### LAOS ----
+#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
+lao_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/" #path andrea
+
+lao_h_survey_file <- paste0(lao_data_path, "lao_holpa_household_survey_clean.xlsx")
+lao_h_choices_file <- paste0(lao_data_path, "lao_holpa_household_form_clean.xlsx")
+
+lao_survey_main <- read_and_process_survey_xlsx("Final_HOLPA_Laos", "_id", lao_h_survey_file,"laos","_index")
+lao_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Crop production
+lao_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Livestock production 1
+lao_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Livestock production 2
+lao_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section:labour household members permanent workers
+lao_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: labour household members seasonal workers 1
+lao_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: labour household members seasonal workers 2
+lao_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
+lao_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
+lao_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
+lao_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: area of land per agricultural practice
+lao_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Irrigation
+
+lao_choices <- read_excel(lao_h_choices_file, sheet = "choices")%>%
+  mutate(country= "laos")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+lao_global_choices<-global_choices%>%
+  rbind(lao_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
+
+
 #### PERFORMANCE MODULE ####
 #INSTRUCTION: Continue running the code from here
-
 fun_performance_choices<- function(country_global_choices) {
   ## Theme: Economic ----
     # Filter and mutate the data frame
@@ -395,7 +434,8 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
               by = c("name_question"="name_question", "name_choice"="name_choice"))%>%
     filter(type_question=="select_one")%>%
     filter(country=="zimbabwe"|
-             country=="kenya")
+             country=="kenya"|
+             country=="laos")
   
   # Left join for "select_one" for countries that downloaded the survey with the name_label version in English (country== "tun")
   select_one2 <- gathered_data  %>%
@@ -543,7 +583,7 @@ mutate(label_choice = case_when(
   country== "kenya" & kobo_farmer_id == "286844609"~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
   country== "senegal" & kobo_farmer_id == "308802823"~gsub("\\$\\{_1_4_1_1\\}", "acre", label_choice),
   country %in% c("zimbabwe","kenya")~ gsub("\\$\\{_1_4_1_1\\}", "acre", label_choice),
-  country %in% c("tunisia","senegal") ~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
+  country %in% c("tunisia","senegal","laos") ~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
   TRUE ~ label_choice))%>%
   
   ## Indicator: biodiversity_agrobiodiversity
@@ -614,7 +654,7 @@ mutate(label_choice= case_when(
   name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
   name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
   name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in%c("zimbabwe","kenya")~"acres",
-  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal")~"hectares",
+  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos")~"hectares",
   TRUE ~ label_choice))%>%
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
@@ -716,3 +756,24 @@ sen_performance_data<-fun_performance_data(sen_global_choices,
 
 sen_performance<-fun_performance(sen_performance_data)
 write.csv(sen_performance,paste0(sen_data_path,"/sen/sen_performance_format.csv"),row.names=FALSE)
+
+
+# LAOS -----
+lao_performance_data<-fun_performance_data(lao_global_choices,
+                                           lao_survey_main,  ## Main survey 
+                                           lao_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           lao_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           lao_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           lao_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
+                                           lao_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           lao_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
+                                           lao_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
+                                           lao_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
+                                           lao_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
+                                           lao_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
+                                           lao_survey_3_3_3_2_begin_repeat) ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+
+lao_performance<-fun_performance(lao_performance_data)
+write.csv(lao_performance,paste0(lao_data_path,"/lao/lao_performance_format.csv"),row.names=FALSE)
+
+
