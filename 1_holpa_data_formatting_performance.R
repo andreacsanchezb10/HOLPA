@@ -7,7 +7,6 @@ library(summarytools)
 
 
 #INSTRUCTION: run the following code
-
 # Read excel files----
 read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name, index) {
   survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
@@ -32,7 +31,6 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
 
 # INSTRUCTIONS: Please download HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
 #Replace global.data.path path with your path and run the code
-
 global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
 
 global_survey <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx"),
@@ -277,6 +275,10 @@ lao_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_
 lao_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
 lao_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: area of land per agricultural practice
 lao_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Irrigation
+lao_survey_3_4_2_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Fish production 1
+
+lao_survey_3_4_2_3_2_4_begin_repeat<- read_and_process_survey_xlsx("_3_4_2_3_2_4_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Fish production 2
+
 
 lao_choices <- read_excel(lao_h_choices_file, sheet = "choices")%>%
   mutate(country= "laos")%>%
@@ -628,7 +630,9 @@ mutate(label_choice = case_when(
 ##Indicator: productivity_crop, productivity_livestock
 #For the countries that translated the name of the crops, livestock and fish to English separated with "//"
 mutate(name_choice= case_when(
-  country %in% c("senegal")&name_question_recla %in%c("_3_4_3_1_3_calculate","_3_4_2_2_2_calculate","_3_4_2_2_5_2_calculate","_3_4_2_2_6_1_1_calculate","_3_4_2_3_2_1_calculate","_3_4_2_3_2_5_calculate" )& grepl("//", name_choice)~ sub(".*//", "", name_choice),
+  country %in% c("senegal","laos")&name_question_recla %in%c("_3_4_3_1_3_calculate","_3_4_2_2_2_calculate","_3_4_2_2_5_2_calculate",
+                                                             "_3_4_2_2_6_1_1_calculate","_3_4_2_3_2_1_calculate","_3_4_2_3_2_5_calculate",
+                                                             "_3_4_2_1_5_1_calculate","_3_4_2_3_2_4_1_calculate")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
   TRUE ~ name_choice))%>%
   
   ##Indicator: labour_productivity
@@ -725,7 +729,7 @@ ken_performance_data<-fun_performance_data(ken_global_choices, #country_global_c
                                            ken_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
                                            ken_survey_3_3_3_2_begin_repeat)%>% ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
   rbind(fun_performance_begin_repeat(ken_global_choices, #country_global_choices
-                                     ken_survey_3_4_2_3_2_begin_repeat)) ##_3_4_2_3_2_repeat_group:  Fish production 
+                                     ken_survey_3_4_2_3_2_begin_repeat)) ##_3_4_2_3_2_begin_repeat:  Fish production 
 
 
 ken_performance<-fun_performance(ken_performance_data)
@@ -759,6 +763,7 @@ write.csv(sen_performance,paste0(sen_data_path,"/sen/sen_performance_format.csv"
 
 
 # LAOS -----
+## CHECK: FISH AND LIVESTOCK production unit asked to Somphasith
 lao_performance_data<-fun_performance_data(lao_global_choices,
                                            lao_survey_main,  ## Main survey 
                                            lao_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
@@ -771,7 +776,10 @@ lao_performance_data<-fun_performance_data(lao_global_choices,
                                            lao_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
                                            lao_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
                                            lao_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
-                                           lao_survey_3_3_3_2_begin_repeat) ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+                                           lao_survey_3_3_3_2_begin_repeat)%>% ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+  rbind(
+    fun_performance_begin_repeat(lao_global_choices,lao_survey_3_4_2_3_2_begin_repeat), ##_3_4_2_3_2_repeat_group:  Fish production 1
+    fun_performance_begin_repeat(lao_global_choices,lao_survey_3_4_2_3_2_4_begin_repeat)) ##_3_4_2_3_2_repeat_group:  Fish production 2
 
 lao_performance<-fun_performance(lao_performance_data)
 write.csv(lao_performance,paste0(lao_data_path,"/lao/lao_performance_format.csv"),row.names=FALSE)
