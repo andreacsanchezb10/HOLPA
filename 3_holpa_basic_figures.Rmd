@@ -30,7 +30,12 @@ Agroecology adherence assessed using Likert scale responses from 1 (low adherenc
 
 ```{r basic figures, include=TRUE, echo=FALSE}
 
-ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_economic_diversification/economic","extra_participation"))), aes(x=indicator,y=score,fill=indicator))+
+table(d_wide$indicator,d_wide$module)
+
+temp <- d %>% filter(indicator == "3_soil_health")
+temp <- d_wide %>% filter(indicator == "score_ae_overall")
+
+ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_economic_diversification/economic","extra_participation"))), aes(x=factor(indicator,levels=unique(indicator[order(indicator_order)])),y=score,fill=indicator))+
   geom_boxplot()+
   ggtitle(paste0("Agroecology adherence across n= ",length(unique(d_wide$kobo_farmer_id))," farm-households"))+
   labs(x="",y="Score\n(1 = low adherence, 5 = high adherence)")+
@@ -41,6 +46,8 @@ ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_econom
   theme(axis.text.x=element_text(angle=90,hjust=1),
         plot.title=element_text(hjust=0.5))
 
+ggsave("ae boxplot.tiff", width = 7, height = 5)
+ggsave("ae-pf boxplot.png", width = 7, height = 5)
 
 ```
 
@@ -48,7 +55,7 @@ ggplot(d_wide %>% filter(module=="agroecology", !(indicator %in% c("extra_econom
 
 ```{r}
 
-ggplot(indicators_scaled %>% filter(!is.na(score_scaled)),
+ggplot(d %>% filter(module %in% c("performance kpi")) %>% filter(!is.na(score_scaled)),
        aes(x=indicator,y=score_scaled,colour=theme_short))+
   geom_boxplot()+
   #coord_polar()+
@@ -56,7 +63,58 @@ ggplot(indicators_scaled %>% filter(!is.na(score_scaled)),
   theme_bw()+
   theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))
 
-# Next, group households by agroecological scores 1-5, and show KPI scores per group as geom_tile or spider graph
+# KPI scores on petal diagram
+
+d_pivot_kpi_ae <- d_wide %>% 
+  #filter(module=="performance kpi")%>%
+  dcast(country+indicator+subindicator+theme_short+Ae_understanding~module,value.var="score_scaled",median) %>%
+  filter(!is.na(`performance kpi`))
+
+col.kpis <- c("AGR" ="green4","SOC"="lightpink3")
+
+ggplot(d_pivot_kpi_ae,
+       aes(y=factor(indicator,levels=unique(indicator[order(indicator)])),x=`performance kpi`,fill=indicator),colour="grey80")+
+  #aes(y=indicator,x=`performance kpi`,fill=as.character(theme_short)))+
+  geom_col(position=position_dodge())+# show.legend=FALSE)+
+  #geom_point()+
+  ggtitle(paste0("KPI score\n(n=",length(unique(d$kobo_farmer_id))," HH)"))+
+  coord_polar(theta = "y",clip="off")+
+  #scale_fill_viridis_d(10,name="Performance dimension")+
+  #scale_fill_manual(values=col.kpis)+
+  scale_fill_brewer(palette=15,name="")+
+  #scale_y_discrete(labels=function(y) str_wrap(paste0("",y),11))+
+  #scale_x_continuous(limits=c(0,100),breaks=seq(0,100,25))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        axis.title=element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(size=11,colour="black"))
+
+ggsave("pf polar.tiff", width = 7, height = 5)
+ggsave("pf polar.png", width = 7, height = 5)
+
+# Heatmap of agroecological scores 1-5 on y axis and KPI scores on x axis
+
+ggplot(indicators_scaled,aes(y=ae_score,x=pf_score,fill=district))+ 
+  geom_point(shape=21,aes(size=count_company),colour="black")+
+  #geom_count(shape=21,show.legend=TRUE,colour="black")+
+  xlab("Agroecological transition level")+
+  scale_size(breaks=c(1,5,10,20,70),range=c(2,9),name=paste0("Number of\ncompanies\n(n = ",length(unique(data$ID)),")"))+
+  scale_fill_viridis_d(direction=-1,na.value="grey",guide="none",drop=FALSE)+
+  scale_y_discrete(drop=FALSE)+
+   scale_x_discrete(drop=FALSE)+
+  theme_classic()+
+ # facet_wrap(~factor(summary_ae$count_indicator,levels=unique(summary_ae$count_indicator)[order(levels(summary_ae$#AE))],ordered=TRUE),scales="free_y", strip.position="right",ncol=1)+
+  theme(plot.title = element_text(hjust=0.5),
+        strip.background = element_blank(), 
+        strip.placement = "outside",
+        axis.title.y= element_blank(),
+        axis.title.x = element_text(size=10,face="bold",colour="black"),
+        axis.text = element_text(size=10,colour="black"),
+        legend.text = element_text(size=10,colour="black"))
+
+ggsave("ae-pf heatmap point.tiff", width = 7, height = 4.6)
+ggsave("ae-pf heatmap point.png", width = 7, height = 4.6)
 
 ```
 
