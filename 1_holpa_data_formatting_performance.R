@@ -597,20 +597,22 @@ mutate(label_choice = case_when(
   
   #For the countries that translated the name of the crops, livestock and fish to English separated with "//"
   mutate(name_choice= case_when(
-    name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+    name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_2_2","_3_3_4_1_1_1","_2_8_4_1_1","_2_8_4_3_1",
+                              "_3_4_2_1_8_3","_1_4_3_3_1_calculate","_3_3_3_2_3_3") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
     TRUE ~ name_choice))%>%
   #Remove _3_4_3_3_1/other
   filter(name_question!="_3_4_3_3_1/other")%>%
   
   ## Indicator: biodiversity_climate_mitigation
+    mutate(name_choice= case_when(
+      name_question_recla %in%c("_3_3_3_1_calculate_2","_3_3_3_3_1","_3_3_4_4_1","_2_8_4_3_4") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+      TRUE ~ name_choice))%>%
   mutate(name_question_recla = case_when(
     name_question_recla=="_3_3_3_3_1"~ "_3_3_3_3",
     TRUE ~ name_question_recla))%>%
   mutate(label_choice = case_when(name_question%in% c("_3_3_3_3_1")~"other", TRUE ~ label_choice))%>%
   #For the countries that downloaded the survey with labels 
-  mutate(name_choice= case_when(
-    name_question_recla %in%c("_3_3_3_1_calculate_2") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
-    TRUE ~ name_choice))%>%
+  
   filter(name_question!="_3_3_3_3/other")%>%
   
   ## Indicator: energy
@@ -632,7 +634,9 @@ mutate(label_choice = case_when(
 mutate(name_choice= case_when(
   country %in% c("senegal","laos")&name_question_recla %in%c("_3_4_3_1_3_calculate","_3_4_2_2_2_calculate","_3_4_2_2_5_2_calculate",
                                                              "_3_4_2_2_6_1_1_calculate","_3_4_2_3_2_1_calculate","_3_4_2_3_2_5_calculate",
-                                                             "_3_4_2_1_5_1_calculate","_3_4_2_3_2_4_1_calculate")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
+                                                             "_3_4_2_1_5_1_calculate","_3_4_2_3_2_4_1_calculate",
+                                                             "_4_1_1_4_4_1","_2_4_1_1","_2_4_1_2","_4_1_1_5_1_1","_4_1_1_5_2_1",
+                                                             "_4_1_1_7_1","_4_1_3_1_1","_4_1_3_1_2_1","_4_1_4_13","_4_1_3_2_13_1")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
   TRUE ~ name_choice))%>%
   
   ##Indicator: labour_productivity
@@ -763,7 +767,6 @@ write.csv(sen_performance,paste0(sen_data_path,"/sen/sen_performance_format.csv"
 
 
 # LAOS -----
-## CHECK: FISH AND LIVESTOCK production unit asked to Somphasith
 lao_performance_data<-fun_performance_data(lao_global_choices,
                                            lao_survey_main,  ## Main survey 
                                            lao_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
