@@ -72,7 +72,7 @@ global_choices <- read_excel(paste0(global.data.path,"HOLPA_global_household_sur
 
 ### ZIMBABWE ----
 #link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
-#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### CONTEXT MODULE
 
 zwe_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/" #path andrea
 
@@ -121,7 +121,7 @@ zwe_global_choices<-rbind(zwe_global_choices,zwe_global_choices.x)
 
 ### TUNISIA -----
 #link to tun data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean?csf=1&web=1&e=07Lc0e
-#INSTRUCTION: Replace tun_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+#INSTRUCTION: Replace tun_data_path path with your path, run the code and then go #### CONTEXT MODULE
 
 tun_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/" #path andrea
 
@@ -150,7 +150,7 @@ tun_global_choices<-global_choices%>%
 
 ### KENYA ----
 #link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean?csf=1&web=1&e=D7sIkb
-#INSTRUCTION: Replace ken_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+#INSTRUCTION: Replace ken_data_path path with your path, run the code and then go #### CONTEXT MODULE
 
 ken_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean/" #path andrea
 
@@ -179,7 +179,7 @@ ken_global_choices<-global_choices%>%
 
 ### SENEGAL ----
 #link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
-#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### CONTEXT MODULE
 
 sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
 
@@ -212,10 +212,36 @@ sen_global_choices<-global_choices%>%
          "country"="country.x")%>%
   select(-country.y)
 
+### LAOS ----
+#link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean?csf=1&web=1&e=D7sIkb
+#INSTRUCTION: Replace lao_data_path path with your path, run the code and then go #### CONTEXT MODULE ####
+lao_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/" #path andrea
+
+lao_h_survey_file <- paste0(lao_data_path, "lao_holpa_household_survey_clean.xlsx")
+lao_h_choices_file <- paste0(lao_data_path, "lao_holpa_household_form_clean.xlsx")
+
+lao_survey_main <- read_and_process_survey_xlsx("Final_HOLPA_Laos", "_id", lao_h_survey_file,"laos","_index")
+lao_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Crop production
+
+lao_choices <- read_excel(lao_h_choices_file,sheet = "choices")%>%
+  mutate(country= "laos")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+lao_global_choices<-global_choices%>%
+  rbind(lao_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
 
 #### CONTEX MODULE ####
 #INSTRUCTION: Continue running the code from here
-
 fun_context_choices<- function(country_global_choices) {
   # Filter and mutate the data frame
   context_choices <- country_global_choices %>%
@@ -311,7 +337,8 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
               by = c("name_question"="name_question", "name_choice"="name_choice"))%>%
     filter(type_question=="select_one")%>%
     filter(country=="zimbabwe"|
-             country=="kenya")
+             country=="kenya"|
+             country=="laos")
   
   # Left join for "select_one" for country== "tun"
   select_one2 <- gathered_data  %>%
@@ -435,6 +462,13 @@ fun_context<- function(country_context_data){
   mutate(name_question_recla = case_when(name_question_recla==  "_1_2_1_13_2_2_1"~"_1_2_1_13_2_2",TRUE ~name_question_recla))%>%
   filter(!(name_question=="_1_2_1_13_2_2/other"))%>%
   #all indicators
+    
+    #For the countries that translated the name of the crops, livestock and fish to English separated with "//"
+    mutate(name_choice= case_when(
+      name_question_recla %in%c("_3_2_1_3_2_1","_3_2_1_2_1","_2_3_1_1_1","_1_2_1_15_1","_4_1_1_4_4_1","_1_4_3_3_1_calculate",
+                                "_1_4_3_6_4","_1_4_3_6_1_calculate","_1_4_3_7_1_calculate","_1_4_3_8_1","_1_4_2_3_7_1",
+                                "_1_4_2_7_calculate","_1_4_2_7_7_1","_1_2_1_6_1","_1_2_1_13_1_1","_1_2_1_13_2_2_1")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
+      TRUE ~ name_choice))%>%
   #Put the unit of area for all necessary questions
   mutate(label_choice= case_when(
     name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
@@ -450,7 +484,10 @@ fun_context<- function(country_context_data){
     type_question == "select_multiple"~ sub("^.*/", "", name_question), # replace name_question by the type of energy
     TRUE ~ name_choice))%>%
   # Remove rows name_choice == NA
-  filter(!is.na(name_choice))
+  filter(!is.na(name_choice))%>%
+    filter(!(country =="laos"& name_question_recla == "_1_2_1_1" & type == "text"))%>%
+    filter(!(country =="laos"& name_question_recla == "_1_2_1_2" & type == "text"))
+  
   
   return(country_context)
 }
@@ -484,3 +521,11 @@ ken_context_data<-    fun_context_main(ken_global_choices, #country_global_choic
 ken_context<-fun_context(ken_context_data)
 write.csv(ken_context,paste0(ken_data_path,"/ken/ken_context_format.csv"),row.names=FALSE)
 
+
+# LAOS-----
+lao_context_data<-fun_context_data(lao_global_choices, #country_global_choices
+                                   lao_survey_main,  #Main survey 
+                                   lao_survey_1_4_2_7_begin_repeat)  #production_end_use for OTHER NON-FARM PRODUCT
+
+lao_context<-fun_context(lao_context_data)
+write.csv(lao_context,paste0(lao_data_path,"/lao/lao_context_format.csv"),row.names=FALSE)
