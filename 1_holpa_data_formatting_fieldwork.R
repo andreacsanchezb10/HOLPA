@@ -129,7 +129,7 @@ names(ken_fieldwork_survey) <- sapply(names(ken_fieldwork_survey), function(x) {
     return(x)
   }
 })
-
+ 
 # Check the renamed columns
 names(ken_fieldwork_survey)
 sort(unique(ken_fieldwork_survey$kobo_farmer_id))
