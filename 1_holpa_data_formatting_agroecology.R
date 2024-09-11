@@ -105,6 +105,35 @@ zwe_global_choices<-global_choices%>%
 ### TUNISIA -----
 #link to tun data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean?csf=1&web=1&e=07Lc0e
 #INSTRUCTION: Replace tun_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
+tun_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/" #path andrea
+
+tun_h_survey_file <- paste0(tun_data_path, "tun_holpa_household_survey_clean.xlsx")
+tun_h_choices_file <- paste0(tun_data_path, "tun_holpa_household_form_clean.xlsx")
+
+tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun_h_survey_file,"tunisia","_index")%>%
+  #Remove respondents that did not wanted to complete the survey
+  filter(consent_2!="No")
+
+# Section: Farm production OTHER #Tunisia doesn't have this section
+tun_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", tun_h_survey_file,"tunisia","_index") # Section: area of land per agricultural practice
+
+tun_choices <- read_excel(tun_h_choices_file,sheet = "choices")%>%
+  mutate(country= "tunisia")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+tun_global_choices<-global_choices%>%
+  rbind(tun_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
+
 ### KENYA ----
 #link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Kenya/kenya_data_clean?csf=1&web=1&e=D7sIkb
 #INSTRUCTION: Replace ken_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
@@ -499,8 +528,5 @@ lao_agroecology_data<-fun_agroecology_data(lao_global_choices,
                                            lao_survey_3_3_3_2_begin_repeat) # Section: area of land per agricultural practice
 
 lao_agroecology<-fun_agroecology(lao_agroecology_data)
-
-
-
 write.csv(lao_agroecology,paste0(lao_data_path,"/lao/lao_agroecology_format.csv"),row.names=FALSE)
 
