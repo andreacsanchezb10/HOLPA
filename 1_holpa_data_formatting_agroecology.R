@@ -245,6 +245,40 @@ lao_global_choices<-global_choices%>%
   right_join(global_survey,by="list_name",relationship="many-to-many")%>%
   mutate(label_choice.country=NA)
 
+### PERU ----
+#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace zwe_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
+per_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/" #path andrea
+
+per_h_survey_file <- paste0(per_data_path, "per_holpa_household_survey_clean.xlsx")
+per_h_choices_file <- paste0(per_data_path, "per_holpa_household_form_clean.xlsx")
+
+per_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", per_h_survey_file,"peru","_index")%>%
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="274186917")
+per_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", per_h_survey_file,"peru","_index")%>% # Section: Farm production OTHER
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="274186917")
+per_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", per_h_survey_file,"peru","_index") # Section: area of land per agricultural practice
+
+
+per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
+  mutate(country= "peru")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+per_global_choices<-global_choices%>%
+  rbind(per_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
+
 
 #### AGROECOLOGY MODULE #### -----
 #INSTRUCTION: Continue running the code from here
