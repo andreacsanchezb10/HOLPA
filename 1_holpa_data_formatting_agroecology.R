@@ -261,7 +261,7 @@ per_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_
   filter(kobo_farmer_id!="274186917")
 per_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", per_h_survey_file,"peru","_index") # Section: area of land per agricultural practice
 
-
+ 
 per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
   mutate(country= "peru")%>%
   select("list_name","name","label::English ((en))","country")%>%
