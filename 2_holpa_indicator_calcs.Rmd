@@ -68,8 +68,8 @@ Run this chunk to import the relevant HOLPA datasets.
 
 # function to import cleaned data
 
-#country_short = "zwe"
-#country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
+country_short = "zwe"
+country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
 #rm(d,country.data.path,country_short)
 
 import.data <- function(country_short,country.data.path){
@@ -84,19 +84,19 @@ import.data <- function(country_short,country.data.path){
   fw <- melt(fw[,c(1,2,33:length(fw))],id.vars=c("kobo_farmer_id","country"),variable.name="name_question",value.name="name_choice")
   fw <- fw %>%
   mutate(indicator = case_when(
-    grepl("tree", name_question) ~ "biodiversity_trees",
-    grepl("biodiv", name_question) ~ "biodiversity",
-    grepl("1_201", name_question) ~ "biodiversity_landscape", # landscape complexity
-    grepl("1_202", name_question) ~ "biodiversity_landscape", # landscape complexity
-    grepl("1_203", name_question) ~ "biodiversity_landscape", # landscape complexity
+    grepl("tree", name_question) ~ "biodiversity_trees_fw",
+    grepl("biodiv", name_question) ~ "biodiversity_fw",
+    grepl("1_201", name_question) ~ "biodiversity_landscape_fw", # landscape complexity
+    grepl("1_202", name_question) ~ "biodiversity_landscape_fw", # landscape complexity
+    grepl("1_203", name_question) ~ "biodiversity_landscape_fw", # landscape complexity
     grepl("1_301", name_question) ~ "crop_health_fw",
     grepl("1_302", name_question) ~ "crop_health_fw",
     grepl("1_303", name_question) ~ "crop_health_fw",
-    grepl("1_111", name_question) ~ "soil_health_prac", # practice
+    grepl("1_111", name_question) ~ "soil_health_fw_prac", # practice
     grepl("1_112", name_question) ~ "soil_health_fw",
-    grepl("1_113", name_question) ~ "soil_health_prac", # practice
+    grepl("1_113", name_question) ~ "soil_health_fw_prac", # practice
     grepl("1_114", name_question) ~ "soil_health_fw",
-    grepl("1_115", name_question) ~ "soil_health_prac", # practice
+    grepl("1_115", name_question) ~ "soil_health_fw_prac", # practice
     grepl("1_116", name_question) ~ "soil_health_fw",
     .default = NA)) %>%
     mutate(subindicator = case_when(
@@ -114,7 +114,8 @@ import.data <- function(country_short,country.data.path){
       name_question %in% c("_1_301_8","_1_302_8","_1_303_8") ~ "crop_management",
       .default = NA))
 
-country_data <- ae %>% full_join(cn) %>% full_join(pf) %>% full_join(fw)  %>% full_join(ae_scores) %>% unique()
+country_data <- ae %>% full_join(cn) %>% full_join(pf)  %>% full_join(fw) %>% full_join(ae_scores) %>% unique()
+
 assign(paste0(country_short,"_data"),country_data,envir=.GlobalEnv)
 }
 
@@ -168,7 +169,7 @@ Agroecology adherence indicator scores are pre-calculated in another code (which
 d <- d %>%
   mutate(module = ifelse(indicator %in% c("extra_economic_diversification/economic","extra_participation"), "performance", module)) %>%
   mutate(subindicator = ifelse(is.na(subindicator),indicator,subindicator)) %>%
-  mutate(subindicator_label = NA) %>%
+  mutate(subindicator_label = "") %>%
   mutate(score = ifelse(score_agroecology_module=="no_answer",NA,score_agroecology_module)) %>%
   mutate(score = as.numeric(score)) %>% 
   mutate(score_label = label_score_agroecology_module) %>%
@@ -192,34 +193,67 @@ Key performance indicator scores are calculated here from survey responses.
 ```{r KPI calcs, include=TRUE, echo=FALSE}
 
 #### Performance KPI1 crop health ####
-#sort(unique(d$indicator))
+sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="crop_health")
 #table(temp$label_question)
 #table(temp$name_question)
 #table(temp$label_question,temp$name_question)
 
 d <- d %>% 
-  mutate(subindicator = ifelse(label_question == "What percentage of the total crop production was lost or damaged in the last 12 months [add country meaning]","crop_loss",
-                               ifelse(label_question=="What was the main cause of crop loss or damage?", "crop_loss_cause", subindicator))) %>%
+  mutate(subindicator = ifelse(label_question == "What percentage of the total crop production was lost or damaged in the last 12 months [add country meaning]","crop_loss",subindicator)) %>%
+  mutate(subindicator = ifelse(label_question=="What was the main cause of crop loss or damage?", "crop_loss_cause", subindicator)) %>%
   
   #mutate(subindicator = ifelse(name_question =="_3_4_2_1_8_2","crop_loss",
   #                             ifelse(name_question == "_3_4_2_1_8_3","crop_loss_cause",subindicator))) %>%
   
   mutate(subindicator_label = ifelse(subindicator=="crop_loss", "Total crop production lost or damaged in last 12 months (%)", subindicator_label)) %>% 
-  mutate(indicator = ifelse(subindicator=="crop_loss" & module=="performance", "kpi1_crop_health", indicator)) %>%
-    mutate(indicator_order = ifelse(indicator =="kpi1_crop_health", 1, indicator_order))
+  mutate(indicator = ifelse(subindicator %in% c("crop_loss"), "kpi1_crop_health", indicator)) %>%
+    mutate(indicator_order = ifelse(indicator %in% c("kpi1_crop_health"), 1, indicator_order))
 
 # Remove out of bounds responses
 d <- d %>% 
-  mutate(score = ifelse(indicator == "kpi1_crop_health", as.numeric(name_choice), score)) %>% 
-  mutate(score = ifelse(indicator == "kpi1_crop_health" & score>100,NA,score)) %>%
-  mutate(module = ifelse(indicator == "kpi1_crop_health","performance kpi",module))
+  mutate(score = ifelse(indicator %in% c("kpi1_crop_health"), as.numeric(name_choice), score)) %>% 
+  mutate(score = ifelse(indicator %in%  c("kpi1_crop_health") & score>100,NA,score)) %>%
+  mutate(module = ifelse(indicator %in%  c("kpi1_crop_health"),"performance kpi",module))
 
 ggplot(d %>% filter(indicator=="kpi1_crop_health"),aes(x=score))+
   geom_histogram()+
   ggtitle("kpi1_crop_health")
 
 ### Performance KPI1b Crop health from fieldwork ####
+sort(unique(d$indicator))
+sort(unique(d$subindicator))
+temp <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice))
+table(temp$label_question)
+table(temp$name_question)
+table(temp$label_question,temp$name_question)
+
+temp_kpi_calc <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice)) %>%
+  mutate(subindicator = gsub("\\_.*", "\\1", name_choice),
+         score = as.numeric(gsub(".*_(*)", "\\1", name_choice)),
+         label_question = gsub("^([^_]*_[^_]*_[^_]*)_.*$","\\1",name_question)) %>%
+  #select(kobo_farmer_id,country,subindicator,score) %>%
+  dcast(kobo_farmer_id+country+label_question~subindicator,value.var="score") %>%
+  
+  # assign scores noting response 0 means "I am not sure, or the question is not applicable" 
+  mutate_at(c("appearance" ,    "apperance", "disease"  ,      "enemy"  ,        "growth" ,        "management"  ,   "natural", "pest"  , "weed"  ),~na_if(.,0))  %>%
+  rowwise() %>%
+  mutate(score = median(c(appearance,    apperance, disease ,      enemy  ,   growth ,        management ,   natural, pest  , weed ),na.rm=T)) %>%
+  group_by(kobo_farmer_id,country) %>%
+  summarise(score = median(score,na.rm=T)) %>%
+  
+  # add indicator name
+  mutate(indicator = "kpi1b_crop_health_fieldwork",
+         subindicator = "crop_health_socla",
+         subindicator_label = "Crop health assessed in-field on a scale of 1 (unhealthy) to 5 (healthy)",
+         indicator_order = 1.2) 
+
+d <- d %>% full_join(temp_kpi_calc) %>%
+  mutate(module = ifelse(indicator %in% c("kpi1b_crop_health_fieldwork"),"performance kpi",module))
+
+ggplot(d %>% filter(indicator=="kpi1b_crop_health_fieldwork"),aes(x=score))+
+  geom_histogram()+
+  ggtitle("kpi1b_crop_health_fieldwork")
 
 ### Performance KPI2 animal health ####
 #sort(unique(d$indicator))
