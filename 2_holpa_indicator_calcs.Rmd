@@ -221,12 +221,11 @@ ggplot(d %>% filter(indicator=="kpi1_crop_health"),aes(x=score))+
   ggtitle("kpi1_crop_health")
 
 ### Performance KPI1b Crop health from fieldwork ####
-sort(unique(d$indicator))
-sort(unique(d$subindicator))
-temp <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice))
-table(temp$label_question)
-table(temp$name_question)
-table(temp$label_question,temp$name_question)
+#sort(unique(d$indicator))
+#temp <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice))
+#table(temp$label_question)
+#table(temp$name_question)
+#table(temp$label_question,temp$name_question)
 
 temp_kpi_calc <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice)) %>%
   mutate(subindicator = gsub("\\_.*", "\\1", name_choice),
@@ -329,8 +328,6 @@ ggplot(d %>% filter(indicator %in% c("kpi3_soil_health")),aes(x=score))+
   geom_histogram()+
   ggtitle("kpi3_soil_health")
 
-#table(d$indicator,d$module)
-
 ### Performance KPI3b soil carbon from fieldwork  ####
 
 #### Performance KPI4 nutrient use NEEDS CONVERTING TO NUTRIENT GAP ####
@@ -399,9 +396,9 @@ temp_kpi_calc <- temp_kpi_calc %>%
   select(kobo_farmer_id,country,indicator,subindicator,score)
 
 d <- d %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "country", "indicator", "subindicator", "score"), keep=NULL) %>%
-  mutate(subindicator_label = ifelse(indicator=="kpi4_nutrient_use","Fertilizer use (kg/ha)",subindicator_label),
-         indicator_order = ifelse(indicator =="kpi4_nutrient_use",4,indicator_order)) %>%
-    mutate(module = ifelse(indicator == "kpi4_nutrient_use","performance kpi",module))
+  mutate(subindicator_label = ifelse(indicator %in% c("kpi4_nutrient_use"),"Fertilizer use (kg/ha)",subindicator_label),
+         indicator_order = ifelse(indicator %in% c("kpi4_nutrient_use"),4,indicator_order)) %>%
+    mutate(module = ifelse(indicator %in% c("kpi4_nutrient_use"),"performance kpi",module))
 
 ggplot(d %>% filter(indicator %in% c("kpi4_nutrient_use")),aes(x=score))+
   geom_histogram()+
@@ -486,14 +483,13 @@ ggplot(d %>% filter(indicator %in% c("kpi5b_tree_diversity")),aes(x=score))+
   ggtitle("kpi5b_tree_diversity")
 
 ### Performance KPI6a biodiversity - abd crop species concentration ####
-table(d$indicator,d$module)
-temp <- d %>% filter(indicator %in% c("biodiversity_agrobiodiversity"))
+#table(d$indicator,d$module)
+#temp <- d %>% filter(indicator %in% c("biodiversity_agrobiodiversity"))
 #temp <- d %>% filter(indicator %in% c("6_synergy"))
 #temp <- d %>% filter(indicator %in% c("productivity_crops"))
 #temp <- d %>% filter(indicator %in% c("biodiversity_climate_mitigation"))
-
-unique(temp$label_question)
-unique(temp$name_choice)
+#unique(temp$label_question)
+#unique(temp$name_choice)
 
 # Extract unit used to measure production area
 area_unit_crops <- d %>% filter(indicator =="productivity_crops") %>% filter(label_question =="Area of land under ${_3_4_3_1_3_calculate} production in ${_1_4_1_1_calculate}:") %>% select(label_choice) %>% unique()
@@ -580,7 +576,6 @@ ggplot(d %>% filter(indicator %in% c("kpi6a_abd_crop_richness_gap")),aes(x=score
   ggtitle("kpi6a_abd_crop_richness_gap")
 
 ### Performance KPI6b biodiversity - abd varietal/breed richness ####
-
 #table(d$indicator,d$module)
 #temp <- d %>% filter(indicator %in% c("biodiversity_agrobiodiversity"))
 #unique(temp$label_question)
@@ -617,7 +612,7 @@ d <- d %>%
 # Assign scores to crop and livestock based on proportion of local 
 temp <- d %>% filter(subindicator %in% c( "abd_crop_local", "abd_livestock_local")) %>%
   select(subindicator,label_choice,name_choice, score) %>% unique()
-arrange(temp,subindicator,score)
+#arrange(temp,subindicator,score)
 
 d <- d %>%
   mutate(score = case_when(subindicator == "abd_crop_local" & label_choice =="Only or mainly locally adapted varieties are grown."~5,
@@ -655,9 +650,9 @@ ggplot(d %>% filter(indicator %in% c("kpi6b_abd_variety_diversity")),aes(x=score
   ggtitle("kpi6b_abd_variety_diversity")
 
 ### Performance KPI7 biodiversity - landscape complexity ####
-table(d$indicator,d$module)
-temp <- d %>% filter(indicator %in% c("landscape_complexity","biodiversity_cover"))
-unique(temp$label_question)
+#table(d$indicator,d$module)
+#temp <- d %>% filter(indicator %in% c("landscape_complexity","biodiversity_cover"))
+#unique(temp$label_question)
 
 d <- d %>%
   # landscape complexity
@@ -701,6 +696,33 @@ ggplot(d %>% filter(indicator %in% c("kpi7_landscape_complexity")),aes(x=score))
 ### Performance KPI8 climate mitigation ####
 
 ### Performance KPI9 water use ####
+sort(unique(d$indicator))
+temp <- d %>% filter(indicator =="water" )
+table(temp$name_question)
+table(temp$label_question)
+table(temp$name_choice)
+table(temp$label_choice)
+
+d <- d %>% 
+  # months with water stress
+  mutate(subindicator = ifelse(label_question %in% c("During which months of the year do you find it difficult to access enough water for your agricultural needs (e.g. growing crops, drinking water for livestock): During a normal year"),"water_stress_normal",subindicator)) 
+  
+temp_kpi_calc <- d %>% filter(subindicator == "water_stress_normal") %>%
+  mutate(score = 1) %>%
+  dcast(kobo_farmer_id+country+module+theme~indicator,value.var="score",fun=sum) %>%
+  rename("score"=water) %>% mutate(score = as.numeric(score)) %>%
+  mutate(score = (1- score/12)*100) %>%
+  mutate(indicator = "kpi9_avoided_water_stress",
+         subindicator = "avoided_ag_water_stress",
+         indicator_order = 9)
+
+d <- d %>% full_join(temp_kpi_calc, keep=NULL) %>%
+    mutate(module = ifelse(indicator %in% c("kpi9_water_stress"),"performance kpi",module)) 
+
+ggplot(d %>% filter(indicator %in% c("kpi9_water_stress")),aes(x=score))+
+  geom_histogram()+
+  ggtitle("kpi9_water_stress")
+
 
 ### Performance KPI10 energy use ####
 
