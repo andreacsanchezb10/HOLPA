@@ -446,7 +446,7 @@ sen_agroecology<- fun_agroecology_data(sen_agroecology_data)
 sort(unique(sen_agroecology$theme))
 view(dfSummary(sen_agroecology))
 
-write.csv(sen_agroecology_data,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/sen/sen_agroecology_score.csv',row.names=FALSE)
+write.csv(sen_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/sen/sen_agroecology_score.csv',row.names=FALSE)
 
 
 #LAOS----
@@ -458,4 +458,4 @@ lao_agroecology<- fun_agroecology_data(lao_agroecology_data)
 sort(unique(lao_agroecology$theme))
 view(dfSummary(lao_agroecology))
 
-write.csv(lao_agroecology_data,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/lao/lao_agroecology_score.csv',row.names=FALSE)
+write.csv(lao_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/lao/lao_agroecology_score.csv',row.names=FALSE)
