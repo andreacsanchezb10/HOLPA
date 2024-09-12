@@ -183,15 +183,24 @@ sen_h_choices_file <- paste0(sen_data_path, "sen_holpa_household_form_clean.xlsx
 sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", "_id", sen_h_survey_file,"senegal","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")%>%
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="309270221") %>%
   slice(-1)
 
 sen_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: Crop production
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="309270221") %>%
   slice(-1)
 sen_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: area of land per agricultural practice
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="309270221") %>%
+   slice(-1)
+
+sen_survey_3_4_3_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_3_1_1_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: Crop list
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="309270221") %>%
   slice(-1)
-
-sen_survey_3_4_3_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_3_1_1_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index") # Section: Crop list
-
+  
 sen_choices <- read_excel(sen_h_choices_file, sheet = "choices")%>%
   mutate(country= "senegal")%>%
   select("list_name","name","label::English ((en))","country")%>%
