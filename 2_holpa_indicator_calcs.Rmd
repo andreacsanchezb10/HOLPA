@@ -1,15 +1,16 @@
 ---
 title: "HOLPA farm-household indicator calculation"
 output:
-  html_document: default
+  word_document: default
   pdf_document: default
+  html_document: default
 date: "2024-04-18"
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 ## Specify settings to use for data analysis
 
-In this section, the user needs to specify which country to analyse, where the cleaned HOLPA survey data are saved, and any country/landscape specific conversion parameters.
+In this section, the user needs to specify which country to analyse, where the cleaned HOLPA survey data are stored on their computer, and any country/landscape specific conversion parameters. This is the only section of the script that needs user input. Subsequent code chunks can be run without making changes.
 
 ```{r set user parameters, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -35,9 +36,13 @@ country <- "zimbabwe"
 
 # Alter these parameters as needed for your country/landscape of analysis
 
-# for KPI4 nutrient use, to convert L/ha to kg/ha, set Specific Gravity value
+# for KPI4 nutrient use: 
+# to convert L/ha to kg/ha, set Specific Gravity value
 #https://icl-growingsolutions.com/en-gb/turf-landscape/knowledge-hub/nutrient-calculations/ 
 nut_conversion_l_to_kg <- 1.23 
+# and set reference fertiliser use (kg/ha) used as the benchmark to determine the under or over use of fertilizer
+# default is -9999 meaning NO DATA, and in this case the MEDIAN fertilizer use in the country-specific HOLPA survey data is used
+ref_nut_quantity_kg_ha = -9999 
 
 # for area unit conversions
 acre_to_hectare = 0.404686
@@ -68,8 +73,8 @@ Run this chunk to import the relevant HOLPA datasets.
 
 # function to import cleaned data
 
-country_short = "zwe"
-country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
+#country_short = "zwe"
+#country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
 #rm(d,country.data.path,country_short)
 
 import.data <- function(country_short,country.data.path){
@@ -193,7 +198,7 @@ Key performance indicator scores are calculated here from survey responses.
 ```{r KPI calcs, include=TRUE, echo=FALSE}
 
 #### Performance KPI1 crop health ####
-sort(unique(d$indicator))
+#sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="crop_health")
 #table(temp$label_question)
 #table(temp$name_question)
@@ -330,7 +335,7 @@ ggplot(d %>% filter(indicator %in% c("kpi3_soil_health")),aes(x=score))+
 
 ### Performance KPI3b soil carbon from fieldwork  ####
 
-#### Performance KPI4 nutrient use NEEDS CONVERTING TO NUTRIENT GAP ####
+#### Performance KPI4 nutrient use ratio ####
 #sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="nutrient_use") # or inputs
 #sort(unique(temp$subindicator))
@@ -385,26 +390,27 @@ temp_kpi_calc <- temp_kpi_calc %>%
   
   # Total amounts
   mutate(nut_quantity_kg_ha = nut_chem_kg_area + nut_chem_lt_area_converted + nut_org_kg_area + nut_orgF_kg_area) %>%
-  mutate(nut_quantity_kg_ha = ifelse(area_unit %in% c("acres","in acres","Acres"), nut_quantity_kg_ha * acre_to_hectare,nut_quantity_kg_ha)) 
+  mutate(nut_quantity_kg_ha = ifelse(area_unit %in% c("acres","in acres","Acres"), nut_quantity_kg_ha * acre_to_hectare,nut_quantity_kg_ha))
 
-temp_kpi_calc <- temp_kpi_calc %>% mutate(indicator = "kpi4_nutrient_use",
-                                          subindicator = "nutrient_use", 
-                                          score = nut_quantity_kg_ha)
+temp_kpi_calc <- temp_kpi_calc %>%
+  group_by(country) %>% mutate(med_nut_quantity_kg_ha = median(nut_quantity_kg_ha, na.rm=T)) %>% ungroup()  %>%
+  mutate(ref_nut_quantity_kg_ha = ref_nut_quantity_kg_ha) %>%
+  mutate(score =  ifelse(ref_nut_quantity_kg_ha > 0 , nut_quantity_kg_ha/ref_nut_quantity_kg_ha, nut_quantity_kg_ha/med_nut_quantity_kg_ha)) 
 
 # Add this back into the main dataset
-temp_kpi_calc <- temp_kpi_calc %>%
-  select(kobo_farmer_id,country,indicator,subindicator,score)
+temp_kpi_calc <- temp_kpi_calc %>% mutate(indicator = "kpi4_nutrient_use",
+                                          subindicator = "nutrient_use", 
+                                          score = as.numeric(score)) %>%
+    select(kobo_farmer_id,country,indicator,subindicator,score)
 
 d <- d %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "country", "indicator", "subindicator", "score"), keep=NULL) %>%
-  mutate(subindicator_label = ifelse(indicator %in% c("kpi4_nutrient_use"),"Fertilizer use (kg/ha)",subindicator_label),
+  mutate(subindicator_label = ifelse(indicator %in% c("kpi4_nutrient_use"),"Ratio between recorded and reference fertilizer use (kg/ha)",subindicator_label),
          indicator_order = ifelse(indicator %in% c("kpi4_nutrient_use"),4,indicator_order)) %>%
     mutate(module = ifelse(indicator %in% c("kpi4_nutrient_use"),"performance kpi",module))
 
 ggplot(d %>% filter(indicator %in% c("kpi4_nutrient_use")),aes(x=score))+
   geom_histogram()+
   ggtitle("kpi4_nutrient_use")
-
-#table(d$indicator,d$module)
 
 ### Performance KPI5a biodiversity - animals ####
 #table(d$indicator,d$module)
@@ -662,9 +668,9 @@ d <- d %>%
   mutate(subindicator = ifelse(label_question %in% c("How would you describe the plant diversity (i.e., number of plant species) in: Bushland patches", "How would you describe the plant diversity (i.e., number of plant species) in: Fallow land which is unproductive for at least 1 year", "How would you describe the plant diversity (i.e., number of plant species) in: Hedgerows/Live fences", "How would you describe the plant diversity (i.e., number of plant species) in: Natural grassland",  "How would you describe the plant diversity (i.e., number of plant species) in: Remnant forest patches","How would you describe the plant diversity (i.e., number of plant species) in: Wetlands", "How would you describe the plant diversity (i.e., number of plant species) in: Woodlots"),"landscape_diversity_by_feature",subindicator))
 
 # assign scores
-temp <- d %>% filter(subindicator %in% c( "landscape_complexity", "landscape_diversity_by_feature")) %>%
-  select(subindicator,label_choice,name_choice, score) %>% unique()
-arrange(temp,subindicator,score)
+#temp <- d %>% filter(subindicator %in% c( "landscape_complexity", #"landscape_diversity_by_feature")) %>%
+#  select(subindicator,label_choice,name_choice, score) %>% unique()
+#arrange(temp,subindicator,score)
 
 d <- d %>%
   mutate(score = case_when(subindicator == "landscape_complexity" & label_choice =="51-100%"~5,
@@ -696,12 +702,12 @@ ggplot(d %>% filter(indicator %in% c("kpi7_landscape_complexity")),aes(x=score))
 ### Performance KPI8 climate mitigation ####
 
 ### Performance KPI9 water use ####
-sort(unique(d$indicator))
-temp <- d %>% filter(indicator =="water" )
-table(temp$name_question)
-table(temp$label_question)
-table(temp$name_choice)
-table(temp$label_choice)
+#sort(unique(d$indicator))
+#temp <- d %>% filter(indicator =="water" )
+#table(temp$name_question)
+#table(temp$label_question)
+#table(temp$name_choice)
+#table(temp$label_choice)
 
 d <- d %>% 
   # months with water stress
@@ -717,12 +723,11 @@ temp_kpi_calc <- d %>% filter(subindicator == "water_stress_normal") %>%
          indicator_order = 9)
 
 d <- d %>% full_join(temp_kpi_calc, keep=NULL) %>%
-    mutate(module = ifelse(indicator %in% c("kpi9_water_stress"),"performance kpi",module)) 
+    mutate(module = ifelse(indicator %in% c("kpi9_avoided_water_stress"),"performance kpi",module)) 
 
-ggplot(d %>% filter(indicator %in% c("kpi9_water_stress")),aes(x=score))+
+ggplot(d %>% filter(indicator %in% c("kpi9_avoided_water_stress")),aes(x=score))+
   geom_histogram()+
-  ggtitle("kpi9_water_stress")
-
+  ggtitle("kpi9_avoided_water_stress")
 
 ### Performance KPI10 energy use ####
 
@@ -768,11 +773,13 @@ temp_kpi_calc <-  temp_kpi_calc %>%
     select(kobo_farmer_id,country,indicator,subindicator,score)
 
 d <- d %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "country", "indicator", "subindicator", "score"), keep=NULL) %>%
-  mutate(module = ifelse(indicator =="kpi16_farmer_agency","performance kpi",module))  %>%
-  mutate(subindicator_label = ifelse(indicator == "kpi16_farmer_agency","Perceived household agency (median for men and women) to make decisions from 1 (no power or freedom) to 5 (total power and freedom)",subindicator_label))
+  mutate(module = ifelse(indicator %in% c("kpi16_farmer_agency"),"performance kpi",module))  %>%
+  mutate(subindicator_label = ifelse(indicator %in% c("kpi16_farmer_agency"),"Perceived household agency (median for men and women) to make decisions from 1 (no power or freedom) to 5 (total power and freedom)",subindicator_label)) %>%
+  mutate(indicator_order = ifelse(indicator %in% c("kpi16_farmer_agency"),16,indicator_order))
 
 ggplot(d %>% filter(indicator %in% c("kpi16_farmer_agency")),aes(x=score))+
-  geom_histogram()
+  geom_histogram()+
+  ggtitle("kpi16 farmer agency")
 
 ### Performance KPI17a land tenure security and KPI17b land owned as share of total used ####
 #sort(unique(d$indicator))
@@ -847,8 +854,6 @@ ggplot(d %>% filter(indicator %in% c("kpi17_land_tenure")),aes(x=score))+
 ggplot(d %>% filter(indicator %in% c("kpi17b_land_tenure")),aes(x=score))+
   geom_histogram()  
 
-table(d$indicator,d$module)
-
 ### Performance KPI18 human wellbeing ####
 #sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="wellbeing")
@@ -888,11 +893,14 @@ d <- d %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "country", "indicat
   mutate(module = ifelse(indicator == "kpi18_human_wellbeing","performance kpi",module))
 
 ggplot(d %>% filter(indicator %in% c("kpi18_human_wellbeing")),aes(x=score))+
-  geom_histogram() 
+  geom_histogram()+
+  ggtitle("kpi18 human wellbeing")
 
-#d <- d %>% filter(!(is.na(score) & is.na(name_choice)))
-  
-
+#### Graphical summary of indicators ####
+library(gridExtra)
+ggplot(d %>% filter(module %in% c("performance kpi")),aes(x=score))+
+  geom_histogram()+
+  facet_wrap(~indicator, scale="free_x")+theme_bw()
 ```
 
 
@@ -924,6 +932,12 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
   ind_max <- max(as.numeric(data_subset$score),na.rm=TRUE)
   data_subset$score_scaled <- (data_subset$score - ind_min)/(ind_max - ind_min)*100
   }
+  # inverse scaling based on min and max values recorded in they survey
+  if(method =="data_driven_inverse"){
+  ind_max <- max(as.numeric(data_subset$score),na.rm=TRUE)
+  ind_min <- min(as.numeric(data_subset$score),na.rm=TRUE)
+  data_subset$score_scaled <- 100 - ((data_subset$score - ind_min)/(ind_max - ind_min)*100)
+  }
   # scaling based on ore-defined min and max values 
   if(method =="set"){
   ind_min <- as.numeric(min)
@@ -937,17 +951,44 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
 }
 
 indicator_scaling(data = d, ind="kpi1_crop_health",method="none")
+indicator_scaling(data = d, ind="kpi1b_crop_health_fieldwork",method="none")
 indicator_scaling(data = d, ind="kpi2_animal_health", method="set", min=1,max=5)
 indicator_scaling(data = d, ind="kpi3_soil_health",method="set",min=1,max=5)
-indicator_scaling(data = d, ind="kpi4_nutrient_use", method="data_driven")
+indicator_scaling(data = d, ind="kpi4_nutrient_use", method="data_driven_inverse")
+indicator_scaling(data = d, ind="kpi5a_animal_diversity", method="set",min=1,max=5)
+indicator_scaling(data = d, ind="kpi5b_tree_diversity", method="set",min=1,max=5)
+indicator_scaling(data = d, ind="kpi6a_abd_crop_richness_gap", method="none") # CHECK
+indicator_scaling(data = d, ind="kpi6b_abd_variety_diversity", method="none") # CHECK
+indicator_scaling(data = d, ind="kpi7_landscape_complexity ", method="none") # CHECK
+indicator_scaling(data = d, ind="kpi9_avoided_water_stress", method="none") # CHECK
+#indicator_scaling(data = d, ind="kpi10", method="none") # CHECK
+#indicator_scaling(data = d, ind="kpi11", method="none") # CHECK
+#indicator_scaling(data = d, ind="kpi12", method="none") # CHECK
+#indicator_scaling(data = d, ind="kpi13", method="none") # CHECK
+#indicator_scaling(data = d, ind="kpi14", method="none") # CHECK
+#indicator_scaling(data = d, ind="kpi15", method="none") # CHECK
 indicator_scaling(data = d, ind="kpi16_farmer_agency", method="set",min=1,max=5)
 indicator_scaling(data = d, ind="kpi17_land_tenure", method="set",min=1,max=5)
 indicator_scaling(data = d, ind="kpi17b_land_tenure", method="none")
 indicator_scaling(data = d, ind="kpi18_human_wellbeing", method="set",min=1, max=5)
 
 indicators_scaled <- indicators_scaled %>%
-  mutate(theme_short = ifelse(indicator %in% c("kpi1_crop_health","kpi2_animal_health","kpi3_soil_health","kpi4_nutrient_use"),"AGR",
-                        ifelse(indicator %in% (c("kpi16_farmer_agency","kpi17_land_tenure","kpi17b_land_tenure","kpi18_human_wellbeing")),"SOC","CHECK"))) %>%
+  mutate(theme_short = case_when(indicator %in% c("kpi1_crop_health",
+                                                  "kpi1b_crop_health_fieldwork",
+                                                  "kpi2_animal_health",
+                                                  "kpi3_soil_health",
+                                                  "kpi4_nutrient_use")~"AGR",
+                                 indicator %in% c("kpi5a_animal_diversity",
+                                                  "kpi5b_tree_diversity",
+                                                  "kpi6a_abd_crop_richness_gap",
+                                                  "kpi6b_abd_variety_diversity",
+                                                  "kpi7_landscape_complexity",
+                                                  "kpi9_avoided_water_stress")~"ENV",
+                                indicator %in% c("kpi16_farmer_agency",
+                                                 "kpi17_land_tenure",
+                                                 "kpi17b_land_tenure",
+                                                 "kpi18_human_wellbeing")~"SOC",
+                                                 .default="CHECK")) %>%
   mutate(indicator = factor(indicator, levels=unique(indicator)[order(indicator_order,theme_short)]))
 
 # Add scaled scores to main dataset
@@ -956,7 +997,6 @@ d <- d %>% left_join(indicators_scaled)
 d <- d %>% mutate(score_scaled = ifelse(module=="agroecology",score,score_scaled))
 
 ```
-
 
 ## Extract context indicators of interest 
 
@@ -1051,15 +1091,25 @@ d_cn_wide <- d %>%
               #names_glue="{subindicator}_{.value}",
               names_vary = "slowest")
 
+# Attach overall agroecology scores 
+d_ae_wide <- d %>%
+  filter(indicator %in% c("score_ae_overall"))  %>% unique() %>%
+  select(c("kobo_farmer_id", "indicator","score")) %>% 
+  pivot_wider(names_from=c(indicator),
+              values_from=c(score),
+              #values_from=c(name_choice), # OR use score here if everything needs to be numeric
+              names_sort=TRUE,
+              #names_glue="{subindicator}_{.value}",
+              names_vary = "slowest")
 
-d_wide <- d %>% filter(!(module=="context")) %>%
-  full_join(d_cn_wide,by="kobo_farmer_id",relationship="many-to-many") 
+#indicators_scaled_wide <- indicators_scaled %>% full_join(d_cn_wide,by="kobo_farmer_id",relationship="many-to-many") %>%
+#full_join(d_ae)
 
-d_wide <- d_wide %>% mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
+#indicators_scaled_wide <- indicators_scaled_wide %>% mutate(indicator = factor(indicator, levels=unique(indicator[order(indicator_order)])))
 
 # Save data for re-use in next script
-write.csv(d,paste0(zwe.data.path,"zwe_indicators.csv"),row.names=FALSE)
-write.csv(d_wide,paste0(zwe.data.path,"zwe_indicators_wide.csv"),row.names=FALSE)
+write.csv(indicators_scaled,paste0(zwe.data.path,"zwe_indicators.csv"),row.names=FALSE)
+#write.csv(indicators_scaled_wide,paste0(zwe.data.path,"zwe_indicators_wide.csv"),row.names=FALSE)
 
 ```
 
