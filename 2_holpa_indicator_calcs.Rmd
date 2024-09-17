@@ -32,18 +32,9 @@ library(ggsci) # ggplot colours for scientific journals
 #country <- "laos"
 #country <- "kenya"
 #country <- "peru"
-country <- "senegal"
+country <- "senegal" # formatted fieldwork csv needs saving to folder
 #country <- "tunisia"
 #country <- "zimbabwe"
-
-# Alter these parameters as needed for your country/landscape of analysis
-
-# for KPI4 nutrient use: 
-# to convert L/ha to kg/ha, set Specific Gravity value
-#https://icl-growingsolutions.com/en-gb/turf-landscape/knowledge-hub/nutrient-calculations/ 
-nut_conversion_l_to_kg <- 1.23 
-nut_conversion_tractor_to_kg <- 2000 # CHECK THIS
-nut_conversion_quintaux_to_kg <- 100
 
 # for area unit conversions
 acre_to_hectare = 0.404686
@@ -73,7 +64,11 @@ Run this chunk to import the relevant HOLPA datasets.
 
 #### Import data ####
 
+# reference values for kpi climate mitigation: practice net GHG contributions
 ref_values_cc <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet="kpi_CC_mitigation")
+
+# reference values for kpi nutrient use: fertilizer unit conversions
+ref_values_nut <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet="kpi_nutrient_conversion")
 
 # function to import cleaned data
 
@@ -133,42 +128,50 @@ set_d <- function(country){
   import.data("bur",bur.data.path)
   d <- bur_data
   ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("BUR","_inputs"))
+  iso = "BUR"
   
   }
   if(country=="india"){
     import.data("ind",ind.data.path)
     d <- ind_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("IND","_inputs"))
+    iso = "IND"
   }
   if(country=="laos"){
       import.data("lao",lao.data.path)
       d <- lao_data
       ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("LAO","_inputs"))
+      iso = "LAO"
   }
   if(country=="kenya"){
     import.data("ken",ken.data.path)
     d <- ken_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("KEN","_inputs"))
+    iso = "KEN"
       }
   if(country=="peru"){
     import.data("per",per.data.path)
     d <- per_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("PER","_inputs"))
+    iso = "PER"
   }
   if(country=="senegal"){
     import.data("sen",sen.data.path)
     d <- sen_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("SEN","_inputs"))
+    iso = "SEN"
   }
   if(country=="tunisia"){
     import.data("tun",tun.data.path)
     d <- tun_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("TUN","_inputs"))
+    iso = "TUN"
   }
   if(country == "zimbabwe"){
     import.data("zwe",zwe.data.path)
     d <- zwe_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("ZWE","_inputs"))
+    iso = "ZWE"
   }
   assign("d",d,envir=.GlobalEnv)
   assign("ref_values_country",ref_values_country,envir=.GlobalEnv)
@@ -225,6 +228,7 @@ d_ae_summary <- d %>%
 d <- d %>% full_join(d_ae_summary)
 
 ggplot(d %>% filter(module %in% c("agroecology")), aes(y=score,x=factor(indicator,levels=unique(indicator[order(indicator_order)])),fill=factor(indicator,levels=unique(indicator[order(indicator_order)]))))+ geom_boxplot()+geom_count()+ ggtitle(paste0("Agroecology scores for ",country)) + labs(x="")+ scale_fill_manual(values=terrain.colors(14)) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
 
 ```
 ## Calculate Key Performance Indicator scores
@@ -371,7 +375,7 @@ kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "
   mutate(module = ifelse(indicator == "kpi3_soil_health","performance kpi",module)) %>% mutate(theme = ifelse(indicator == "kpi3_soil_health","agricultural",theme))
   
 kpi_histogram(kpi_scores,"kpi3_soil_health")
-kpi_all_plot(kpi_scores)
+kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI3b soil carbon from fieldwork - NEEDS COMPLETING ####
 
@@ -379,6 +383,7 @@ kpi_all_plot(kpi_scores)
 #sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="nutrient_use") # or inputs
 #sort(unique(temp$subindicator))
+#sort(unique(temp$label_question))
 
 # set reference fertiliser use (kg/ha) used as the benchmark to determine the under or over use of fertilizer
 # default is -9999 meaning NO DATA, and in this case the MEDIAN fertilizer use in the country-specific HOLPA survey data is used
@@ -392,8 +397,20 @@ kpi_all_plot(kpi_scores)
 
 ref_nut_quantity_kg_ha <- -9999 
 
-area_unit <- d %>% filter(indicator =="nutrient_use") %>% filter(label_question =="Over the past 12 months [add country meaning], how much CHEMICAL FERTILIZER was applied to cropland: Specify the surface area affected in ${_1_4_1_1_calculate}") %>% select(label_choice) %>% unique()
-area_unit <- area_unit$label_choice
+nut_conversion_factors <- ref_values_nut %>%
+  filter(Region == iso) %>%
+  rename("fertilizer_unit" = `fertilizer unit`,
+    "conversion_factor" = `conversion factor (to convert to kilograms)`) %>%
+  select(fertilizer_unit,conversion_type_clean,conversion_factor) %>%
+  mutate(conversion_factor = ifelse(is.na(conversion_factor),-9999,conversion_factor))
+
+temp_kpi_calc1 <- d %>% filter(indicator =="nutrient_use") %>% filter(label_question =="Over the past 12 months [add country meaning], how much CHEMICAL FERTILIZER was applied to cropland: Specify the surface area affected in ${_1_4_1_1_calculate}") %>% select(kobo_farmer_id, label_choice) %>% unique() %>% rename("nut_chem_area_unit"=label_choice) 
+
+temp_kpi_calc2 <- d %>% filter(indicator =="nutrient_use") %>% filter(label_question =="Over the past 12 months [add country meaning], how much ORGANIC FERTILIZER OR MANURE GENERATED ON-FARM was applied to cropland: Specify the surface area affected in ${_1_4_1_1_calculate}") %>% select(kobo_farmer_id, label_choice) %>% unique() %>% rename("nut_orgF_area_unit"=label_choice)  
+
+temp_kpi_calc3 <- d %>% filter(indicator =="nutrient_use") %>% filter(label_question =="Over the past 12 months [add country meaning], how much ORGANIC FERTILIZER OR MANURE FROM OTHER SOURCES (e.g. puchased) was applied to cropland: Specify the surface area affected in ${_1_4_1_1_calculate}") %>% select(kobo_farmer_id, label_choice) %>% unique() %>% rename("nut_org_area_unit"=label_choice)  
+
+area_unit <- temp_kpi_calc1 %>% left_join(temp_kpi_calc2) %>% left_join(temp_kpi_calc3)
 
 d <- d %>% 
   # chemical fertilizers
@@ -418,46 +435,45 @@ temp_kpi_calc <- d %>% filter(indicator =="nutrient_use") %>%
                              "nut_org_unit","nut_org_quantity","nut_org_area")) %>%
   dcast(kobo_farmer_id+country+indicator ~subindicator,value.var="name_choice") 
 
-# check which units are present
-sort(unique(temp_kpi_calc$nut_chem_unit)) 
-sort(unique(temp_kpi_calc$nut_org_unit)) 
-sort(unique(temp_kpi_calc$nut_orgF_unit)) 
+temp_kpi_calc <- temp_kpi_calc %>%
+    left_join(nut_conversion_factors[,c("fertilizer_unit","conversion_factor")],by=c("nut_chem_unit"="fertilizer_unit")) %>%
+  rename("nut_chem_unit_conversion" = conversion_factor) %>%
+  left_join(nut_conversion_factors[,c("fertilizer_unit","conversion_factor")],by=c("nut_orgF_unit"="fertilizer_unit")) %>%
+  rename("nut_orgF_unit_conversion" = conversion_factor) %>%
+  left_join(nut_conversion_factors[,c("fertilizer_unit","conversion_factor")],by=c("nut_org_unit"="fertilizer_unit")) %>%
+  rename("nut_org_unit_conversion" = conversion_factor) %>%
+  left_join(area_unit) %>%
+  
+  # set quantities to 0 if there is no information on area unit, or no conversion factor provided
+  mutate(nut_chem_quantity = ifelse(nut_chem_quantity>0 & (is.na(nut_chem_area) | nut_chem_area ==0 | is.na(nut_chem_unit_conversion) | nut_chem_unit_conversion<0),0,nut_chem_quantity),
+         nut_org_quantity = ifelse(nut_org_quantity>0 & (is.na(nut_org_area) | nut_org_area ==0 | is.na(nut_org_unit_conversion) | nut_org_unit_conversion<0),0,nut_org_quantity),
+         nut_orgF_quantity = ifelse(nut_orgF_quantity>0 & (is.na(nut_orgF_area)| nut_orgF_area ==0 | is.na(nut_orgF_unit_conversion) | nut_orgF_unit_conversion<0),0,nut_orgF_quantity)) %>%
+  
+  # fix missing area unit in Kenya data
+  mutate(nut_orgF_area_unit = ifelse(kobo_farmer_id== 286788734,"acre",nut_orgF_area_unit)) 
 
 # Calculate nutrient use per unit area
 temp_kpi_calc <- temp_kpi_calc %>%
     mutate_at(c("nut_chem_quantity","nut_chem_area",
               "nut_org_quantity","nut_org_area",
               "nut_orgF_quantity","nut_orgF_area"), ~ifelse(is.na(.),0,as.numeric(.))) %>%
+  # convert areas into hectares
+  mutate(nut_chem_area_ha = ifelse(nut_chem_area_unit %in% c("acres","in acres","Acres"), nut_chem_area * acre_to_hectare, nut_chem_area),
+         nut_orgF_area_ha = ifelse(nut_orgF_area_unit %in% c("acres","in acres","Acres"), nut_orgF_area * acre_to_hectare, nut_orgF_area),
+         nut_org_area_ha = ifelse(nut_org_area_unit %in% c("acres","in acres","Acres"), nut_org_area * acre_to_hectare, nut_org_area)) %>%
   
-  # kilograms
-  mutate(nut_chem_kg_area = ifelse(nut_chem_quantity>0 & nut_chem_unit =="Kilograms", nut_chem_quantity/nut_chem_area, 0),
-         nut_org_kg_area = ifelse(nut_org_quantity>0 & nut_org_unit =="Kilograms", nut_org_quantity/nut_org_area, 0),
-         nut_orgF_kg_area = ifelse(nut_orgF_quantity>0 & nut_orgF_unit =="Kilograms", nut_orgF_quantity/nut_orgF_area, 0)) %>%
+  # convert quantities applied into kg
+  mutate(nut_chem_kg_ha = ifelse(nut_chem_quantity>0, (nut_chem_quantity*nut_chem_unit_conversion) /nut_chem_area_ha, 0),
+         nut_org_kg_ha = ifelse(nut_org_quantity>0, (nut_org_quantity*nut_org_unit_conversion)/nut_org_area_ha, 0),
+         nut_orgF_kg_ha = ifelse(nut_orgF_quantity>0, (nut_orgF_quantity*nut_orgF_unit_conversion)/nut_orgF_area_ha, 0)) %>%
   
-    # litres
-  mutate(nut_chem_lt_area_converted = ifelse(nut_chem_quantity>0 & nut_chem_unit %in% c("Liters","Litres" ,"litres","liters"), nut_chem_quantity/nut_chem_area* nut_conversion_l_to_kg, 0)) %>%
-  
-   # Tonnes
-  mutate(nut_chem_tn_area_converted = ifelse(nut_chem_quantity>0 & nut_chem_unit %in% c("ton","tonnes","Ton","Tonnes"), (nut_chem_quantity/nut_chem_area)/1000, 0)) %>%
-  
-     # Tractor
-  mutate(nut_chem_tn_area_converted = ifelse(nut_chem_quantity>0 & nut_chem_unit %in% c("Tractor","Tracteur","tractor","tracteur"), (nut_chem_quantity/nut_chem_area)*nut_conversion_tractor_to_kg, 0)) %>%
-  
-       # Quintaux
-  mutate(nut_chem_tn_area_converted = ifelse(nut_chem_quantity>0 & nut_chem_unit %in% c("Quintaux","quintaux"), (nut_chem_quantity/nut_chem_area)*nut_conversion_quintaux_to_kg, 0)) %>%
-  
-  # specify area units
-  mutate(area_unit = area_unit) %>%
-  
-  # Total amounts
-  mutate(nut_quantity_kg_ha = nut_chem_kg_area + nut_chem_lt_area_converted + nut_org_kg_area + nut_orgF_kg_area) %>%
-  mutate(nut_quantity_kg_ha = ifelse(area_unit %in% c("acres","in acres","Acres"), nut_quantity_kg_ha * acre_to_hectare,nut_quantity_kg_ha))
+  # Combine and convert from kg/area to kg/hectare
+  mutate(nut_quantity_kg_ha = nut_chem_kg_ha + nut_org_kg_ha + nut_orgF_kg_ha) 
 
 temp_kpi_calc <- temp_kpi_calc %>%
   group_by(country) %>% mutate(med_nut_quantity_kg_ha = median(nut_quantity_kg_ha, na.rm=T)) %>% ungroup()  %>%
   mutate(ref_nut_quantity_kg_ha = ref_nut_quantity_kg_ha) %>%
   mutate(score =  ifelse(ref_nut_quantity_kg_ha > 0 , nut_quantity_kg_ha/ref_nut_quantity_kg_ha, nut_quantity_kg_ha/med_nut_quantity_kg_ha)) 
-
 # Add this back into the main dataset
 temp_kpi_calc <- temp_kpi_calc %>% mutate(indicator = "kpi4_nutrient_use",
                                           subindicator = "nutrient_use", 
@@ -531,7 +547,7 @@ d <- d %>%
 #unique(temp_kpi_calc$name_choice)
 
 # assign scores
-temp_kpi_calc <- temp_kpi_calc %>%
+temp_kpi_calc <- d %>%
   mutate(score = case_when(
       subindicator %in% c("bio_tree_abun","bio_tree_diversity") & name_choice %in% ("none") ~ 1,
       subindicator %in% c("bio_tree_abun","bio_tree_diversity") & name_choice %in% ("low") ~ 2.33, 
@@ -921,10 +937,10 @@ kpi_all_boxplot(kpi_scores)
 # set reference national annual income (local currency per year) used as the benchmark to determine how household incomes compare to this
 # default is to use the MEDIAN income recorded in the country-specific HOLPA survey data 
 # alternative is to use country-sourced data: activate this option only if information on income is provided in ref_values_country
-#ref_income <- ref_values_country %>%
-#  select(income_ref_clean) 
-#ref_income <- ref_income$income_ref_clean
-ref_income <- NA
+ref_income <- ref_values_country %>%
+  select(income_ref_clean) 
+ref_income <- ref_income$income_ref_clean[1]
+#ref_income <- NA
 
 d <- d %>%
   mutate(subindicator = case_when(grepl("In the past 12 months, approximately how much income", label_question)~"income_amount",
@@ -1155,6 +1171,8 @@ kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "
 
 kpi_histogram(kpi_scores,"kpi18_human_wellbeing")
 kpi_all_boxplot(kpi_scores)
+
+ggsave(paste0(country," kpi boxplots.pdf"))
 
 ```
 
