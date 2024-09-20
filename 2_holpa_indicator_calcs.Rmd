@@ -72,9 +72,8 @@ ref_values_nut <- read_excel(paste0(ref.values.data.path,"HOLPA data post-proces
 
 # function to import cleaned data
 
-#country_short = "zwe"
-#country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
-#rm(d,country.data.path,country_short)
+country_short = "sen"
+country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/sen/"
 
 import.data <- function(country_short,country.data.path){
   cn <- read_csv(paste0(country.data.path,country_short,"_context_format.csv"),show_col_types = FALSE)
@@ -128,50 +127,50 @@ set_d <- function(country){
   import.data("bur",bur.data.path)
   d <- bur_data
   ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("BUR","_inputs"))
-  iso = "BUR"
+  iso <- "BUR"
   
   }
   if(country=="india"){
     import.data("ind",ind.data.path)
     d <- ind_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("IND","_inputs"))
-    iso = "IND"
+    iso <- "IND"
   }
   if(country=="laos"){
       import.data("lao",lao.data.path)
       d <- lao_data
       ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("LAO","_inputs"))
-      iso = "LAO"
+      iso <- "LAO"
   }
   if(country=="kenya"){
     import.data("ken",ken.data.path)
     d <- ken_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("KEN","_inputs"))
-    iso = "KEN"
+    iso <- "KEN"
       }
   if(country=="peru"){
     import.data("per",per.data.path)
     d <- per_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("PER","_inputs"))
-    iso = "PER"
+    iso <- "PER"
   }
   if(country=="senegal"){
     import.data("sen",sen.data.path)
     d <- sen_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("SEN","_inputs"))
-    iso = "SEN"
+    iso <- "SEN"
   }
   if(country=="tunisia"){
     import.data("tun",tun.data.path)
     d <- tun_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("TUN","_inputs"))
-    iso = "TUN"
+    iso <- "TUN"
   }
   if(country == "zimbabwe"){
     import.data("zwe",zwe.data.path)
     d <- zwe_data
     ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("ZWE","_inputs"))
-    iso = "ZWE"
+    iso <- "ZWE"
   }
   assign("d",d,envir=.GlobalEnv)
   assign("ref_values_country",ref_values_country,envir=.GlobalEnv)
@@ -227,7 +226,10 @@ d_ae_summary <- d %>%
 
 d <- d %>% full_join(d_ae_summary)
 
-ggplot(d %>% filter(module %in% c("agroecology")), aes(y=score,x=factor(indicator,levels=unique(indicator[order(indicator_order)])),fill=factor(indicator,levels=unique(indicator[order(indicator_order)]))))+ geom_boxplot()+geom_count()+ ggtitle(paste0("Agroecology scores for ",country)) + labs(x="")+ scale_fill_manual(values=terrain.colors(14)) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+ggplot(d %>% filter(module %in% c("agroecology")), aes(y=score,x=factor(indicator,levels=unique(indicator[order(indicator_order)])),fill=factor(indicator,levels=unique(indicator[order(indicator_order)]))))+ geom_boxplot()+geom_count()+ ggtitle(paste0("Agroecology scores for ",country)) + labs(x="")+ scale_fill_manual(values=terrain.colors(14),name="Indicators") +
+  theme_bw()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+ggsave(paste0(global.data.path,"figures/1_agroecology_scores_",country,".tif"),width=7,height=6,units="in")
 
 
 ```
@@ -240,6 +242,9 @@ Key performance indicator scores are calculated here from survey responses.
 
 #sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="crop_health")
+#temp <- d %>% filter(indicator =="crop_health_fw")
+#temp <- d %>% filter(grepl("What percentage of the total crop production",label_question))
+
 #table(temp$label_question)
 #table(temp$name_question)
 #table(temp$label_question,temp$name_question)
@@ -271,9 +276,9 @@ kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI1b Crop health from fieldwork ####
 #sort(unique(d$indicator))
-#temp <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice))
-#table(temp$label_question)
-#table(temp$name_question)
+temp <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice))
+table(temp$label_question)
+table(temp$name_question)
 #table(temp$label_question,temp$name_question)
 
 temp_kpi_calc <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(name_choice)) %>%
@@ -332,7 +337,8 @@ temp_kpi_calc <- d %>%
   mutate(module = ifelse(indicator == "kpi2_animal_health","performance kpi",module)) %>% mutate(theme = ifelse(indicator %in% c("kpi2_animal_health"),"agricultural",theme)) %>%
   filter(indicator=="kpi2_animal_health")
 
-kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc)
+#kpi_scores <-  temp_kpi_calc # For Senegal - temporary fix
+kpi_scores <-  kpi_scores %>% full_join(temp_kpi_calc)
 
 kpi_histogram(kpi_scores,"kpi2_animal_health")
 kpi_all_boxplot(kpi_scores)
@@ -395,6 +401,7 @@ kpi_all_boxplot(kpi_scores)
 #  mutate(nut_ref = ifelse(is.na(nut_ref),-9999,nut_ref))
 #ref_nut_quantity_kg_ha <- ref_nut_quantity_kg_ha$nut_ref
 
+#iso ="SEN"
 ref_nut_quantity_kg_ha <- -9999 
 
 nut_conversion_factors <- ref_values_nut %>%
@@ -411,6 +418,12 @@ temp_kpi_calc2 <- d %>% filter(indicator =="nutrient_use") %>% filter(label_ques
 temp_kpi_calc3 <- d %>% filter(indicator =="nutrient_use") %>% filter(label_question =="Over the past 12 months [add country meaning], how much ORGANIC FERTILIZER OR MANURE FROM OTHER SOURCES (e.g. puchased) was applied to cropland: Specify the surface area affected in ${_1_4_1_1_calculate}") %>% select(kobo_farmer_id, label_choice) %>% unique() %>% rename("nut_org_area_unit"=label_choice)  
 
 area_unit <- temp_kpi_calc1 %>% left_join(temp_kpi_calc2) %>% left_join(temp_kpi_calc3)
+
+if(iso %in% c("SEN")){
+  area_unit <- area_unit %>%
+    mutate_at(c("nut_chem_area_unit","nut_org_area_unit","nut_orgF_area_unit"),
+               ~ifelse(is.na(.),"hectares",as.character(.)))
+}
 
 d <- d %>% 
   # chemical fertilizers
@@ -434,6 +447,11 @@ temp_kpi_calc <- d %>% filter(indicator =="nutrient_use") %>%
                              "nut_orgF_unit","nut_orgF_quantity","nut_orgF_area",
                              "nut_org_unit","nut_org_quantity","nut_org_area")) %>%
   dcast(kobo_farmer_id+country+indicator ~subindicator,value.var="name_choice") 
+
+# Check which fertilizer units are used
+sort(unique(temp_kpi_calc$nut_chem_unit))
+sort(unique(temp_kpi_calc$nut_org_unit))
+sort(unique(temp_kpi_calc$nut_orgF_unit))
 
 temp_kpi_calc <- temp_kpi_calc %>%
     left_join(nut_conversion_factors[,c("fertilizer_unit","conversion_factor")],by=c("nut_chem_unit"="fertilizer_unit")) %>%
@@ -474,6 +492,7 @@ temp_kpi_calc <- temp_kpi_calc %>%
   group_by(country) %>% mutate(med_nut_quantity_kg_ha = median(nut_quantity_kg_ha, na.rm=T)) %>% ungroup()  %>%
   mutate(ref_nut_quantity_kg_ha = ref_nut_quantity_kg_ha) %>%
   mutate(score =  ifelse(ref_nut_quantity_kg_ha > 0 , nut_quantity_kg_ha/ref_nut_quantity_kg_ha, nut_quantity_kg_ha/med_nut_quantity_kg_ha)) 
+
 # Add this back into the main dataset
 temp_kpi_calc <- temp_kpi_calc %>% mutate(indicator = "kpi4_nutrient_use",
                                           subindicator = "nutrient_use", 
@@ -1172,7 +1191,7 @@ kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "
 kpi_histogram(kpi_scores,"kpi18_human_wellbeing")
 kpi_all_boxplot(kpi_scores)
 
-ggsave(paste0(country," kpi boxplots.pdf"))
+ggsave(paste0(global.data.path,"figures/kpi boxplots ",country,".tif"),width=7,height=7,units="in")
 
 ```
 
@@ -1228,14 +1247,15 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
   rm(data, ind, method, min,max)
 }
 
-indicator_scaling(kpi_scores, ind="kpi1_crop_health",method="none")
-indicator_scaling(kpi_scores, ind="kpi1b_crop_health_fieldwork",method="none")
+indicator_scaling(kpi_scores, ind="kpi1_crop_health",method="none") # CHECK sub-indicator label - should be avoided so 100 is positive?
+indicator_scaling(kpi_scores, ind="kpi1b_crop_health_fieldwork",method="none") # CHECK
 indicator_scaling(kpi_scores, ind="kpi2_animal_health", method="set", min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi3_soil_health",method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi4_nutrient_use", method="data_driven_inverse")
 indicator_scaling(kpi_scores, ind="kpi5a_animal_diversity", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi5b_tree_diversity", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi6a_abd_crop_richness_gap", method="none") 
+indicator_scaling(kpi_scores, ind="kpi6b_abd_concentration_index", method="none") 
 indicator_scaling(kpi_scores, ind="kpi6b_abd_variety_diversity", method="set" ,min=1,max=5) 
 indicator_scaling(kpi_scores, ind="kpi7_landscape_complexity ", method="set" ,min=1,max=5) 
 indicator_scaling(kpi_scores, ind="kpi8_climate_mitigation", method="set" ,min=1,max=5) 
@@ -1245,8 +1265,8 @@ indicator_scaling(kpi_scores, ind="kpi11_hh_income_v_mean", method="data_driven"
 #indicator_scaling(data = d, ind="kpi12", method="none") # CHECK
 #indicator_scaling(data = d, ind="kpi13", method="none") # CHECK
 #indicator_scaling(data = d, ind="kpi14", method="none") # CHECK
-indicator_scaling(kpi_scores, ind="kpi15_diet_diversity", method="none") # CHECK
-indicator_scaling(kpi_scores, ind="kpi16_farmer_agency", method="set",min=0,max=10)
+indicator_scaling(kpi_scores, ind="kpi15_diet_diversity", method="set",min=0,max=10) # CHECK
+indicator_scaling(kpi_scores, ind="kpi16_farmer_agency", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi17_land_tenure", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi17b_land_tenure", method="none")
 indicator_scaling(kpi_scores, ind="kpi18_human_wellbeing", method="set",min=1, max=5)
