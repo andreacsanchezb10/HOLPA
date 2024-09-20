@@ -185,7 +185,8 @@ sen_fieldwork_survey <- read_and_process_survey_xlsx("HOLPA Senegal_version fina
   select(1397:1824)
 
 names(sen_fieldwork_survey)
-write.csv(sen_data_path,file=paste0(sen_data_path,"sen/sen_fieldwork_format.csv"),row.names=FALSE)
+write.csv(sen_fieldwork_survey,file=paste0(sen_data_path,"sen/sen_fieldwork_format.csv"),row.names=FALSE)
+write.csv(sen_fieldwork_survey,file="C:/Users/andreasanchez/OneDrive - CGIAR/Desktop/temporary/sen_fieldwork_format.csv",row.names=FALSE)
 
 ### LAOS ----
 lao_data_path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/" #Andrea
