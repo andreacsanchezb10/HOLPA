@@ -33,7 +33,6 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
 
 # INSTRUCTIONS: Please download HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
 #Replace global.data.path path with your path and run the code
-
 global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
 
 global_survey <- read_excel(paste0(global.data.path,"HOLPA_global_household_survey_20231204_mapped_to_indicators_master.xlsx"),
@@ -261,8 +260,8 @@ per_read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_
     mutate(country = country_name,
            sheet_id = sheet_name) %>%
     rename("kobo_farmer_id" := !!column_id_rename,
-           "index" := !!index) 
-  
+           "index" := !!index) %>%
+    slice(-1)
   return(survey_data)
 }
 
@@ -271,13 +270,24 @@ per_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HO
 per_h_survey_file <- paste0(per_data_path, "per_holpa_household_survey_clean.xlsx")
 per_h_choices_file <- paste0(per_data_path, "per_holpa_household_form_clean.xlsx")
 
-#pendiente
-per_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", per_h_survey_file,"peru","_index")
-#pendiente
-per_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", per_h_survey_file,"peru","_index") # Section: Farm production OTHER
+per_survey_main <- per_read_and_process_survey_xlsx("maintable", "hid", per_h_survey_file,"peru","rowuuid") #main survey
+per_2_8_4_begin_group <- per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # energy section _2_8_4_begin_group
+per_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # biodiversity section _3_3_1_begin_group
+per_2_1_1_begin_group<-per_read_and_process_survey_xlsx("_2_1_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # co-creation section _2_1_1_begin_group
+per_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group ", "hid", per_h_survey_file,"peru","rowuuid")  # diet _3_1_3_begin_group
+per_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
+per_2_2_1_begin_group<-per_read_and_process_survey_xlsx("_2_2_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # governance _2_2_1_begin_group
+per_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #participation section _2_3_1_begin_group
+names(per_survey_main)
 
+#pendiente
+#per_survey_1_4_2_7_begin_repeat <- per_read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "hid", per_h_survey_file,"peru","_index") # Section: Farm production OTHER
 
-per_survey_3_3_3_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","_3_3_3_2_begin_repeat_rowid") # Section: area of land per agricultural practice
+per_survey_3_3_3_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","_3_3_3_2_begin_repeat_rowid")%>% # Section: area of land per agricultural practice
+  mutate(parent_table_name="maintable",
+         parent_index= kobo_farmer_id)
+
+names(per_survey_3_3_3_2_begin_repeat)
 
 per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
   mutate(country= "peru")%>%
@@ -338,8 +348,8 @@ fun_agroecology_choices<- function(country_global_choices) {
  }
 
 
-fun_agroecology_questions_columns<- function(country_agroecology_choices) {
-  agroecology_questions_columns<- country_agroecology_choices%>% 
+fun_agroecology_questions_columns<- function(agroecology_choices) {
+  agroecology_questions_columns<- agroecology_choices%>% 
     dplyr::select(label_question, name_question_choice)%>%
     dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
     spread(key = name_question_choice, value = label_question)%>%
@@ -355,6 +365,28 @@ fun_agroecology_questions_columns<- function(country_agroecology_choices) {
   return(agroecology_questions_columns)
   
 }
+
+# For Peru select only the select_multiple columns
+per_fun_agroecology_questions_columns<- function(agroecology_choices) {
+  per_agroecology_questions_columns<- agroecology_choices%>% 
+    filter(type_question=="select_multiple")%>%
+    dplyr::select(name_question, label_question)%>%
+    dplyr::distinct(name_question, .keep_all = TRUE)%>%
+    spread(key = name_question, value = label_question)%>%
+    mutate("kobo_farmer_id"="kobo_farmer_id",
+           "country"="country_name",
+           "sheet_id"="sheet_id",
+           "parent_table_name"="_parent_table_name",
+           "index"="index",
+           "parent_index"="_parent_index")
+  
+  per_agroecology_questions_columns <- colnames(per_agroecology_questions_columns)
+  per_agroecology_questions_columns
+  
+  return(per_agroecology_questions_columns)
+  
+}
+
 
 fun_agroecology_left_join <- function(agroecology_choices, gathered_data ) {
   # Left join for "calculate" and "integer"
@@ -386,7 +418,8 @@ fun_agroecology_left_join <- function(agroecology_choices, gathered_data ) {
     filter(type_question=="select_one")%>%
     filter(country=="zimbabwe"|
              country=="kenya"|
-             country=="laos")
+             country=="laos"|
+             country=="peru")
   
   # Left join for "select_one" for country== "tun" (that downloaded the database with label_choices)
   select_one2 <- gathered_data  %>%
@@ -416,6 +449,7 @@ fun_agroecology_left_join <- function(agroecology_choices, gathered_data ) {
 }
 
 ## Main survey ----
+#all countries that used KoboCollect tool, and select_one, integer, calculate questions from Peru
 fun_agroecology_main<- function(country_global_choices,country_survey_main){
   country_agroecology_choices<-  fun_agroecology_choices(country_global_choices)
   country_agroecology_question_columns<- fun_agroecology_questions_columns(country_agroecology_choices)
@@ -440,6 +474,65 @@ fun_agroecology_main<- function(country_global_choices,country_survey_main){
     mutate(parent_table_name= NA,
            parent_index=NA)
   return(result_main_survey)
+}
+
+# For peru select_multiple questions
+per_fun_agroecology_main<- function(country_global_choices, country_survey_main) {
+  
+  # Step 1: Apply per_fun_agroecology_main logic
+  per_country_agroecology_choices <- fun_agroecology_choices(country_global_choices)
+  per_country_agroecology_question_columns <- per_fun_agroecology_questions_columns(per_country_agroecology_choices)
+  
+  per_country_agroecology_columns <- intersect(per_country_agroecology_question_columns, colnames(country_survey_main))
+  mismatched_columns <- setdiff(per_country_agroecology_question_columns, per_country_agroecology_columns)
+  
+  per_country_agroecology <- country_survey_main %>%
+    select(all_of(per_country_agroecology_columns)) %>%
+    mutate_all(as.character)
+  
+  # Remove columns with only NA values
+  na_columns <- colSums(is.na(per_country_agroecology)) == nrow(per_country_agroecology)
+  per_country_agroecology <- per_country_agroecology[, !na_columns]
+  
+  # Step 2: Apply generate_binary_matrix logic
+  # Initialize the result dataframe with kobo_farmer_id
+  result <- country_survey_main %>% select(kobo_farmer_id,"country", "sheet_id", "index")
+  cols_to_process <- names(per_country_agroecology)[!names(per_country_agroecology) %in% c("kobo_farmer_id", "country", "sheet_id", "index")]
+  
+  for (col in cols_to_process) {
+    
+    # Separate rows based on comma-separated values
+    data_long <- per_country_agroecology %>%
+      select(kobo_farmer_id, all_of(col)) %>%
+      separate_rows(all_of(col), sep = ",") %>%
+      mutate(!!col := paste0(col, "/", !!sym(col)))  # Append the column name
+    
+    # Create binary columns for each value
+    data_wide <- data_long %>%
+      mutate(value = 1) %>%
+      pivot_wider(names_from = all_of(col), values_from = value, values_fill = 0)
+    
+    # Merge the result with the wide data (binary columns)
+    result <- result %>%
+      left_join(data_wide, by = "kobo_farmer_id")
+  }
+  
+  country_agroecology_choices<-  fun_agroecology_choices(country_global_choices)
+  
+  per_result_main_survey <- result%>%
+    gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
+    left_join(select(country_agroecology_choices,
+                     c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name,name_question_choice)), 
+              by = c("name_question"="name_question_choice"))%>%
+    select(-name_choice.y,-name_question.y)%>%
+    rename("name_choice"="name_choice.x")%>%
+    #Remove answers == "0" or NA
+    filter(type_question == "select_multiple" & !is.na(name_choice))%>%
+    mutate(name_question_recla= name_question)%>%
+    mutate(parent_table_name= NA,
+           parent_index=NA)
+  # Return the final binary matrix
+  return(per_result_main_survey)
 }
  
 ## begin_repeat ----
@@ -579,3 +672,38 @@ lao_agroecology_data<-fun_agroecology_data(lao_global_choices,
 lao_agroecology<-fun_agroecology(lao_agroecology_data)
 write.csv(lao_agroecology,paste0(lao_data_path,"/lao/lao_agroecology_format.csv"),row.names=FALSE)
 
+
+# PERU -----
+## For the moment Peru doesn't have this section _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics
+per_agroecology_data<-rbind(
+  fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
+  fun_agroecology_begin_repeat(per_global_choices, per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice
+  fun_agroecology_main(per_global_choices, per_2_8_4_begin_group ), # energy section _2_8_4_begin_group
+  fun_agroecology_main(per_global_choices, per_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
+  fun_agroecology_main(per_global_choices,per_2_1_1_begin_group), # co-creation section _2_2_1_begin_group
+  fun_agroecology_main(per_global_choices,per_3_1_3_begin_group), # diet _3_1_3_begin_group
+  fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  fun_agroecology_main(per_global_choices,per_2_2_1_begin_group),  # governance _2_2_1_begin_group
+  fun_agroecology_main(per_global_choices,per_2_3_1_begin_group)) #participation section _2_3_1_begin_group
+
+
+per_agroecology_data<-rbind(
+  fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
+  fun_agroecology_begin_repeat(per_global_choices, per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice
+  fun_agroecology_main(per_global_choices, per_2_8_4_begin_group ), # energy section _2_8_4_begin_group
+  fun_agroecology_main(per_global_choices, per_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
+  fun_agroecology_main(per_global_choices,per_2_1_1_begin_group), # co-creation section _2_2_1_begin_group
+  fun_agroecology_main(per_global_choices,per_3_1_3_begin_group), # diet _3_1_3_begin_group
+  fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  fun_agroecology_main(per_global_choices,per_2_2_1_begin_group),  # governance _2_2_1_begin_group
+  fun_agroecology_main(per_global_choices,per_2_3_1_begin_group), #participation section _2_3_1_begin_group
+  per_fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
+  per_fun_agroecology_main(per_global_choices,per_1_4_2_begin_group))  # farm characteristics _1_4_2_begin_group
+
+
+  
+ names(per_agroecology_data) 
+#Problems with all select_multiple questions, adapt the code for Peru situation. 
+per_agroecology<-fun_agroecology(per_agroecology_data) 
+
+write.csv(per_agroecology,paste0(per_data_path,"/per/per_agroecology_format.csv"),row.names=FALSE)
