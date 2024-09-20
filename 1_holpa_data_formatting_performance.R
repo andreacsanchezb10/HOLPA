@@ -193,6 +193,7 @@ ken_global_choices<-global_choices%>%
 #INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 
 sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
+sen_data_path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/" #path sarah
 
 sen_h_survey_file <- paste0(sen_data_path, "sen_holpa_household_survey_clean.xlsx")
 sen_h_choices_file <- paste0(sen_data_path, "sen_holpa_household_form_clean.xlsx")
