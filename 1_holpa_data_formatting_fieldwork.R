@@ -169,12 +169,58 @@ write.csv(ken_error_fieldwork,file=paste0(ken_data_path,"ken/ken_error_fieldwork
 #link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
 #INSTRUCTION: Replace sen_data_path path with your path, run the code and then run the code 
 #Senegal household and fieldwork databases were developed in the same form
-sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
 
-#Fieldwork survey
-sen_fieldwork_survey <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", "_id", paste0(sen_data_path,"sen_holpa_household_survey_clean.xlsx"),"senegal","_index")%>%
+#Global databases
+#fieldwork_global_survey contains the global form with questions
+#global_choices contains the global form with choices
+
+# INSTRUCTIONS: Please download HOLPA_global_field_survey_20231106.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
+#Replace global.data.path path with your path and run the code
+fieldwork.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
+
+fieldwork_global_survey <- read_excel(paste0(fieldwork.data.path,"HOLPA_global_field_survey_20231106.xlsx"),
+                            sheet = "survey")%>%
+  #select only the necessary columns
+  select(
+    #"module","indicator", "subindicator", 
+    "type", "name","label::English ((en))")%>%
+  #rename columns names
+  rename("label_question" = "label::English ((en))")%>%
+  rename("name_question" = "name")%>%
+  #remove rows without questions
+  filter(type!="begin_group")%>%
+  filter(type!="begin_repeat")%>%
+  filter(type!="end_repeat")%>%
+  #separate question type components
+  mutate(type_question = ifelse(substr(type,1,10)=="select_one","select_one",
+                                ifelse(substr(type,1,10)=="select_mul","select_multiple",type)))%>%
+  #create column with list_name codes matching the choices worksheet
+  mutate(list_name = if_else(type_question== "select_one"|type_question== "select_multiple", 
+                             str_replace(.$type, paste0(".*", .$type_question), ""),NA))%>%
+  mutate(list_name = str_replace_all(list_name, " ", ""))  #%>% mutate(global_r_list_name =  sub('*_', "", name_question)) %>%mutate(global_r_list_name = ifelse(grepl("_", global_r_list_name, fixed = TRUE)==TRUE,global_r_list_name,""))
+
+fieldwork_global_choices <- read_excel(paste0(fieldwork.data.path,"HOLPA_global_field_survey_20231106.xlsx"),
+                             sheet = "choices")%>%
+  select("list_name","name","label::English ((en))")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  mutate(country= "global")
+
+#### Import data ####
+#link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
+#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
+
+sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
+#sen_data_path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/" #path sarah
+
+sen_f_survey_file <- paste0(sen_data_path, "sen_holpa_household_survey_clean.xlsx")
+sen_f_choices_file <- paste0(sen_data_path, "sen_holpa_household_form_clean.xlsx")
+
+sen_fieldwork_survey <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", "_id", sen_f_survey_file,"senegal","_index")%>%
   #Remove respondents that did not wanted to complete the survey
   filter(consent_2!="No")%>%
+  #Remove respondents that are not farmers
+  filter(kobo_farmer_id!="309270221") %>%
   slice(-1)%>%
   mutate(x_2_6_1_3= NA)%>%
   rename("x_2_6_1_3_1"= "_2_6_1_3_1",
@@ -182,11 +228,137 @@ sen_fieldwork_survey <- read_and_process_survey_xlsx("HOLPA Senegal_version fina
   mutate(x_2_6_1_3= x_2_6_1_3_1,
          x_2_6_1_3= if_else(is.na(x_2_6_1_3),x_2_6_1_3_2,x_2_6_1_3))%>%
   rename("_2_6_1_3"="x_2_6_1_3")%>%
-  select(1397:1824)
+  select(sheet_id,1397:1824)
 
 names(sen_fieldwork_survey)
-write.csv(sen_fieldwork_survey,file=paste0(sen_data_path,"sen/sen_fieldwork_format.csv"),row.names=FALSE)
-write.csv(sen_fieldwork_survey,file="C:/Users/andreasanchez/OneDrive - CGIAR/Desktop/temporary/sen_fieldwork_format.csv",row.names=FALSE)
+sen_choices <- read_excel(sen_f_choices_file, sheet = "choices")%>%
+  mutate(country= "senegal")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+sen_fieldwork_global_choices<-fieldwork_global_choices%>%
+  rbind(sen_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(fieldwork_global_survey,by="list_name",relationship="many-to-many")%>%
+  left_join(sen_choices,by=c("list_name","name_choice"))%>%
+  rename("label_choice"="label_choice.x",
+         "label_choice.country"="label_choice.y",
+         "country"="country.x")%>%
+  select(-country.y)%>%
+  mutate(name_question_choice= if_else(type_question=="select_multiple",
+                                       paste(name_question,"/",name_choice, sep=""),
+                                       name_question))
+
+
+#INSTRUCTION: Continue running the code from here
+fun_f_questions_columns<- function(country_f_choices) {
+  performance_questions_columns<- country_f_choices%>% 
+    dplyr::select(label_question, name_question_choice)%>%
+    dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
+    spread(key = name_question_choice, value = label_question)%>%
+    mutate("kobo_farmer_id"="kobo_farmer_id",
+           "country"="country_name",
+           "sheet_id"="sheet_id",
+           "parent_table_name"="_parent_table_name",
+           "index"="index",
+           "parent_index"="_parent_index")
+  
+  performance_questions_columns <- colnames(performance_questions_columns)
+  
+  return(performance_questions_columns)
+  
+}
+
+fun_f_left_join <- function(performance_choices, gathered_data ) {
+  
+  # Left join for "calculate" and "integer"
+  continuous <- gathered_data  %>%
+    dplyr::left_join(select(performance_choices,
+                            c(name_question, "name_choice", label_choice, label_question,type, type_question, list_name)), 
+                     by = "name_question")%>%
+    filter(type_question =="calculate"|type_question =="integer"|type_question =="note"|
+             type_question =="text"|type_question =="audio"|type_question =="decimal")%>%
+    select(-name_choice.y)%>%
+    rename("name_choice"="name_choice.x")
+  
+  # Left join for "select_multiple"
+  select_multiple <- gathered_data  %>%
+    left_join(select(performance_choices,
+                     c(name_question, name_choice, label_choice, label_question, type, type_question, list_name,name_question_choice)), 
+              by = c("name_question"="name_question_choice"))%>%
+    filter(type_question=="select_multiple")%>%
+    select(-name_choice.y,-name_question.y)%>%
+    rename("name_choice"="name_choice.x")%>%
+    #Remove answers == "0" or NA
+    filter(type_question == "select_multiple" & !is.na(name_choice) & name_choice != 0)
+  
+  # Left join for "select_one" for countries that downloaded the survey with the name_label version in country language (country== "sen")
+  select_one3 <- gathered_data  %>%
+    left_join(select(performance_choices,
+                     c(name_question, name_choice, label_choice, label_question, type, type_question, list_name,label_choice.country)), 
+              by = c("name_question"="name_question", "name_choice"="label_choice.country"))%>%
+    select(-name_choice)%>%
+    dplyr::rename("name_choice"="name_choice.y")%>%
+    filter(type_question=="select_one")%>%
+    filter(country== "senegal")
+  
+  result<- rbind(continuous,select_multiple,select_one3)
+  
+  return(result)
+}
+
+### Function to get answers from the following sections ---- 
+## Main survey ----
+fun_f_main<- function(country_global_choices,country_f_survey){
+  country_f_choices<-  country_global_choices
+  country_f_question_columns<- fun_f_questions_columns(country_f_choices)
+  
+  country_f_columns <- intersect(country_f_question_columns, colnames(country_f_survey))
+  
+  country_f <- country_f_survey %>%
+    select(all_of(country_f_columns))%>%
+    mutate_all(as.character)
+  
+  # Identify columns with only NA values
+  na_columns <- colSums(is.na(country_f)) == nrow(country_f)
+  
+  # Remove columns with only NA values
+  country_f <- country_f[, !na_columns]
+  
+  result_main_survey <- country_f%>%
+    gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
+    fun_f_left_join(country_f_choices,.)%>%
+    mutate(name_question_recla= name_question)%>%
+    mutate(parent_table_name= NA,
+           parent_index=NA)
+  return(result_main_survey)
+}
+
+
+fun_performance<- function(country_f_data){
+  country_f<- country_f_data%>%
+    #For the countries that translated the name of the crops, livestock and fish to English separated with "//"
+    mutate(name_choice= case_when(
+      name_question_recla %in%c("_1_111_2_other","_1_113_2_other","_1_115_3_other","_1_201_1_other",             
+                                "_1_202_1_other","_1_203_1_other") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+      TRUE ~ name_choice))%>%
+    
+    
+    return(country_f)
+}
+
+sen_fieldwork<-fun_f_main(sen_fieldwork_global_choices,sen_fieldwork_survey)
+sen_fieldwork<-fun_performance(sen_fieldwork)%>%
+  pivot_wider(id_cols = "kobo_farmer_id",names_from = "name_question", values_from = name_choice)
+names(sen_fieldwork)
+
+write.csv(sen_fieldwork,file=paste0(sen_data_path,"sen/sen_fieldwork_format.csv"),row.names=FALSE)
+
 
 ### LAOS ----
 lao_data_path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/" #Andrea

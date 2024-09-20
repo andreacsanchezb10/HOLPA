@@ -193,7 +193,7 @@ ken_global_choices<-global_choices%>%
 #INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 
 sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
-sen_data_path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/" #path sarah
+#sen_data_path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/" #path sarah
 
 sen_h_survey_file <- paste0(sen_data_path, "sen_holpa_household_survey_clean.xlsx")
 sen_h_choices_file <- paste0(sen_data_path, "sen_holpa_household_form_clean.xlsx")
@@ -209,7 +209,7 @@ sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", 
          "x_2_6_1_3_2"= "_2_6_1_3_2")%>%
   mutate(x_2_6_1_3= x_2_6_1_3_1,
          x_2_6_1_3= if_else(is.na(x_2_6_1_3),x_2_6_1_3_2,x_2_6_1_3))%>%
-  rename("_2_6_1_3"="x_2_6_1_3")
+  rename(sheet_name,"_2_6_1_3"="x_2_6_1_3")
 
 sen_survey_3_4_3_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_3_1_1_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index") %>%# Section: Crop list
   #Remove respondents that are not farmers
