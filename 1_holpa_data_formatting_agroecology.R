@@ -282,8 +282,6 @@ per_2_12_1_begin_group<-per_read_and_process_survey_xlsx("_2_12_1_begin_group", 
 per_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #income section _2_4_1_begin_group
 names(per_survey_main)
 
-#pendiente
-#per_survey_1_4_2_7_begin_repeat <- per_read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "hid", per_h_survey_file,"peru","_index") # Section: Farm production OTHER
 
 per_survey_3_3_3_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","_3_3_3_2_begin_repeat_rowid")%>% # Section: area of land per agricultural practice
   mutate(parent_table_name="maintable",
@@ -305,7 +303,21 @@ per_global_choices<-global_choices%>%
   #Removing duplicates
   distinct(list_name,name_choice, .keep_all = TRUE) %>%
   right_join(global_survey,by="list_name",relationship="many-to-many")%>%
-  mutate(label_choice.country=NA)
+  mutate(label_choice.country=NA)%>%
+  dplyr::bind_rows(data.frame(
+    list_name= c(rep("3_3_1_2",8)),
+    name_choice= c(rep(c("high","medium","low","none"),2)),
+    label_choice= c(rep(c("High: five or more species with different heights, woodiness or flowering seasons.","Medium: two to four species.","Low: only one species.","None"),2)),
+    country= c(rep("peru",8)),module=c(rep("agroecology",8)),indicator=c(rep( "5_biodiversity")),subindicator=c(rep( "5_biodiversity")),
+    type= c(rep("select_one 3_3_1_2",8)),
+    type_question=c(rep("select_one",8)),
+    name_question= c(rep("_3_3_1_2_10",4),rep("_3_3_1_2_11",4)),
+    label_question = c("How would you describe the plant diversity (i.e., number of plant species) in: Young fallow (less than 10 years)",
+                       "How would you describe the plant diversity (i.e., number of plant species) in: Old fallow (more or equal than 10 years)"),
+    label_choice.country= c(rep(NA,8)),
+    stringsAsFactors = FALSE))
+names(per_global_choices)
+
 
 #### AGROECOLOGY MODULE #### -----
 #INSTRUCTION: Continue running the code from here
@@ -354,6 +366,7 @@ fun_agroecology_questions_columns<- function(agroecology_choices) {
   agroecology_questions_columns<- agroecology_choices%>% 
     dplyr::select(label_question, name_question_choice)%>%
     dplyr::distinct(name_question_choice, .keep_all = TRUE)%>%
+    # Global code
     spread(key = name_question_choice, value = label_question)%>%
     mutate("kobo_farmer_id"="kobo_farmer_id",
            "country"="country_name",
@@ -412,7 +425,7 @@ fun_agroecology_left_join <- function(agroecology_choices, gathered_data ) {
     #Remove answers == "0" or NA
     filter(type_question == "select_multiple" & !is.na(name_choice))
   
-  # Left join for "select_one" for country== "zwe","ken","lao" (that downloaded the database with label_name)
+  # Left join for "select_one" for country== "zwe","ken","lao","per" (that downloaded the database with label_name)
   select_one1 <- gathered_data  %>%
     left_join(select(agroecology_choices,
                      c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
@@ -584,6 +597,7 @@ fun_agroecology<- function(country_agroecology_data){
     name_question %in% c("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8","c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20")~"_3_4_3_1_1_2",
     name_question %in% c("l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8","l9","l10") ~ "_3_4_3_3_1",
     name_question %in% c("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10") ~ "_3_4_3_4_2",
+    #country=="peru" & name_question %in% c("_3_3_1_2_10","_3_3_1_2_11")~ "_3_3_1_2_2",
     TRUE ~ name_question_recla))%>%
     
     #For the countries that translated the name of the crops, livestock and fish, agricultural to English separated with "//"

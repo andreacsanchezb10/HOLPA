@@ -262,7 +262,7 @@ sen_global_choices<-global_choices%>%
 
 ### LAOS ----
 #link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean?csf=1&web=1&e=azqxKc
-#INSTRUCTION: Replace zwe_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
+#INSTRUCTION: Replace lao_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
 lao_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/" #path andrea
 
 lao_h_survey_file <- paste0(lao_data_path, "lao_holpa_household_survey_clean.xlsx")
@@ -301,6 +301,71 @@ lao_global_choices<-global_choices%>%
   right_join(global_survey,by="list_name",relationship="many-to-many")%>%
   mutate(label_choice.country=NA)
 
+### PERU ----
+#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace zwe_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
+per_read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name, index) {
+  survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
+    mutate(country = country_name,
+           sheet_id = sheet_name) %>%
+    rename("kobo_farmer_id" := !!column_id_rename,
+           "index" := !!index) %>%
+    slice(-1)
+  return(survey_data)
+}
+
+per_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/" #path andrea
+
+per_h_survey_file <- paste0(per_data_path, "per_holpa_household_survey_clean.xlsx")
+per_h_choices_file <- paste0(per_data_path, "per_holpa_household_form_clean.xlsx")
+
+per_survey_main <- per_read_and_process_survey_xlsx("maintable", "hid", per_h_survey_file,"peru","rowuuid") #main survey
+per_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # diet _3_1_3_begin_group
+per_3_1_2_begin_group <-per_read_and_process_survey_xlsx("_3_1_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farmer agency _3_1_2_begin_group
+per_3_1_1_begin_group<-per_read_and_process_survey_xlsx("_3_1_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # human well being _3_1_1_begin_group
+per_1_4_1_begin_group<-per_read_and_process_survey_xlsx("_1_4_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # land tenure _1_4_1_begin_group
+
+per_2_8_4_begin_group <- per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # energy section _2_8_4_begin_group
+per_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # biodiversity section _3_3_1_begin_group
+per_2_1_1_begin_group<-per_read_and_process_survey_xlsx("_2_1_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # co-creation section _2_1_1_begin_group
+per_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
+per_2_2_1_begin_group<-per_read_and_process_survey_xlsx("_2_2_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # governance _2_2_1_begin_group
+per_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #participation section _2_3_1_begin_group
+per_2_12_1_begin_group<-per_read_and_process_survey_xlsx("_2_12_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #synergy section _2_12_1_begin_group
+per_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #income section _2_4_1_begin_group
+
+per_survey_3_3_3_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","_3_3_3_2_begin_repeat_rowid")%>% # Section: area of land per agricultural practice
+  mutate(parent_table_name="maintable",
+         parent_index= kobo_farmer_id)
+
+
+per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
+  mutate(country= "peru")%>%
+  select("list_name","name","label::English (en)","country")%>%
+  rename("label_choice" = "label::English (en)")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+per_global_choices<-global_choices%>%
+  rbind(per_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)%>%
+  dplyr::bind_rows(data.frame(
+    list_name= c(rep("3_3_1_2",8)),
+    name_choice= c(rep(c("high","medium","low","none"),2)),
+    label_choice= c(rep(c("High: five or more species with different heights, woodiness or flowering seasons.","Medium: two to four species.","Low: only one species.","None"),2)),
+    country= c(rep("peru",8)),module=c(rep("agroecology",8)),indicator=c(rep( "5_biodiversity")),subindicator=c(rep( "5_biodiversity")),
+    type= c(rep("select_one 3_3_1_2",8)),
+    type_question=c(rep("select_one",8)),
+    name_question= c(rep("_3_3_1_2_10",4),rep("_3_3_1_2_11",4)),
+    label_question = c("How would you describe the plant diversity (i.e., number of plant species) in: Young fallow (less than 10 years)",
+                       "How would you describe the plant diversity (i.e., number of plant species) in: Old fallow (more or equal than 10 years)"),
+    label_choice.country= c(rep(NA,8)),
+    stringsAsFactors = FALSE))
 
 
 #### PERFORMANCE MODULE ####
@@ -434,7 +499,7 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
     #Remove answers == "0" or NA
     filter(type_question == "select_multiple" & !is.na(name_choice) & name_choice != 0)
   
-  # Left join for "select_one" for countries that downloaded the survey with the name_choice version (country== "zwe","ken"
+  # Left join for "select_one" for countries that downloaded the survey with the name_choice version (country== "zwe","ken","lao","per"
   select_one1 <- gathered_data  %>%
     left_join(select(performance_choices,
                      c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
@@ -442,7 +507,8 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
     filter(type_question=="select_one")%>%
     filter(country=="zimbabwe"|
              country=="kenya"|
-             country=="laos")
+             country=="laos"|
+             country=="peru")
   
   # Left join for "select_one" for countries that downloaded the survey with the name_label version in English (country== "tun")
   select_one2 <- gathered_data  %>%
@@ -667,7 +733,7 @@ mutate(label_choice= case_when(
   name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
   name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
   name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in%c("zimbabwe","kenya")~"acres",
-  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos")~"hectares",
+  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos","peru")~"hectares",
   TRUE ~ label_choice))%>%
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
@@ -793,3 +859,31 @@ lao_performance<-fun_performance(lao_performance_data)
 write.csv(lao_performance,paste0(lao_data_path,"/lao/lao_performance_format.csv"),row.names=FALSE)
 
 
+# PERU -----
+per_performance_data<-rbind(
+  fun_performance_main(per_global_choices,per_survey_main), ## Main survey
+  fun_performance_main(per_global_choices,per_3_1_3_begin_group), # diet _3_1_3_begin_group
+  fun_performance_main(per_global_choices,per_3_1_2_begin_group),   # farmer agency _3_1_2_begin_group
+  fun_performance_main(per_global_choices,per_3_1_1_begin_group),  # human well being _3_1_1_begin_group
+  fun_performance_main(per_global_choices,per_1_4_1_begin_group)  # land tenure _1_4_1_begin_group
+  
+  
+  
+                                           #per_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           # per_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           # per_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           #per_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
+                                           #per_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           #per_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
+                                           #per_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
+                                           #per_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
+                                           #per_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
+                                           #per_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
+                                           #per_survey_3_3_3_2_begin_repeat ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+)
+  rbind(
+    fun_performance_begin_repeat(per_global_choices,per_survey_3_4_2_3_2_begin_repeat), ##_3_4_2_3_2_repeat_group:  Fish production 1
+    fun_performance_begin_repeat(per_global_choices,per_survey_3_4_2_3_2_4_begin_repeat)) ##_3_4_2_3_2_repeat_group:  Fish production 2
+
+per_performance<-fun_performance(per_performance_data)
+write.csv(per_performance,paste0(per_data_path,"/per/per_performance_format.csv"),row.names=FALSE)

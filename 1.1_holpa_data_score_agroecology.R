@@ -22,6 +22,7 @@ library("summarytools")
 #Kenya = 28/29 questions (missing: "_2_6_1_4_6")
 #Senegal = 29/29 questions 
 #Laos = 26/29 questions (missing: "_2_6_1_4_1", "_2_6_1_4_4", "_2_6_1_4_5")
+#Peru = 26/29 questions (missing:"_2_6_1_4_6","_3_3_1_2_4","_2_6_1_4_5" ) (extra questions: "_3_3_1_2_10","_3_3_1_2_11")
 
 ## type_question: select_multiple ----
 # 2_input_reduction:"_1_4_3_1", "_1_4_3_5",   "_2_8_5_3","_1_4_3_8", "_1_4_3_9" = 5/6
@@ -32,6 +33,8 @@ library("summarytools")
 #Kenya = 15/17 questions (missing:"_2_7_1_6", "_1_4_2_7_4")
 #Senegal= 16/17 questions (missing:"_1_4_2_7_4")
 #Laos = 11/17 questions ("_2_7_1_1","_2_7_1_4", "_2_7_1_5",_1_4_2_2_3", "_1_4_2_5_5", "_1_4_2_6_3")
+#Peru = 13/17 questions ("_2_7_1_6", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_7_4")
+
 
 ## type_question: integer ----
 # 8 - knowledge: "_2_1_1_1" "_2_1_1_2" "_2_1_1_3" "_2_1_1_4" "_2_1_1_5" "_2_1_1_6" "_2_1_1_7" = 7/7
@@ -41,6 +44,7 @@ library("summarytools")
 #Kenya =  7/7 questions
 #Senegal = 7/7 questions
 #Laos = 7/7 questions
+#Peru = 7/7 questions
 
 ## type_question: counting----
 # 3- soil_health: "_2_9_1_1" = 1/1
@@ -54,6 +58,16 @@ library("summarytools")
 #Kenya = 10/10 questions
 #Senegal = 10/10 questions
 #Laos = 10/10 questions
+#Peru = 10/10 questions
+
+## type_question: counting----
+# 3- soil_health: "" = 1/1
+# 4_animal_health: "","" = 2/3
+# 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2,
+# 6- synergy: "","","","","","" = 6/6
+# 7- economic_diversification: "" = 1/1
+
+
 
 #### AGROECOLOGY: SCORING FUNCTION ------
 fun_agroecology_data<- function(country_agroecology_data){
@@ -153,6 +167,9 @@ fun_agroecology_data<- function(country_agroecology_data){
       grepl("chemical", label_score_agroecology_module) & grepl("organic", label_score_agroecology_module) ~ 2,
       grepl("chemical", label_score_agroecology_module) & grepl("Other please specify", label_score_agroecology_module) ~ 1,
       label_score_agroecology_module %in% c("chemical","chemical//chemical","Other please specify")~ 1,
+      country=="peru"&kobo_farmer_id=="20231106_AnG"&name_question_recla=="_1_4_3_8"&name_choice=="6//other"~2,
+      country=="peru"&kobo_farmer_id=="20231106_ClM"&name_question_recla=="_1_4_3_8"&name_choice=="other//1"~1,
+      
       
       label_score_agroecology_module%in%c("natural")~ 5,
       country=="senegal" & name_question_recla=="_2_8_5_3" & name_choice== "other"~ 1,
@@ -163,6 +180,8 @@ fun_agroecology_data<- function(country_agroecology_data){
       grepl("Trader or supermarket.", label_score_agroecology_module) ~ 3,
       grepl("Aux détaillants tels que les supermarchés, les épiceries ou les restaurants.", label_score_agroecology_module) ~ 3,
       grepl("Local market", label_score_agroecology_module) ~ 3,
+      country=="peru" & name_choice=="retailers" ~ 3,
+      
       
       
       grepl("To a middle man / aggregator.", label_score_agroecology_module) ~ 2,
@@ -177,6 +196,9 @@ fun_agroecology_data<- function(country_agroecology_data){
       grepl("organic", label_score_agroecology_module) & grepl("ecological", label_score_agroecology_module) ~ "Combination of organic inputs/treatments, and ecological practices/treatments applied",
       grepl("chemical", label_score_agroecology_module) & grepl("ecological", label_score_agroecology_module) ~ "Combination of chemical inputs/treatments, and ecological practices/treatments applied",
       grepl("chemical", label_score_agroecology_module) & grepl("organic", label_score_agroecology_module) ~ "Combination of chemical and organic inputs/treatments",
+      country=="peru"&kobo_farmer_id=="20231106_AnG"&name_question_recla=="_1_4_3_8"&name_choice=="6//other"~"Combination of chemical and organic inputs/treatments",
+      country=="peru"&kobo_farmer_id=="20231106_ClM"&name_question_recla=="_1_4_3_8"&name_choice=="other//1"~"Only chemical inputs/treatments applied",
+      
       grepl("chemical", label_score_agroecology_module) & grepl("Other please specify", label_score_agroecology_module) ~ "Only chemical inputs/treatments applied",
       label_score_agroecology_module %in% c("chemical","chemical//chemical","Other please specify")~ "Only chemical inputs/treatments applied",
       label_score_agroecology_module=="none"& name_question_recla%in%c("_1_4_3_1","_1_4_3_5")~ "No ecological practices, chemical or organic inputs were applied.",
@@ -194,6 +216,7 @@ fun_agroecology_data<- function(country_agroecology_data){
       
       country=="senegal" & grepl("Aux détaillants tels que les supermarchés, les épiceries ou les restaurants.", label_score_agroecology_module) ~ "Sold on-farm production to retailers such us supermarkets, grocery stores, or restaurants.",
       grepl("To a middle man / aggregator.", label_score_agroecology_module) ~ "Sold on-farm production to a middle man / aggregator.",
+      country=="peru" & name_choice=="retailers" ~ "Sold on-farm production to retailers such us supermarkets, grocery stores, or restaurants.",
       
       country=="kenya" & name_question_recla == "_2_7_1_1"& label_score_agroecology_module=="Other please, specify"~ "Sold on-farm production to schools",
       label_score_agroecology_module=="none"&name_question_recla %in% c("_2_7_1_1","_2_7_1_2","_2_7_1_3","_2_7_1_4", "_2_7_1_5","_2_7_1_6") ~ "Produce on-farm production but did not sold them",
@@ -459,3 +482,13 @@ sort(unique(lao_agroecology$theme))
 view(dfSummary(lao_agroecology))
 
 write.csv(lao_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/lao/lao_agroecology_score.csv',row.names=FALSE)
+
+#PERU ----
+per.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/per/per_agroecology_format.csv" #andrea path
+per_agroecology_data <- read.csv(per.data.path)
+
+per_agroecology<- fun_agroecology_data(per_agroecology_data)
+sort(unique(per_agroecology$theme))
+view(dfSummary(per_agroecology))
+
+write.csv(per_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/per/per_agroecology_score.csv',row.names=FALSE)
