@@ -278,6 +278,8 @@ per_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group ", 
 per_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
 per_2_2_1_begin_group<-per_read_and_process_survey_xlsx("_2_2_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # governance _2_2_1_begin_group
 per_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #participation section _2_3_1_begin_group
+per_2_12_1_begin_group<-per_read_and_process_survey_xlsx("_2_12_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #synergy section _2_12_1_begin_group
+per_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #income section _2_4_1_begin_group
 names(per_survey_main)
 
 #pendiente
@@ -586,7 +588,8 @@ fun_agroecology<- function(country_agroecology_data){
     
     #For the countries that translated the name of the crops, livestock and fish, agricultural to English separated with "//"
     mutate(name_choice= case_when(
-      name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_3_1_calculate_2","_3_3_1_7_1") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+      name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_3_1_calculate_2","_3_3_1_7_1",
+                                "_2_4_1_2") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
       TRUE ~ name_choice))%>%
     
     mutate(label_choice= case_when(
@@ -613,7 +616,7 @@ fun_agroecology<- function(country_agroecology_data){
       name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
       name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
       name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in%c("zimbabwe","kenya")~"acres",
-      name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos")~"hectares",
+      name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos","peru")~"hectares",
       TRUE ~ label_choice))
   
   
@@ -674,19 +677,7 @@ write.csv(lao_agroecology,paste0(lao_data_path,"/lao/lao_agroecology_format.csv"
 
 
 # PERU -----
-## For the moment Peru doesn't have this section _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics
-per_agroecology_data<-rbind(
-  fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
-  fun_agroecology_begin_repeat(per_global_choices, per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice
-  fun_agroecology_main(per_global_choices, per_2_8_4_begin_group ), # energy section _2_8_4_begin_group
-  fun_agroecology_main(per_global_choices, per_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
-  fun_agroecology_main(per_global_choices,per_2_1_1_begin_group), # co-creation section _2_2_1_begin_group
-  fun_agroecology_main(per_global_choices,per_3_1_3_begin_group), # diet _3_1_3_begin_group
-  fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
-  fun_agroecology_main(per_global_choices,per_2_2_1_begin_group),  # governance _2_2_1_begin_group
-  fun_agroecology_main(per_global_choices,per_2_3_1_begin_group)) #participation section _2_3_1_begin_group
-
-
+## Peru doesn't have this section _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics
 per_agroecology_data<-rbind(
   fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
   fun_agroecology_begin_repeat(per_global_choices, per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice
@@ -697,12 +688,14 @@ per_agroecology_data<-rbind(
   fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
   fun_agroecology_main(per_global_choices,per_2_2_1_begin_group),  # governance _2_2_1_begin_group
   fun_agroecology_main(per_global_choices,per_2_3_1_begin_group), #participation section _2_3_1_begin_group
-  per_fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
-  per_fun_agroecology_main(per_global_choices,per_1_4_2_begin_group))  # farm characteristics _1_4_2_begin_group
+  fun_agroecology_main(per_global_choices,per_2_12_1_begin_group), # synergy section _2_12_1_begin_group
+  fun_agroecology_main(per_global_choices,per_2_4_1_begin_group), # income section _2_4_1_begin_group
+  per_fun_agroecology_main(per_global_choices, per_survey_main), # Main survey 
+  per_fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  per_fun_agroecology_main(per_global_choices,per_2_12_1_begin_group), # synergy section _2_12_1_begin_group
+  per_fun_agroecology_main(per_global_choices,per_2_4_1_begin_group) # income section _2_4_1_begin_group
+)
 
-
-  
- names(per_agroecology_data) 
 #Problems with all select_multiple questions, adapt the code for Peru situation. 
 per_agroecology<-fun_agroecology(per_agroecology_data) 
 
