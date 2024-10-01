@@ -234,7 +234,7 @@ fun_agroecology_data<- function(country_agroecology_data){
       label_score_agroecology_module == 2 ~ 3, #2 to 3 times per year.
       label_score_agroecology_module == 3 ~ 3, #2 to 3 times per year.
       label_score_agroecology_module == 4 ~ 4, #4 times per year.
-      label_score_agroecology_module == 5 ~ 4, #5 or more times per year.
+      label_score_agroecology_module == 5 ~ 5, #5 or more times per year.
       label_score_agroecology_module> 5 ~ 5,   #5 or more times per year.
       TRUE ~ score_agroecology_module))%>%
     mutate(label_score_agroecology_module= paste(name_choice, "times per year"))
