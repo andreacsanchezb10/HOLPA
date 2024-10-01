@@ -274,7 +274,7 @@ per_survey_main <- per_read_and_process_survey_xlsx("maintable", "hid", per_h_su
 per_2_8_4_begin_group <- per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # energy section _2_8_4_begin_group
 per_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # biodiversity section _3_3_1_begin_group
 per_2_1_1_begin_group<-per_read_and_process_survey_xlsx("_2_1_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # co-creation section _2_1_1_begin_group
-per_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group ", "hid", per_h_survey_file,"peru","rowuuid")  # diet _3_1_3_begin_group
+per_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # diet _3_1_3_begin_group
 per_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
 per_2_2_1_begin_group<-per_read_and_process_survey_xlsx("_2_2_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # governance _2_2_1_begin_group
 per_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #participation section _2_3_1_begin_group
