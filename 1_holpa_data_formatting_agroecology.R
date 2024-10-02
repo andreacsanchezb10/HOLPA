@@ -271,16 +271,16 @@ per_h_survey_file <- paste0(per_data_path, "per_holpa_household_survey_clean.xls
 per_h_choices_file <- paste0(per_data_path, "per_holpa_household_form_clean.xlsx")
 
 per_survey_main <- per_read_and_process_survey_xlsx("maintable", "hid", per_h_survey_file,"peru","rowuuid") #main survey
-per_2_8_4_begin_group <- per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # energy section _2_8_4_begin_group
-per_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # biodiversity section _3_3_1_begin_group
-per_2_1_1_begin_group<-per_read_and_process_survey_xlsx("_2_1_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # co-creation section _2_1_1_begin_group
-per_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # diet _3_1_3_begin_group
-per_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
-per_2_2_1_begin_group<-per_read_and_process_survey_xlsx("_2_2_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # governance _2_2_1_begin_group
-per_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #participation section _2_3_1_begin_group
-per_2_12_1_begin_group<-per_read_and_process_survey_xlsx("_2_12_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #synergy section _2_12_1_begin_group
-per_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #income section _2_4_1_begin_group
-names(per_survey_main)
+per_survey_2_8_4_begin_group <- per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # energy section _2_8_4_begin_group
+per_survey_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") # biodiversity section _3_3_1_begin_group
+per_survey_2_1_1_begin_group<-per_read_and_process_survey_xlsx("_2_1_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # co-creation section _2_1_1_begin_group
+per_survey_3_1_3_begin_group <-per_read_and_process_survey_xlsx("_3_1_3_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # diet _3_1_3_begin_group
+per_survey_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
+per_survey_2_2_1_begin_group<-per_read_and_process_survey_xlsx("_2_2_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # governance _2_2_1_begin_group
+per_survey_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #participation section _2_3_1_begin_group
+per_survey_2_12_1_begin_group<-per_read_and_process_survey_xlsx("_2_12_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #synergy section _2_12_1_begin_group
+per_survey_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","rowuuid") #income section _2_4_1_begin_group
+names(per_survey_survey_main)
 
 
 per_survey_3_3_3_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","_3_3_3_2_begin_repeat_rowid")%>% # Section: area of land per agricultural practice
@@ -693,21 +693,21 @@ write.csv(lao_agroecology,paste0(lao_data_path,"/lao/lao_agroecology_format.csv"
 # PERU -----
 ## Peru doesn't have this section _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics
 per_agroecology_data<-rbind(
-  fun_agroecology_main(per_global_choices, per_survey_main), ## Main survey 
-  fun_agroecology_begin_repeat(per_global_choices, per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice
-  fun_agroecology_main(per_global_choices, per_2_8_4_begin_group ), # energy section _2_8_4_begin_group
-  fun_agroecology_main(per_global_choices, per_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
-  fun_agroecology_main(per_global_choices,per_2_1_1_begin_group), # co-creation section _2_2_1_begin_group
-  fun_agroecology_main(per_global_choices,per_3_1_3_begin_group), # diet _3_1_3_begin_group
-  fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
-  fun_agroecology_main(per_global_choices,per_2_2_1_begin_group),  # governance _2_2_1_begin_group
-  fun_agroecology_main(per_global_choices,per_2_3_1_begin_group), #participation section _2_3_1_begin_group
-  fun_agroecology_main(per_global_choices,per_2_12_1_begin_group), # synergy section _2_12_1_begin_group
-  fun_agroecology_main(per_global_choices,per_2_4_1_begin_group), # income section _2_4_1_begin_group
+  fun_agroecology_main(per_global_choices, per_survey_survey_main), ## Main survey 
+  fun_agroecology_begin_repeat(per_global_choices, per_survey_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice
+  fun_agroecology_main(per_global_choices, per_survey_2_8_4_begin_group ), # energy section _2_8_4_begin_group
+  fun_agroecology_main(per_global_choices, per_survey_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_2_1_1_begin_group), # co-creation section _2_2_1_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_3_1_3_begin_group), # diet _3_1_3_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_2_2_1_begin_group),  # governance _2_2_1_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_2_3_1_begin_group), #participation section _2_3_1_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_2_12_1_begin_group), # synergy section _2_12_1_begin_group
+  fun_agroecology_main(per_global_choices,per_survey_2_4_1_begin_group), # income section _2_4_1_begin_group
   per_fun_agroecology_main(per_global_choices, per_survey_main), # Main survey 
-  per_fun_agroecology_main(per_global_choices,per_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
-  per_fun_agroecology_main(per_global_choices,per_2_12_1_begin_group), # synergy section _2_12_1_begin_group
-  per_fun_agroecology_main(per_global_choices,per_2_4_1_begin_group) # income section _2_4_1_begin_group
+  per_fun_agroecology_main(per_global_choices,per_survey_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  per_fun_agroecology_main(per_global_choices,per_survey_2_12_1_begin_group), # synergy section _2_12_1_begin_group
+  per_fun_agroecology_main(per_global_choices,per_survey_2_4_1_begin_group) # income section _2_4_1_begin_group
 )
 
 #Problems with all select_multiple questions, adapt the code for Peru situation. 
