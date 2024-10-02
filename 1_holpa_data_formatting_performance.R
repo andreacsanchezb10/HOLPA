@@ -374,17 +374,10 @@ per_survey_1_2_1_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_begin_gro
 per_survey_4_1_3_begin_group<-per_read_and_process_survey_xlsx("_4_1_3_begin_group", "hid", per_h_survey_file,"peru","maintable") # resilience section _4_1_3_begin_group
 per_survey_1_2_1_4_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # farmer information _1_2_1_4_begin_group
 per_survey_4_1_1_5_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_5_begin_group", "hid", per_h_survey_file,"peru","maintable") # access to credit _4_1_1_5_begin_group
-
 per_survey_4_1_1_7_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_7_begin_group", "hid", per_h_survey_file,"peru","maintable") # inputs subsidy  _4_1_1_7_begin_group
 
-
-#pendientes
-per_survey_3_3_4_1_3_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "hid", per_h_survey_file,"peru","maintable") # irrigation section _3_2_1_3_1_begin_group
-per_survey_3_3_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable") # Section: area of land per agricultural practice  _3_3_3_2_begin_repeat
-
-names(per_survey_3_4_3_1_2_begin_repeat)
-sort(unique(per_survey_3_4_2_2_2_begin_repeat$parent_table_name))
-sort(unique(per_survey_3_4_2_2_2_begin_repeat$parent_index))
+per_survey_3_3_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_3_2_begin_repeat_rowid") # Section: area of land per agricultural practice  _3_3_3_2_begin_repeat
+per_survey_3_3_4_1_3_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_4_1_3_begin_repeat_rowid") # irrigation section _3_3_4_1_3_begin_repeat
 
 
 per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
@@ -1006,9 +999,9 @@ per_performance_data<-rbind(
   fun_performance_main(per_global_choices,per_survey_1_4_1_begin_group), # land tenure _1_4_1_begin_group
   fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
   fun_performance_main(per_global_choices,per_survey_3_3_4_begin_group), # water section _3_3_4_begin_group
-  #fun_performance_main(per_global_choices,per_survey_3_3_4_1_3_begin_repeat), # irrigation section _3_3_4_1_3_begin_repeat
+  fun_performance_main(per_global_choices,per_survey_3_3_4_1_3_begin_repeat), # irrigation section _3_3_4_1_3_begin_repeat
   fun_performance_main(per_global_choices,per_survey_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
-  #fun_performance_main(per_global_choices,per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice  
+  fun_performance_main(per_global_choices,per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice  
   fun_performance_main(per_global_choices,per_survey_2_4_1_begin_group), #income section _2_4_1_begin_group
   fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat), #crop production section _3_4_3_1_2_begin_repeat
   fun_performance_main(per_global_choices,per_survey_3_4_2_2_2_begin_repeat), #livestock production 1 _3_4_2_2_2_begin_repeat
@@ -1037,10 +1030,10 @@ per_performance_data<-rbind(
   per_fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_1_begin_repeat),  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
   per_fun_performance_main(per_global_choices,per_survey_2_4_1_begin_group), #income section _2_4_1_begin_group
   per_fun_performance_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
-  per_fun_performance_main(per_global_choices,per_survey_4_1_3_begin_group) # resilience section _4_1_3_begin_group
+  per_fun_performance_main(per_global_choices,per_survey_4_1_3_begin_group), # resilience section _4_1_3_begin_group
   
-  #per_fun_performance_main(per_global_choices,per_survey_3_3_4_1_3_begin_repeat) # irrigation section _3_3_4_1_3_begin_repeat
-  #per_fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat) #crop production section _3_4_3_1_2_begin_repeat
+  per_fun_performance_main(per_global_choices,per_survey_3_3_4_1_3_begin_repeat), # irrigation section _3_3_4_1_3_begin_repeat
+  per_fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat) #crop production section _3_4_3_1_2_begin_repeat
   
   )
 
