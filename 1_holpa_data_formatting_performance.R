@@ -376,6 +376,8 @@ per_survey_1_2_1_4_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_4_begin
 per_survey_4_1_1_5_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_5_begin_group", "hid", per_h_survey_file,"peru","maintable") # access to credit _4_1_1_5_begin_group
 per_survey_4_1_1_7_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_7_begin_group", "hid", per_h_survey_file,"peru","maintable") # inputs subsidy  _4_1_1_7_begin_group
 
+per_survey_4_1_7_1_begin_group<-per_read_and_process_survey_xlsx("_4_1_7_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # soil characteristics  _4_1_7_1_begin_group
+
 per_survey_3_3_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_3_2_begin_repeat_rowid") # Section: area of land per agricultural practice  _3_3_3_2_begin_repeat
 per_survey_3_3_4_1_3_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_4_1_3_begin_repeat_rowid") # irrigation section _3_3_4_1_3_begin_repeat
 
@@ -991,6 +993,7 @@ write.csv(lao_performance,paste0(lao_data_path,"/lao/lao_performance_format.csv"
 
 
 # PERU -----
+names(per_survey_main)
 per_performance_data<-rbind(
   fun_performance_main(per_global_choices,per_survey_main), ## Main survey
   fun_performance_main(per_global_choices,per_survey_3_1_3_begin_group), ##_3_1_3_begin_group: diet quality
@@ -1023,6 +1026,9 @@ per_performance_data<-rbind(
   fun_performance_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
   fun_performance_main(per_global_choices,per_survey_4_1_1_7_begin_group), # inputs subsidy  _4_1_1_7_begin_group
   
+  fun_performance_main(per_global_choices,per_survey_4_1_7_1_begin_group), # soil characteristics  _4_1_7_1_begin_group
+  
+  
   per_fun_performance_main(per_global_choices,per_survey_main), # Main survey
   per_fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
   per_fun_performance_main(per_global_choices,per_survey_3_3_4_begin_group), # water section _3_3_4_begin_group
@@ -1036,9 +1042,6 @@ per_performance_data<-rbind(
   per_fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat) #crop production section _3_4_3_1_2_begin_repeat
   
   )
-
-names(per_survey_2_8_4_begin_group)
-
 
 
 per_performance<-fun_performance(per_performance_data)
