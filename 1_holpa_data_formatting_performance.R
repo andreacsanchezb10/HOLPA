@@ -303,8 +303,8 @@ lao_global_choices<-global_choices%>%
   mutate(label_choice.country=NA)
 
 ### PERU ----
-#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
-#INSTRUCTION: Replace zwe_data_path path with your own path, run the code and then go #### PERFORMANCE MODULE
+#link to per data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace per_data_path path with your own path, run the code and then go #### PERFORMANCE MODULE
 per_read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name,name_parent_table,index_column) {
   survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
     mutate(country = country_name,
@@ -418,10 +418,6 @@ per_global_choices<-global_choices%>%
     TRUE ~ label_choice))
   
   
-
-  
-
-
 #### PERFORMANCE MODULE ####
 #INSTRUCTION: Continue running the code from here
 fun_performance_choices<- function(country_global_choices) {

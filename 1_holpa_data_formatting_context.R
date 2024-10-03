@@ -262,6 +262,134 @@ lao_global_choices<-global_choices%>%
   right_join(global_survey,by="list_name",relationship="many-to-many")%>%
   mutate(label_choice.country=NA)
 
+### PERU ----
+#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace per_data_path path with your own path, run the code and then go ####  CONTEXT MODULE
+per_read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name,name_parent_table,index_column) {
+  survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
+    mutate(country = country_name,
+           sheet_id = sheet_name) %>%
+    rename("kobo_farmer_id" := !!column_id_rename)%>%
+    mutate(index= kobo_farmer_id)%>%
+    slice(-1)
+  # Automatically rename columns for begin_groups groups
+  if (grepl("begin_group", tolower(sheet_name))) {
+    survey_data <- survey_data %>%
+      mutate(parent_table_name= name_parent_table,
+             parent_index = kobo_farmer_id)
+  }
+  # Automatically rename columns for begin_repeat groups
+  if (grepl("begin_repeat", tolower(sheet_name))) {
+    survey_data <- survey_data %>%
+      mutate(parent_table_name= name_parent_table) %>%
+      dplyr::rename("parent_index" = "index",
+                    "index" := !!index_column)
+  }
+  
+  return(survey_data)
+}
+
+per_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/" #path andrea
+
+per_h_survey_file <- paste0(per_data_path, "per_holpa_household_survey_clean.xlsx")
+per_h_choices_file <- paste0(per_data_path, "per_holpa_household_form_clean.xlsx")
+
+per_survey_main<-per_read_and_process_survey_xlsx("maintable", "hid", per_h_survey_file,"peru") #main survey
+per_survey_4_2_1_begin_group<-per_read_and_process_survey_xlsx("_4_2_1_begin_group", "hid", per_h_survey_file,"peru","maintable")  # climate perception _4_2_1_begin_group
+per_survey_1_4_1_begin_group<-per_read_and_process_survey_xlsx("_1_4_1_begin_group", "hid", per_h_survey_file,"peru","maintable")  # land tenure _1_4_1_begin_group
+per_survey_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_group", "hid", per_h_survey_file,"peru","rowuuid")  # farm characteristics _1_4_2_begin_group
+per_survey_4_1_7_1_begin_group<-per_read_and_process_survey_xlsx("_4_1_7_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # soil characteristics  _4_1_7_1_begin_group
+per_survey_3_3_4_begin_group<- per_read_and_process_survey_xlsx("_3_3_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # water section _3_3_4_begin_group
+per_survey_4_1_3_begin_group<-per_read_and_process_survey_xlsx("_4_1_3_begin_group", "hid", per_h_survey_file,"peru","maintable") # resilience section _4_1_3_begin_group
+per_survey_3_2_1_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_2_1_3_1_begin_group", "hid", per_h_survey_file,"peru","maintable")%>% # socio-economic section _2_8_4_begin_group
+  mutate("_1_2_1_17"="minutes",
+         "_4_1_5_2_1"="minutes",
+         "_4_1_5_2_2"="minutes",
+         "_4_1_5_2_3"="minutes",
+         "_4_1_5_2_4"="minutes",
+         "_4_1_5_2_5"="minutes",
+         "_4_1_5_2_6"="minutes",
+         "_4_1_5_2_7"="minutes")
+per_survey_4_1_1_5_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_5_begin_group", "hid", per_h_survey_file,"peru","maintable") # access to credit _4_1_1_5_begin_group
+per_survey_1_2_1_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # household information section _1_2_1_begin_group
+per_survey_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","maintable") #income section _2_4_1_begin_group
+per_survey_1_3_1_1_begin_group<-per_read_and_process_survey_xlsx("_1_3_1_1_begin_group", "hid", per_h_survey_file,"peru","maintable") #personal factors section _1_3_1_1_begin_group
+
+
+
+per_survey_3_3_4_1_3_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_4_1_3_begin_repeat_rowid") # irrigation section _3_3_4_1_3_begin_repeat
+per_survey_3_1_3_begin_group<-per_read_and_process_survey_xlsx("_3_1_3_begin_group", "hid", per_h_survey_file,"peru","maintable")  # diet _3_1_3_begin_group
+per_survey_3_1_2_begin_group<-per_read_and_process_survey_xlsx("_3_1_2_begin_group", "hid", per_h_survey_file,"peru","maintable")  # farmer agency _3_1_2_begin_group
+per_survey_3_1_1_begin_group<-per_read_and_process_survey_xlsx("_3_1_1_begin_group", "hid", per_h_survey_file,"peru","maintable")  # human well being _3_1_1_begin_group
+per_survey_2_8_4_begin_group<-per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # energy section _2_8_4_begin_group
+per_survey_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # biodiversity section _3_3_1_begin_group
+per_survey_3_4_3_1_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_3_1_2_begin_repeat_rowid") #crop production _3_4_3_1_2_begin_repeat
+per_survey_3_4_2_2_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_2_2_2_begin_repeat_rowid") #livestock production 1 _3_4_2_2_2_begin_repeat
+per_survey_3_4_2_2_6_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_2_2_2_begin_repeat","_3_4_2_2_6_begin_repeat_rowid")%>% #livestock production 2 _3_4_2_2_6_begin_repeat
+  select(-parent_index)%>%rename("parent_index" ="_3_4_2_2_2_begin_repeat_rowid")
+per_survey_3_4_2_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_2_3_2_begin_repeat_rowid") #fish production 1 _3_4_2_3_2_begin_repeat
+per_survey_3_4_2_3_2_4_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_2_3_2_4_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_2_3_2_begin_repeat","_3_4_2_3_2_4_begin_repeat_rowid")%>% #fish production 2 _3_4_2_3_2_4_begin_repeat
+  select(-parent_index)%>%rename("parent_index" ="_3_4_2_3_2_begin_repeat_rowid")
+per_survey_3_4_1_1_7_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_1_7_1_begin_repeat_rowid") ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+per_survey_3_4_1_1_7_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_1_7_2_begin_repeat_rowid") ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1
+per_survey_3_4_1_2_7_2_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_1_1_7_2_begin_repeat","_3_4_1_2_7_2_1_begin_repeat_rowid")%>% ##_3_4_1_2_7_2_1_begin_repeat: household members seasonal workers 2
+  select(-parent_index)%>%rename("parent_index" ="_3_4_1_1_7_2_begin_repeat_rowid")
+per_survey_3_4_1_2_1_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_2_1_1_begin_repeat_rowid") ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers
+per_survey_3_4_1_2_1_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_2_1_2_begin_repeat_rowid")  ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
+per_survey_3_4_1_2_1_2_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_1_2_1_2_begin_repeat","_3_4_1_2_1_2_1_begin_repeat_rowid")%>%  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
+  select(-parent_index)%>%rename("parent_index" ="_3_4_1_2_1_2_begin_repeat_rowid")
+
+
+
+per_survey_4_1_4_begin_group<-per_read_and_process_survey_xlsx("_4_1_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # assets section _4_1_4_begin_group
+per_survey_1_2_1_4_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # farmer information _1_2_1_4_begin_group
+per_survey_4_1_1_7_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_7_begin_group", "hid", per_h_survey_file,"peru","maintable") # inputs subsidy  _4_1_1_7_begin_group
+
+
+per_survey_3_3_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_3_2_begin_repeat_rowid") # Section: area of land per agricultural practice  _3_3_3_2_begin_repeat
+
+
+per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
+  mutate(country= "peru")%>%
+  select("list_name","name","label::English (en)","country")%>%
+  rename("label_choice" = "label::English (en)")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+per_global_choices<-global_choices%>%
+  rbind(per_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)%>%
+  dplyr::bind_rows(data.frame(
+    list_name= c(rep("3_3_1_2",8)),
+    name_choice= c(rep(c("high","medium","low","none"),2)),
+    label_choice= c(rep(c("High: five or more species with different heights, woodiness or flowering seasons.","Medium: two to four species.","Low: only one species.","None"),2)),
+    country= c(rep("peru",8)),module=c(rep("agroecology",8)),indicator=c(rep( "5_biodiversity")),subindicator=c(rep( "5_biodiversity")),
+    type= c(rep("select_one 3_3_1_2",8)),
+    type_question=c(rep("select_one",8)),
+    name_question= c(rep("_3_3_1_2_10",4),rep("_3_3_1_2_11",4)),
+    label_question = c("How would you describe the plant diversity (i.e., number of plant species) in: Young fallow (less than 10 years)",
+                       "How would you describe the plant diversity (i.e., number of plant species) in: Old fallow (more or equal than 10 years)"),
+    label_choice.country= c(rep(NA,8)),
+    stringsAsFactors = FALSE))%>%
+  
+  mutate(label_choice = case_when(
+    type =="select_one 1_2_1_12_1"& name_choice %in%c(1,2)~"Primary",
+    type =="select_one 1_2_1_12_1"& name_choice %in%c(3,4)~"Seconday",
+    type =="select_one 1_2_1_12_1"& name_choice %in%c(5:10)~"Higher",
+    type =="select_one 1_2_1_12_1"& name_choice==11~"None",
+    TRUE ~ label_choice))%>%
+  #filter(!is.na(list_name))
+  filter(!(name_question == "_1_2_1_1" & type == "text"))%>%
+  filter(!(name_question == "_1_2_1_2" & type == "text"))
+
+
+  
+
 
 #### CONTEX MODULE ####
 #INSTRUCTION: Continue running the code from here
@@ -361,7 +489,8 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
     filter(type_question=="select_one")%>%
     filter(country=="zimbabwe"|
              country=="kenya"|
-             country=="laos")
+             country=="laos"|
+             country=="peru")
   
   # Left join for "select_one" for country== "tun"
   select_one2 <- gathered_data  %>%
@@ -388,13 +517,12 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
 }
 
 ### Function to get answers from the following sections ---- 
-## Main survey ----
+## Main survey and begin_repeat  ----
 fun_context_main<- function(country_global_choices,country_survey_main){
   country_context_choices<-  fun_context_choices(country_global_choices)
   country_context_question_columns<- fun_context_questions_columns(country_context_choices)
   
   country_context_columns <- intersect(country_context_question_columns, colnames(country_survey_main))
-  mismatched_columns <- setdiff(country_context_question_columns, country_context_columns)
   
   country_context <- country_survey_main %>%
     select(all_of(country_context_columns))%>%
@@ -412,31 +540,126 @@ fun_context_main<- function(country_global_choices,country_survey_main){
     mutate(name_question_recla= name_question)%>%
     mutate(parent_table_name= NA,
            parent_index=NA)
+  
+  if (grepl("begin_repeat", tolower(country_context$sheet_id[1]))) {
+    result_main_survey <- country_context%>%
+      gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+      fun_context_left_join(country_context_choices,.)%>%
+      mutate(name_question_recla= name_question)
+  }
+  
+  if (grepl("_3_3_4_1_3_begin_repeat", tolower(country_context$sheet_id[1]))) {
+    result_main_survey <- country_context%>%
+      gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+      fun_context_left_join(country_context_choices,.)%>%
+      mutate(name_question_recla= name_question)%>%
+      mutate(name_question_recla = str_remove(name_question_recla, "/.*"))
+  }
+  
   return(result_main_survey)
 }
- 
-## begin_repeat: questions located in begin_repeat groups  ---- 
-fun_context_begin_repeat<- function(country_global_choices,country_survey_begin_repeat){
-  country_context_choices<-  fun_context_choices(country_global_choices)
-  country_context_question_columns<- fun_context_questions_columns(country_context_choices)
+
+# For Peru select only the select_multiple columns
+per_fun_context_questions_columns<- function(context_choices) {
+  per_context_questions_columns<- context_choices%>% 
+    filter(type_question=="select_multiple")%>%
+    dplyr::select(name_question, label_question)%>%
+    dplyr::distinct(name_question, .keep_all = TRUE)%>%
+    spread(key = name_question, value = label_question)%>%
+    mutate("kobo_farmer_id"="kobo_farmer_id",
+           "country"="country_name",
+           "sheet_id"="sheet_id",
+           "parent_table_name"="_parent_table_name",
+           "index"="index",
+           "parent_index"="_parent_index")
   
-  country_context_columns_begin_repeat <- intersect(country_context_question_columns, colnames(country_survey_begin_repeat))
+  per_context_questions_columns <- colnames(per_context_questions_columns)
+  per_context_questions_columns
   
-  country_context_begin_repeat <- country_survey_begin_repeat %>%
-    select(all_of(country_context_columns_begin_repeat))%>%
+  return(per_context_questions_columns)
+  
+}
+
+# For peru select_multiple questions
+per_fun_context_main<- function(country_global_choices, country_survey_main) {
+  
+  # Step 1: Apply per_fun_context_main logic
+  per_country_context_choices <- fun_context_choices(country_global_choices)
+  per_country_context_question_columns <- per_fun_context_questions_columns(per_country_context_choices)
+  
+  per_country_context_columns <- intersect(per_country_context_question_columns, colnames(country_survey_main))
+  mismatched_columns <- setdiff(per_country_context_question_columns, per_country_context_columns)
+  
+  per_country_context <- country_survey_main %>%
+    select(all_of(per_country_context_columns)) %>%
     mutate_all(as.character)
   
-  # Identify columns with only NA values
-  na_columns_begin_repeat <- colSums(is.na(country_context_begin_repeat)) == nrow(country_context_begin_repeat)
-  
   # Remove columns with only NA values
-  country_context_begin_repeat <- country_context_begin_repeat[, !na_columns_begin_repeat]
+  na_columns <- colSums(is.na(per_country_context)) == nrow(per_country_context)
+  per_country_context <- per_country_context[, !na_columns]
   
-  result_begin_repeat <- country_context_begin_repeat%>%
-    gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
-    fun_context_left_join(country_context_choices,.)%>%
-    mutate(name_question_recla= name_question)
-  return(result_begin_repeat)
+  # Step 2: Apply generate_binary_matrix logic
+  # Initialize the result dataframe with kobo_farmer_id
+  result <- country_survey_main %>% select(kobo_farmer_id,"country", "sheet_id", "index")
+  
+  if (grepl("begin_group|begin_repeat", tolower(country_survey_main$sheet_id[1]))) {
+    result <- country_survey_main %>% select(kobo_farmer_id,"country", "sheet_id", "index","parent_table_name","parent_index")
+  }
+  
+  cols_to_process <- names(per_country_context)[!names(per_country_context) %in% c("kobo_farmer_id", "country", "sheet_id", "index")]
+  
+  for (col in cols_to_process) {
+    
+    # Separate rows based on comma-separated values
+    data_long <- per_country_context %>%
+      select(kobo_farmer_id,index, all_of(col)) %>%
+      separate_rows(all_of(col), sep = ",") %>%
+      mutate(!!col := paste0(col, "/", !!sym(col)))  # Append the column name
+    
+    # Create binary columns for each value
+    data_wide <- data_long %>%
+      mutate(value = 1) %>%
+      pivot_wider(names_from = all_of(col), values_from = value, values_fill = 0)
+    
+    # Merge the result with the wide data (binary columns)
+    result <- result %>%
+      left_join(data_wide, by = c("kobo_farmer_id","index"))
+  }
+  
+  country_context_choices<-  fun_context_choices(country_global_choices)
+  
+  per_result_main_survey <- result%>%
+    gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
+    left_join(select(country_context_choices,
+                     c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name,name_question_choice)), 
+              by = c("name_question"="name_question_choice"))%>%
+    select(-name_choice.y,-name_question.y)%>%
+    rename("name_choice"="name_choice.x")%>%
+    #Remove answers == "0" or NA
+    filter(type_question == "select_multiple" & !is.na(name_choice))%>%
+    mutate(name_question_recla= name_question)%>%
+    filter(name_choice!=0)%>%
+    mutate(parent_table_name= NA,
+           parent_index=NA)
+  
+  # Automatically rename columns for begin_groups groups
+  if (grepl("begin_group|begin_repeat", tolower(result$sheet_id[1]))) {
+    per_result_main_survey <- result%>%
+      gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+      left_join(select(country_context_choices,
+                       c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name,name_question_choice)), 
+                by = c("name_question"="name_question_choice"))%>%
+      select(-name_choice.y,-name_question.y)%>%
+      rename("name_choice"="name_choice.x")%>%
+      #Remove answers == "0" or NA
+      filter(type_question == "select_multiple" & !is.na(name_choice))%>%
+      mutate(name_question_recla= name_question)%>%
+      filter(name_choice!=0)
+    
+  }
+  
+  # Return the final binary matrix
+  return(per_result_main_survey)
 }
 
 ### Function to combine answers from all context sections ---- 
@@ -573,3 +796,71 @@ lao_context_data<-fun_context_data(lao_global_choices, #country_global_choices
 
 lao_context<-fun_context(lao_context_data)
 write.csv(lao_context,paste0(lao_data_path,"/lao/lao_context_format.csv"),row.names=FALSE)
+
+# PERU -----
+names(per_survey_main)
+per_context_data<-rbind(
+  fun_context_main(per_global_choices,per_survey_main), ## Main survey
+  fun_context_main(per_global_choices,per_survey_4_2_1_begin_group),  # climate perception _4_2_1_begin_group
+  fun_context_main(per_global_choices,per_survey_1_4_1_begin_group), # land tenure _1_4_1_begin_group
+  fun_context_main(per_global_choices,per_survey_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  fun_context_main(per_global_choices,per_survey_4_1_7_1_begin_group), # soil characteristics  _4_1_7_1_begin_group
+  fun_context_main(per_global_choices,per_survey_3_3_4_begin_group), # water section _3_3_4_begin_group
+  fun_context_main(per_global_choices,per_survey_4_1_3_begin_group), # resilience section _4_1_3_begin_group
+  fun_context_main(per_global_choices,per_survey_3_2_1_3_1_begin_group), # socio-economic section _2_8_4_begin_group
+  fun_context_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
+  fun_context_main(per_global_choices,per_survey_1_2_1_begin_group), # household information section _1_2_1_begin_group
+  fun_context_main(per_global_choices,per_survey_2_4_1_begin_group), #income section _2_4_1_begin_group
+  fun_context_main(per_global_choices,per_survey_1_3_1_1_begin_group), #personal factors section _1_3_1_1_begin_group
+  per_fun_context_main(per_global_choices,per_survey_main), # Main survey
+  per_fun_context_main(per_global_choices,per_survey_4_2_1_begin_group),  # climate perception _4_2_1_begin_group
+  per_fun_context_main(per_global_choices,per_survey_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
+  per_fun_context_main(per_global_choices,per_survey_3_2_1_3_1_begin_group)) # socio-economic section _2_8_4_begin_group
+  
+  
+  
+  
+
+x<-fun_context_main(per_global_choices,per_survey_4_2_1_begin_group)
+
+
+  fun_performance_main(per_global_choices,per_survey_3_1_3_begin_group), ##_3_1_3_begin_group: diet quality
+  fun_performance_main(per_global_choices,per_survey_3_1_2_begin_group),   # farmer agency _3_1_2_begin_group
+  fun_performance_main(per_global_choices,per_survey_3_1_1_begin_group),  # human well being _3_1_1_begin_group
+  fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
+  fun_performance_main(per_global_choices,per_survey_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
+  fun_performance_main(per_global_choices,per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice  
+  fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat), #crop production section _3_4_3_1_2_begin_repeat
+  fun_performance_main(per_global_choices,per_survey_3_4_2_2_2_begin_repeat), #livestock production 1 _3_4_2_2_2_begin_repeat
+  fun_performance_main(per_global_choices,per_survey_3_4_2_2_6_begin_repeat), #livestock production 2 _3_4_2_2_6_begin_repeat
+  fun_performance_main(per_global_choices,per_survey_3_4_2_3_2_begin_repeat), #fish production 1 _3_4_2_3_2_begin_repeat
+  fun_performance_main(per_global_choices,per_survey_3_4_2_3_2_4_begin_repeat), #fish production 2 _3_4_2_3_2_4_begin_repeat
+  fun_performance_main(per_global_choices,per_survey_3_4_1_1_7_1_begin_repeat), ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+  fun_performance_main(per_global_choices,per_survey_3_4_1_1_7_2_begin_repeat), ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1
+  fun_performance_main(per_global_choices,per_survey_3_4_1_2_7_2_1_begin_repeat), ##_3_4_1_2_7_2_1_begin_repeat: household members seasonal workers 2
+  fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_1_begin_repeat), ###_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers
+  fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_begin_repeat),  ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
+  fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_1_begin_repeat),  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
+  fun_performance_main(per_global_choices,per_survey_4_1_4_begin_group), # assets section _4_1_4_begin_group
+  fun_performance_main(per_global_choices,per_survey_1_2_1_4_begin_group), # farmer information _1_2_1_4_begin_group
+  
+  fun_performance_main(per_global_choices,per_survey_4_1_1_7_begin_group), # inputs subsidy  _4_1_1_7_begin_group
+  
+  
+  
+  per_fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
+  per_fun_performance_main(per_global_choices,per_survey_3_3_4_begin_group), # water section _3_3_4_begin_group
+  per_fun_performance_main(per_global_choices,per_survey_3_4_1_2_7_2_1_begin_repeat), ##_3_4_1_2_7_2_1_begin_repeat: household members seasonal workers 2
+  per_fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_1_begin_repeat),  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
+  per_fun_performance_main(per_global_choices,per_survey_2_4_1_begin_group), #income section _2_4_1_begin_group
+  per_fun_performance_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
+  per_fun_performance_main(per_global_choices,per_survey_4_1_3_begin_group), # resilience section _4_1_3_begin_group
+  
+  per_fun_performance_main(per_global_choices,per_survey_3_3_4_1_3_begin_repeat), # irrigation section _3_3_4_1_3_begin_repeat
+  per_fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat) #crop production section _3_4_3_1_2_begin_repeat
+  
+)
+
+
+per_context<-fun_context(per_context_data)
+write.csv(per_context,paste0(per_data_path,"/per/per_context_format.csv"),row.names=FALSE)
