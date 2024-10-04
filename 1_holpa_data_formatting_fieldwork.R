@@ -5,14 +5,9 @@ library(readxl)
 library(dplyr)
 library(summarytools)
 
-#### Set file paths ####
-# TO CHECK: I need to connect directly to the share point, I already asked Sebastien for permision
-#For now I will leave it like this to continue working
 
-#### Import data ####
-# Each dataset contains a survey worksheet with the questions and responses for text, open and numeric questions, and
-# a choices worksheet with the response options for multiple choice questions (single or multiple).
-# These need to be imported and combined.
+
+# INSTRUCTIONS:  if you are not from SENEGAL or PERU, run the function read_and_process_survey_xlsx and go to your country section
 
 ### Country databases ####
 read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name, index) {
@@ -32,6 +27,46 @@ read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path
   
   return(survey_data)
 }
+
+
+# INSTRUCTIONS ONLY FOR SENEGAL AND PERU: Please download HOLPA_global_field_survey_20231106.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
+
+#Global databases ####
+#fieldwork_global_survey contains the global form with questions
+#global_choices contains the global form with choices
+
+#Replace global.data.path path with your path and run the code
+fieldwork.global.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
+
+fieldwork_global_survey <- read_excel(paste0(fieldwork.global.data.path,"HOLPA_global_field_survey_20231106.xlsx"),
+                                      sheet = "survey")%>%
+  #select only the necessary columns
+  select(
+    #"module","indicator", "subindicator", 
+    "type", "name","label::English ((en))")%>%
+  #rename columns names
+  rename("label_question" = "label::English ((en))")%>%
+  rename("name_question" = "name")%>%
+  #remove rows without questions
+  filter(type!="begin_group")%>%
+  filter(type!="begin_repeat")%>%
+  filter(type!="end_repeat")%>%
+  #separate question type components
+  mutate(type_question = ifelse(substr(type,1,10)=="select_one","select_one",
+                                ifelse(substr(type,1,10)=="select_mul","select_multiple",type)))%>%
+  #create column with list_name codes matching the choices worksheet
+  mutate(list_name = if_else(type_question== "select_one"|type_question== "select_multiple", 
+                             str_replace(.$type, paste0(".*", .$type_question), ""),NA))%>%
+  mutate(list_name = str_replace_all(list_name, " ", ""))  #%>% mutate(global_r_list_name =  sub('*_', "", name_question)) %>%mutate(global_r_list_name = ifelse(grepl("_", global_r_list_name, fixed = TRUE)==TRUE,global_r_list_name,""))
+
+fieldwork_global_choices <- read_excel(paste0(fieldwork.global.data.path,"HOLPA_global_field_survey_20231106.xlsx"),
+                                       sheet = "choices")%>%
+  select("list_name","name","label::English ((en))")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  mutate(country= "global")
+
+
 
 ### ZIMBABWE ----
 zwe_data_path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean/" #path Andrea
@@ -96,7 +131,7 @@ names(tun_fieldwork)
 
 write.csv(tun_fieldwork,file= paste0(tun_data_path,"tun/tun_fieldwork_format.csv"),row.names=FALSE)
 
-#6 farmers do not match with the household survey
+#2 farmers do not match with the household survey
 tun_error_fieldwork<- tun_household_survey%>%
   select(kobo_farmer_id, tun_household_id )%>%
   right_join(tun_fieldwork_survey,by=c("tun_household_id"))%>%
@@ -166,50 +201,10 @@ ken_error_fieldwork<- ken_household_survey%>%
 write.csv(ken_error_fieldwork,file=paste0(ken_data_path,"ken/ken_error_fieldwork.csv"),row.names=FALSE)
 
 ### SENEGAL ----
+## Import data
 #link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
 #INSTRUCTION: Replace sen_data_path path with your path, run the code and then run the code 
 #Senegal household and fieldwork databases were developed in the same form
-
-#Global databases
-#fieldwork_global_survey contains the global form with questions
-#global_choices contains the global form with choices
-
-# INSTRUCTIONS: Please download HOLPA_global_field_survey_20231106.xlsx in your computer from: https://github.com/andreacsanchezb10/HOLPA
-#Replace global.data.path path with your path and run the code
-fieldwork.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/analysis/HOLPA/HOLPA/" #path andrea
-
-fieldwork_global_survey <- read_excel(paste0(fieldwork.data.path,"HOLPA_global_field_survey_20231106.xlsx"),
-                            sheet = "survey")%>%
-  #select only the necessary columns
-  select(
-    #"module","indicator", "subindicator", 
-    "type", "name","label::English ((en))")%>%
-  #rename columns names
-  rename("label_question" = "label::English ((en))")%>%
-  rename("name_question" = "name")%>%
-  #remove rows without questions
-  filter(type!="begin_group")%>%
-  filter(type!="begin_repeat")%>%
-  filter(type!="end_repeat")%>%
-  #separate question type components
-  mutate(type_question = ifelse(substr(type,1,10)=="select_one","select_one",
-                                ifelse(substr(type,1,10)=="select_mul","select_multiple",type)))%>%
-  #create column with list_name codes matching the choices worksheet
-  mutate(list_name = if_else(type_question== "select_one"|type_question== "select_multiple", 
-                             str_replace(.$type, paste0(".*", .$type_question), ""),NA))%>%
-  mutate(list_name = str_replace_all(list_name, " ", ""))  #%>% mutate(global_r_list_name =  sub('*_', "", name_question)) %>%mutate(global_r_list_name = ifelse(grepl("_", global_r_list_name, fixed = TRUE)==TRUE,global_r_list_name,""))
-
-fieldwork_global_choices <- read_excel(paste0(fieldwork.data.path,"HOLPA_global_field_survey_20231106.xlsx"),
-                             sheet = "choices")%>%
-  select("list_name","name","label::English ((en))")%>%
-  rename("label_choice" = "label::English ((en))")%>%
-  rename("name_choice" = "name")%>%
-  mutate(country= "global")
-
-#### Import data ####
-#link to sen data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean?csf=1&web=1&e=bT58Tm
-#INSTRUCTION: Replace sen_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
-
 sen_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Senegal/senegal_data_clean/" #path andrea
 #sen_data_path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/" #path sarah
 
@@ -312,8 +307,8 @@ fun_f_left_join <- function(performance_choices, gathered_data ) {
   return(result)
 }
 
-### Function to get answers from the following sections ---- 
-## Main survey ----
+## Function to get answers from the following sections 
+# Main survey
 fun_f_main<- function(country_global_choices,country_f_survey){
   country_f_choices<-  country_global_choices
   country_f_question_columns<- fun_f_questions_columns(country_f_choices)
@@ -382,7 +377,7 @@ lao_fieldwork<- lao_household_survey%>%
   filter(!is.na(kobo_farmer_id))
 
 names(lao_fieldwork)
-
+lao_fieldwork%>%select(sheet_id)
 write.csv(lao_fieldwork,file=paste0(lao_data_path,"lao/lao_fieldwork_format.csv"),row.names=FALSE)
 
 #No errors for Laos
@@ -391,5 +386,131 @@ lao_error_fieldwork<- lao_household_survey%>%
   right_join(lao_fieldwork_survey,by=c("household_id","kobo_farmer_id"))%>%
   filter(is.na(kobo_farmer_id))
 
-write.csv(lao_error_fieldwork,file=paste0(lao_data_path,"lao/lao_error_fieldwork.csv"),row.names=FALSE)
+#write.csv(lao_error_fieldwork,file=paste0(lao_data_path,"lao/lao_error_fieldwork.csv"),row.names=FALSE)
 
+
+### PERU ----
+per_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/" #path andrea
+
+#Fieldwork household codes
+code_fieldwork_household <- read_excel(paste0(per_data_path,"farmer_id_houshold_fieldwork.xlsx"),
+                                      sheet = "Cod campo_hogar")%>%
+  rename("f_kobo_farmer_id" = "id_CAMPO",
+         "kobo_farmer_id" = "id_HOGAR")
+
+#Fieldwork survey
+per_fieldwork_survey <- paste0(per_data_path,"per_holpa_fieldwork_survey_clean.xlsx")
+
+# Read the sheets and set the common key column name
+per_fieldwork_sheet_names <- excel_sheets(per_fieldwork_survey)
+common_key <- "hid"  # Replace with the actual common key in your data
+
+# Assuming the first sheet is the main table
+per_fieldwork <- read_excel(per_fieldwork_survey, sheet = per_fieldwork_sheet_names[1])
+
+# Loop over the other sheets (excluding the main one) and left join them with the main table
+for (sheet in per_fieldwork_sheet_names[-1]) {
+  # Create the name of the sheet prefixed with "per_survey"
+  sheet_df_name <- paste0("per_survey_", sheet)
+  
+  # Read the sheet
+  temp_sheet <- read_excel(per_fieldwork_survey, sheet = sheet)
+  
+  # Check if the common key exists in the sheet
+  if (common_key %in% colnames(temp_sheet)) {
+    # Perform the left join
+    per_fieldwork <- left_join(per_fieldwork, temp_sheet, by = common_key)
+    print(paste("Joined with", sheet, "- resulting columns:", ncol(per_fieldwork)))
+  } else {
+    print(paste("Skipping", sheet, "- common key", common_key, "not found"))
+  }
+}
+
+per_fieldwork_survey<-per_fieldwork%>%
+  mutate(country = "peru")%>%
+  dplyr::rename("f_kobo_farmer_id" = "hid")
+                
+
+per_fieldwork_global_choices<-fieldwork_global_choices%>%
+  right_join(fieldwork_global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(name_question_choice= if_else(type_question=="select_multiple",
+                                       paste(name_question,"/",name_choice, sep=""),
+                                       name_question))
+
+# For Peru select only the select_multiple columns
+per_fun_questions_columns<- function(fieldwork_choices) {
+  per_fieldwork_questions_columns<- fieldwork_choices%>% 
+    filter(type_question=="select_multiple")%>%
+    dplyr::select(name_question, label_question)%>%
+    dplyr::distinct(name_question, .keep_all = TRUE)%>%
+    spread(key = name_question, value = label_question)%>%
+    mutate("f_kobo_farmer_id"="f_kobo_farmer_id",
+           "country"="country_name",
+           "sheet_id"="sheet_id",
+           "parent_table_name"="_parent_table_name",
+           "index"="index",
+           "parent_index"="_parent_index")
+  
+  per_fieldwork_questions_columns <- colnames(per_fieldwork_questions_columns)
+  per_fieldwork_questions_columns
+  
+  return(per_fieldwork_questions_columns)
+  
+}
+
+per_fun_fieldwork_main<- function(country_global_choices, country_survey_main) {
+  
+  # Step 1: Apply per_fun_performance_main logic
+  per_country_fieldwork_choices <- country_global_choices
+  per_country_fieldwork_question_columns <- per_fun_questions_columns(per_country_fieldwork_choices)
+  per_country_fieldwork_question_columns
+  
+  per_country_performance_columns <- intersect(per_country_fieldwork_question_columns, colnames(country_survey_main))
+  mismatched_columns <- setdiff(per_country_fieldwork_question_columns, per_country_performance_columns)
+  mismatched_columns
+  
+  per_country_performance <- country_survey_main %>%
+    select(all_of(per_country_performance_columns)) %>%
+    mutate_all(as.character)
+  
+  # Remove columns with only NA values
+  na_columns <- colSums(is.na(per_country_performance)) == nrow(per_country_performance)
+  per_country_performance <- per_country_performance[, !na_columns]
+  
+  # Step 2: Apply generate_binary_matrix logic
+  # Initialize the result dataframe with f_kobo_farmer_id
+  result <- country_survey_main %>% select(f_kobo_farmer_id,"country")
+  
+  cols_to_process <- names(per_country_performance)[!names(per_country_performance) %in% c("f_kobo_farmer_id", "country")]
+  cols_to_process
+  
+  for (col in cols_to_process) {
+    
+    # Separate rows based on comma-separated values
+    data_long <- per_country_performance %>%
+      select(f_kobo_farmer_id, all_of(col)) %>%
+      separate_rows(all_of(col), sep = ",") %>%
+      mutate(!!col := paste0(col, "/", !!sym(col)))  # Append the column name
+    
+    # Create binary columns for each value
+    data_wide <- data_long %>%
+      mutate(value = 1) %>%
+      pivot_wider(names_from = all_of(col), values_from = value, values_fill = 0)
+    
+    # Merge the result with the wide data (binary columns)
+    result <- result %>%
+      left_join(data_wide, by = c("f_kobo_farmer_id"))
+  }
+  
+  # Return the final binary matrix
+  return(result)
+}
+
+
+per_fieldwork<-per_fun_fieldwork_main(per_fieldwork_global_choices,per_fieldwork_survey)%>%
+  left_join(per_fieldwork_survey,by=c("f_kobo_farmer_id","country"))%>%
+  left_join(code_fieldwork_household%>% select(kobo_farmer_id,f_kobo_farmer_id),by="f_kobo_farmer_id")%>%
+  filter(!is.na(kobo_farmer_id))
+
+
+write.csv(per_fieldwork,file=paste0(per_data_path,"per/per_fieldwork_format.csv"),row.names=FALSE)

@@ -110,7 +110,6 @@ zwe_global_choices<-global_choices%>%
 ### TUNISIA -----
 #link to tun data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean?csf=1&web=1&e=07Lc0e
 #INSTRUCTION: Replace tun_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
-
 tun_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Tunisia/tunisia_data_clean/" #path andrea
 
 tun_h_survey_file <- paste0(tun_data_path, "tun_holpa_household_survey_clean.xlsx")
@@ -375,9 +374,7 @@ per_survey_4_1_3_begin_group<-per_read_and_process_survey_xlsx("_4_1_3_begin_gro
 per_survey_1_2_1_4_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # farmer information _1_2_1_4_begin_group
 per_survey_4_1_1_5_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_5_begin_group", "hid", per_h_survey_file,"peru","maintable") # access to credit _4_1_1_5_begin_group
 per_survey_4_1_1_7_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_7_begin_group", "hid", per_h_survey_file,"peru","maintable") # inputs subsidy  _4_1_1_7_begin_group
-
 per_survey_4_1_7_1_begin_group<-per_read_and_process_survey_xlsx("_4_1_7_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # soil characteristics  _4_1_7_1_begin_group
-
 per_survey_3_3_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_3_2_begin_repeat_rowid") # Section: area of land per agricultural practice  _3_3_3_2_begin_repeat
 per_survey_3_3_4_1_3_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_4_1_3_begin_repeat_rowid") # irrigation section _3_3_4_1_3_begin_repeat
 
@@ -409,8 +406,7 @@ per_global_choices<-global_choices%>%
                        "How would you describe the plant diversity (i.e., number of plant species) in: Old fallow (more or equal than 10 years)"),
     label_choice.country= c(rep(NA,8)),
     stringsAsFactors = FALSE))%>%
-  
-  mutate(label_choice = case_when(
+    mutate(label_choice = case_when(
     type =="select_one 1_2_1_12_1"& name_choice %in%c(1,2)~"Primary",
     type =="select_one 1_2_1_12_1"& name_choice %in%c(3,4)~"Seconday",
     type =="select_one 1_2_1_12_1"& name_choice %in%c(5:10)~"Higher",
@@ -1018,12 +1014,9 @@ per_performance_data<-rbind(
   fun_performance_main(per_global_choices,per_survey_1_2_1_begin_group), # household information section _1_2_1_begin_group
   fun_performance_main(per_global_choices,per_survey_4_1_3_begin_group), # resilience section _4_1_3_begin_group
   fun_performance_main(per_global_choices,per_survey_1_2_1_4_begin_group), # farmer information _1_2_1_4_begin_group
-  
   fun_performance_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
   fun_performance_main(per_global_choices,per_survey_4_1_1_7_begin_group), # inputs subsidy  _4_1_1_7_begin_group
-  
   fun_performance_main(per_global_choices,per_survey_4_1_7_1_begin_group), # soil characteristics  _4_1_7_1_begin_group
-  
   
   per_fun_performance_main(per_global_choices,per_survey_main), # Main survey
   per_fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group

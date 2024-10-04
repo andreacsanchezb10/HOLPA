@@ -357,10 +357,6 @@ per_global_choices<-global_choices%>%
   filter(!(name_question == "_1_2_1_1" & type == "text"))%>%
   filter(!(name_question == "_1_2_1_2" & type == "text"))
 
-
-  
-
-
 #### CONTEX MODULE ####
 #INSTRUCTION: Continue running the code from here
 fun_context_choices<- function(country_global_choices) {
