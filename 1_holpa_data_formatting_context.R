@@ -301,7 +301,7 @@ per_survey_1_4_2_begin_group<-per_read_and_process_survey_xlsx("_1_4_2_begin_gro
 per_survey_4_1_7_1_begin_group<-per_read_and_process_survey_xlsx("_4_1_7_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # soil characteristics  _4_1_7_1_begin_group
 per_survey_3_3_4_begin_group<- per_read_and_process_survey_xlsx("_3_3_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # water section _3_3_4_begin_group
 per_survey_4_1_3_begin_group<-per_read_and_process_survey_xlsx("_4_1_3_begin_group", "hid", per_h_survey_file,"peru","maintable") # resilience section _4_1_3_begin_group
-per_survey_3_2_1_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_2_1_3_1_begin_group", "hid", per_h_survey_file,"peru","maintable")%>% # socio-economic section _2_8_4_begin_group
+per_survey_3_2_1_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_2_1_3_1_begin_group", "hid", per_h_survey_file,"peru","maintable")%>% # socio-economic section _3_2_1_3_1_begin_group
   mutate("_1_2_1_17"="minutes",
          "_4_1_5_2_1"="minutes",
          "_4_1_5_2_2"="minutes",
@@ -314,40 +314,10 @@ per_survey_4_1_1_5_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_5_begin
 per_survey_1_2_1_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # household information section _1_2_1_begin_group
 per_survey_2_4_1_begin_group<-per_read_and_process_survey_xlsx("_2_4_1_begin_group", "hid", per_h_survey_file,"peru","maintable") #income section _2_4_1_begin_group
 per_survey_1_3_1_1_begin_group<-per_read_and_process_survey_xlsx("_1_3_1_1_begin_group", "hid", per_h_survey_file,"peru","maintable") #personal factors section _1_3_1_1_begin_group
-
-
-
-per_survey_3_3_4_1_3_begin_repeat<- per_read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_4_1_3_begin_repeat_rowid") # irrigation section _3_3_4_1_3_begin_repeat
-per_survey_3_1_3_begin_group<-per_read_and_process_survey_xlsx("_3_1_3_begin_group", "hid", per_h_survey_file,"peru","maintable")  # diet _3_1_3_begin_group
-per_survey_3_1_2_begin_group<-per_read_and_process_survey_xlsx("_3_1_2_begin_group", "hid", per_h_survey_file,"peru","maintable")  # farmer agency _3_1_2_begin_group
-per_survey_3_1_1_begin_group<-per_read_and_process_survey_xlsx("_3_1_1_begin_group", "hid", per_h_survey_file,"peru","maintable")  # human well being _3_1_1_begin_group
-per_survey_2_8_4_begin_group<-per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # energy section _2_8_4_begin_group
-per_survey_3_3_1_begin_group<-per_read_and_process_survey_xlsx("_3_3_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # biodiversity section _3_3_1_begin_group
-per_survey_3_4_3_1_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_3_1_2_begin_repeat_rowid") #crop production _3_4_3_1_2_begin_repeat
-per_survey_3_4_2_2_2_begin_repeat<- per_read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_2_2_2_begin_repeat_rowid") #livestock production 1 _3_4_2_2_2_begin_repeat
-per_survey_3_4_2_2_6_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_2_2_2_begin_repeat","_3_4_2_2_6_begin_repeat_rowid")%>% #livestock production 2 _3_4_2_2_6_begin_repeat
-  select(-parent_index)%>%rename("parent_index" ="_3_4_2_2_2_begin_repeat_rowid")
-per_survey_3_4_2_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_2_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_2_3_2_begin_repeat_rowid") #fish production 1 _3_4_2_3_2_begin_repeat
-per_survey_3_4_2_3_2_4_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_2_3_2_4_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_2_3_2_begin_repeat","_3_4_2_3_2_4_begin_repeat_rowid")%>% #fish production 2 _3_4_2_3_2_4_begin_repeat
-  select(-parent_index)%>%rename("parent_index" ="_3_4_2_3_2_begin_repeat_rowid")
-per_survey_3_4_1_1_7_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_1_7_1_begin_repeat_rowid") ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
-per_survey_3_4_1_1_7_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_1_7_2_begin_repeat_rowid") ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1
-per_survey_3_4_1_2_7_2_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_1_1_7_2_begin_repeat","_3_4_1_2_7_2_1_begin_repeat_rowid")%>% ##_3_4_1_2_7_2_1_begin_repeat: household members seasonal workers 2
-  select(-parent_index)%>%rename("parent_index" ="_3_4_1_1_7_2_begin_repeat_rowid")
-per_survey_3_4_1_2_1_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_2_1_1_begin_repeat_rowid") ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers
-per_survey_3_4_1_2_1_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_4_1_2_1_2_begin_repeat_rowid")  ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
-per_survey_3_4_1_2_1_2_1_begin_repeat<-per_read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "hid", per_h_survey_file,"peru","_3_4_1_2_1_2_begin_repeat","_3_4_1_2_1_2_1_begin_repeat_rowid")%>%  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
-  select(-parent_index)%>%rename("parent_index" ="_3_4_1_2_1_2_begin_repeat_rowid")
-
-
-
-per_survey_4_1_4_begin_group<-per_read_and_process_survey_xlsx("_4_1_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # assets section _4_1_4_begin_group
 per_survey_1_2_1_4_begin_group<-per_read_and_process_survey_xlsx("_1_2_1_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # farmer information _1_2_1_4_begin_group
-per_survey_4_1_1_7_begin_group<-per_read_and_process_survey_xlsx("_4_1_1_7_begin_group", "hid", per_h_survey_file,"peru","maintable") # inputs subsidy  _4_1_1_7_begin_group
-
-
-per_survey_3_3_3_2_begin_repeat<-per_read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "hid", per_h_survey_file,"peru","maintable","_3_3_3_2_begin_repeat_rowid") # Section: area of land per agricultural practice  _3_3_3_2_begin_repeat
-
+per_survey_1_2_1_16_begin_group <-per_read_and_process_survey_xlsx("_1_2_1_16_begin_group", "hid", per_h_survey_file,"peru","maintable") # agroecology section _1_2_1_16_begin_group
+per_survey_2_3_1_begin_group<-per_read_and_process_survey_xlsx("_2_3_1_begin_group", "hid", per_h_survey_file,"peru","maintable") # participation section _2_3_1_begin_group
+per_survey_2_8_4_begin_group<-per_read_and_process_survey_xlsx("_2_8_4_begin_group", "hid", per_h_survey_file,"peru","maintable") # energy section _2_8_4_begin_group
 
 per_choices <- read_excel(per_h_choices_file, sheet = "choices")%>%
   mutate(country= "peru")%>%
@@ -466,7 +436,7 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
                             c(name_question, module, theme, indicator,"name_choice", label_choice, label_question,type, type_question, list_name)), 
                      by = "name_question")%>%
     filter(type_question =="calculate"|type_question =="integer"|type_question =="note"|
-             type_question =="text"|type_question =="audio"|type_question =="decimal"| type_question =="geopoint")%>%
+             type_question =="text"|type_question =="audio"|type_question =="decimal"| type_question =="geopoint"|type_question=="image")%>%
     select(-name_choice.y)%>%
     rename("name_choice"="name_choice.x")
   
@@ -669,7 +639,7 @@ fun_context_data<- function(country_global_choices,
                                 ) {
   context_data<- rbind(
     fun_context_main(country_global_choices, country_survey_main), ## Main survey
-    fun_context_begin_repeat(country_global_choices, country_survey_1_4_2_7_begin_repeat)  ##production_end_use for OTHER NON-FARM PRODUCT
+    fun_context_main(country_global_choices, country_survey_1_4_2_7_begin_repeat)  ##production_end_use for OTHER NON-FARM PRODUCT
   )
   return(context_data)
 }
@@ -798,7 +768,6 @@ lao_context<-fun_context(lao_context_data)
 write.csv(lao_context,paste0(lao_data_path,"/lao/lao_context_format.csv"),row.names=FALSE)
 
 # PERU -----
-names(per_survey_main)
 per_context_data<-rbind(
   fun_context_main(per_global_choices,per_survey_main), ## Main survey
   fun_context_main(per_global_choices,per_survey_4_2_1_begin_group),  # climate perception _4_2_1_begin_group
@@ -807,60 +776,22 @@ per_context_data<-rbind(
   fun_context_main(per_global_choices,per_survey_4_1_7_1_begin_group), # soil characteristics  _4_1_7_1_begin_group
   fun_context_main(per_global_choices,per_survey_3_3_4_begin_group), # water section _3_3_4_begin_group
   fun_context_main(per_global_choices,per_survey_4_1_3_begin_group), # resilience section _4_1_3_begin_group
-  fun_context_main(per_global_choices,per_survey_3_2_1_3_1_begin_group), # socio-economic section _2_8_4_begin_group
+  fun_context_main(per_global_choices,per_survey_3_2_1_3_1_begin_group), # socio-economic section _3_2_1_3_1_begin_group
   fun_context_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
   fun_context_main(per_global_choices,per_survey_1_2_1_begin_group), # household information section _1_2_1_begin_group
   fun_context_main(per_global_choices,per_survey_2_4_1_begin_group), #income section _2_4_1_begin_group
   fun_context_main(per_global_choices,per_survey_1_3_1_1_begin_group), #personal factors section _1_3_1_1_begin_group
+  fun_context_main(per_global_choices,per_survey_1_2_1_4_begin_group), # farmer information _1_2_1_4_begin_group
+  fun_context_main(per_global_choices,per_survey_1_2_1_16_begin_group), #agroecology section _1_2_1_16_begin_group
+  fun_context_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
+  
   per_fun_context_main(per_global_choices,per_survey_main), # Main survey
   per_fun_context_main(per_global_choices,per_survey_4_2_1_begin_group),  # climate perception _4_2_1_begin_group
   per_fun_context_main(per_global_choices,per_survey_1_4_2_begin_group),  # farm characteristics _1_4_2_begin_group
-  per_fun_context_main(per_global_choices,per_survey_3_2_1_3_1_begin_group)) # socio-economic section _2_8_4_begin_group
+  per_fun_context_main(per_global_choices,per_survey_3_2_1_3_1_begin_group), # socio-economic section _3_2_1_3_1_begin_group
+  per_fun_context_main(per_global_choices,per_survey_1_2_1_4_begin_group), # farmer information _1_2_1_4_begin_group
+  per_fun_context_main(per_global_choices,per_survey_2_3_1_begin_group), # participation section _2_3_1_begin_group
+  per_fun_context_main(per_global_choices,per_survey_2_8_4_begin_group)) # energy section _2_8_4_begin_group
   
-  
-  
-  
-
-x<-fun_context_main(per_global_choices,per_survey_4_2_1_begin_group)
-
-
-  fun_performance_main(per_global_choices,per_survey_3_1_3_begin_group), ##_3_1_3_begin_group: diet quality
-  fun_performance_main(per_global_choices,per_survey_3_1_2_begin_group),   # farmer agency _3_1_2_begin_group
-  fun_performance_main(per_global_choices,per_survey_3_1_1_begin_group),  # human well being _3_1_1_begin_group
-  fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
-  fun_performance_main(per_global_choices,per_survey_3_3_1_begin_group), # biodiversity section _3_3_1_begin_group
-  fun_performance_main(per_global_choices,per_survey_3_3_3_2_begin_repeat), # Section: area of land per agricultural practice  
-  fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat), #crop production section _3_4_3_1_2_begin_repeat
-  fun_performance_main(per_global_choices,per_survey_3_4_2_2_2_begin_repeat), #livestock production 1 _3_4_2_2_2_begin_repeat
-  fun_performance_main(per_global_choices,per_survey_3_4_2_2_6_begin_repeat), #livestock production 2 _3_4_2_2_6_begin_repeat
-  fun_performance_main(per_global_choices,per_survey_3_4_2_3_2_begin_repeat), #fish production 1 _3_4_2_3_2_begin_repeat
-  fun_performance_main(per_global_choices,per_survey_3_4_2_3_2_4_begin_repeat), #fish production 2 _3_4_2_3_2_4_begin_repeat
-  fun_performance_main(per_global_choices,per_survey_3_4_1_1_7_1_begin_repeat), ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
-  fun_performance_main(per_global_choices,per_survey_3_4_1_1_7_2_begin_repeat), ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1
-  fun_performance_main(per_global_choices,per_survey_3_4_1_2_7_2_1_begin_repeat), ##_3_4_1_2_7_2_1_begin_repeat: household members seasonal workers 2
-  fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_1_begin_repeat), ###_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers
-  fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_begin_repeat),  ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1
-  fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_1_begin_repeat),  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
-  fun_performance_main(per_global_choices,per_survey_4_1_4_begin_group), # assets section _4_1_4_begin_group
-  fun_performance_main(per_global_choices,per_survey_1_2_1_4_begin_group), # farmer information _1_2_1_4_begin_group
-  
-  fun_performance_main(per_global_choices,per_survey_4_1_1_7_begin_group), # inputs subsidy  _4_1_1_7_begin_group
-  
-  
-  
-  per_fun_performance_main(per_global_choices,per_survey_2_8_4_begin_group), # energy section _2_8_4_begin_group
-  per_fun_performance_main(per_global_choices,per_survey_3_3_4_begin_group), # water section _3_3_4_begin_group
-  per_fun_performance_main(per_global_choices,per_survey_3_4_1_2_7_2_1_begin_repeat), ##_3_4_1_2_7_2_1_begin_repeat: household members seasonal workers 2
-  per_fun_performance_main(per_global_choices,per_survey_3_4_1_2_1_2_1_begin_repeat),  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2
-  per_fun_performance_main(per_global_choices,per_survey_2_4_1_begin_group), #income section _2_4_1_begin_group
-  per_fun_performance_main(per_global_choices,per_survey_4_1_1_5_begin_group), # access to credit _4_1_1_5_begin_group
-  per_fun_performance_main(per_global_choices,per_survey_4_1_3_begin_group), # resilience section _4_1_3_begin_group
-  
-  per_fun_performance_main(per_global_choices,per_survey_3_3_4_1_3_begin_repeat), # irrigation section _3_3_4_1_3_begin_repeat
-  per_fun_performance_main(per_global_choices,per_survey_3_4_3_1_2_begin_repeat) #crop production section _3_4_3_1_2_begin_repeat
-  
-)
-
-
 per_context<-fun_context(per_context_data)
 write.csv(per_context,paste0(per_data_path,"/per/per_context_format.csv"),row.names=FALSE)
