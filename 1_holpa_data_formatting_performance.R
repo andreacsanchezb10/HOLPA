@@ -414,6 +414,45 @@ per_global_choices<-global_choices%>%
     TRUE ~ label_choice))
   
   
+### BURKINA FASO ----
+#link to bfa data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace bfa_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
+bfa_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean/" #path andrea
+
+bfa_h_survey_file <- paste0(bfa_data_path, "bfa_holpa_household_survey_clean.xlsx")
+bfa_h_choices_file <- paste0(bfa_data_path, "bfa_holpa_household_form_clean.xlsx")
+
+bfa_survey_main <- read_and_process_survey_xlsx("HOLPA_global_household_survey", "_id", bfa_h_survey_file,"burkina_faso","_index")
+bfa_survey_3_4_3_1_2_begin_repeat <- read_and_process_survey_xlsx("_3_4_3_1_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: Crop production
+bfa_survey_3_4_2_2_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: Livestock production 1
+bfa_survey_3_4_2_2_6_begin_repeat<-read_and_process_survey_xlsx("_3_4_2_2_6_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: Livestock production 2
+bfa_survey_3_4_1_1_7_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_1_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section:labour household members permanent workers
+bfa_survey_3_4_1_1_7_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_1_7_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: labour household members seasonal workers 1
+bfa_survey_3_4_1_2_7_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_7_2_1_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: labour household members seasonal workers 2
+bfa_survey_3_4_1_2_1_1_begin_repeat<- read_and_process_survey_xlsx("_3_4_1_2_1_1_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: labour Hired/Free/Exchange Labourers permanent workers
+bfa_survey_3_4_1_2_1_2_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 1
+bfa_survey_3_4_1_2_1_2_1_begin_repeat<-read_and_process_survey_xlsx("_3_4_1_2_1_2_1_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: labour Hired/Free/Exchange Labourers seasonal workers 2
+bfa_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: area of land per agricultural practice
+bfa_survey_3_3_4_1_3_begin_repeat<- read_and_process_survey_xlsx("_3_3_4_1_3_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: Irrigation
+names(bfa_survey_3_4_1_1_7_2_begin_repeat)
+names(bfa_survey_main)
+
+bfa_choices <- read_excel(bfa_h_choices_file, sheet = "choices")%>%
+  mutate(country= "burkina_faso")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+bfa_global_choices<-global_choices%>%
+  rbind(bfa_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
 #### PERFORMANCE MODULE ####
 #INSTRUCTION: Continue running the code from here
 fun_performance_choices<- function(country_global_choices) {
@@ -565,7 +604,7 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
     #Remove answers == "0" or NA
     filter(type_question == "select_multiple" & !is.na(name_choice) & name_choice != 0)
   
-  # Left join for "select_one" for countries that downloaded the survey with the name_choice version (country== "zwe","ken","lao","per"
+  # Left join for "select_one" for countries that downloaded the survey with the name_choice version (country== "zwe","ken","lao","per","bfa"
   select_one1 <- gathered_data  %>%
     left_join(select(performance_choices,
                      c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
@@ -574,7 +613,8 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
     filter(country=="zimbabwe"|
              country=="kenya"|
              country=="laos"|
-             country=="peru")
+             country=="peru"|
+             country=="burkina_faso")
   
   # Left join for "select_one" for countries that downloaded the survey with the name_label version in English (country== "tun")
   select_one2 <- gathered_data  %>%
@@ -769,7 +809,7 @@ mutate(label_choice = case_when(
   country== "kenya" & kobo_farmer_id == "286844609"~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
   country== "senegal" & kobo_farmer_id == "308802823"~gsub("\\$\\{_1_4_1_1\\}", "acre", label_choice),
   country %in% c("zimbabwe","kenya")~ gsub("\\$\\{_1_4_1_1\\}", "acre", label_choice),
-  country %in% c("tunisia","senegal","laos") ~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
+  country %in% c("tunisia","senegal","laos","peru","burkina_faso") ~ gsub("\\$\\{_1_4_1_1\\}", "hectare", label_choice),
   TRUE ~ label_choice))%>%
   
   ## Indicator: biodiversity_agrobiodiversity
@@ -782,7 +822,9 @@ mutate(label_choice = case_when(
   #For the countries that translated the name of the crops, livestock and fish to English separated with "//"
   mutate(name_choice= case_when(
     name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_2_2","_3_3_4_1_1_1","_2_8_4_1_1","_2_8_4_3_1",
-                              "_3_4_2_1_8_3","_1_4_3_3_1_calculate","_3_3_3_2_3_3") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+                              "_3_4_2_1_8_3","_1_4_3_3_1_calculate","_3_3_3_2_3_1","_3_3_3_2_3_2","_3_3_3_2_3_3",
+                              "_3_3_3_2_3_4",	"_3_3_3_2_3_5",	"_3_3_3_2_3_6"
+    ) & grepl("//", name_choice)~ sub(".*//", "", name_choice),
     TRUE ~ name_choice))%>%
   #Remove _3_4_3_3_1/other
   filter(name_question!="_3_4_3_3_1/other")%>%
@@ -816,12 +858,13 @@ mutate(label_choice = case_when(
 ##Indicator: productivity_crop, productivity_livestock
 #For the countries that translated the name of the crops, livestock and fish to English separated with "//"
 mutate(name_choice= case_when(
-  country %in% c("senegal","laos","peru")&name_question_recla %in%c("_3_4_3_1_3_calculate","_3_4_2_2_2_calculate","_3_4_2_2_5_2_calculate",
+  country %in% c("senegal","laos","peru","burkina_faso")&name_question_recla %in%c("_3_4_3_1_3_calculate","_3_4_2_2_2_calculate","_3_4_2_2_5_2_calculate",
                                                              "_3_4_2_2_6_1_1_calculate","_3_4_2_3_2_1_calculate","_3_4_2_3_2_5_calculate",
                                                              "_3_4_2_1_5_1_calculate","_3_4_2_3_2_4_1_calculate",
                                                              "_4_1_1_4_4_1","_2_4_1_1","_2_4_1_2","_4_1_1_5_1_1","_4_1_1_5_2_1",
                                                              "_4_1_1_7_1","_4_1_3_1_1","_4_1_3_1_2_1","_4_1_4_13","_4_1_3_2_13_1",
-                                                             "_3_3_4_1_2_1")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
+                                                             "_3_3_4_1_2_1","_3_4_3_3_1"
+                                                             )& grepl("//", name_choice)~ sub(".*//", "", name_choice),
   TRUE ~ name_choice))%>%
   
   ##Indicator: labour_productivity
@@ -858,7 +901,7 @@ mutate(label_choice= case_when(
   name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
   name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
   name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in%c("zimbabwe","kenya")~"acres",
-  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos","peru")~"hectares",
+  name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_3_3_3_2_2","_1_4_4_4_1","_3_4_2_1_1","_3_4_2_2_1_1", "_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos","peru","burkina_faso")~"hectares",
   TRUE ~ label_choice))%>%
   mutate(name_question_recla = case_when(
     type_question == "select_multiple"~str_replace(name_question_recla, "/.*", ""),
@@ -1035,3 +1078,22 @@ per_performance_data<-rbind(
 
 per_performance<-fun_performance(per_performance_data)
 write.csv(per_performance,paste0(per_data_path,"/per/per_performance_format.csv"),row.names=FALSE)
+
+
+# BURKINA FASO -----
+bfa_performance_data<-fun_performance_data(bfa_global_choices,
+                                           bfa_survey_main,  ## Main survey 
+                                           bfa_survey_3_4_3_1_2_begin_repeat, ## _3_4_3_1_2_begin_repeat: Crop production 
+                                           bfa_survey_3_4_2_2_2_begin_repeat, ##_3_4_2_2_2_begin_repeat: Livestock production 1 
+                                           bfa_survey_3_4_2_2_6_begin_repeat, ##_3_4_2_2_6_begin_repeat: Livestock production 2  
+                                           bfa_survey_3_3_4_1_3_begin_repeat,  ##_3_3_4_1_3_begin_repeat: Irrigation
+                                           bfa_survey_3_4_1_1_7_1_begin_repeat,  ##_3_4_1_1_7_1_begin_repeat: household members permanent workers
+                                           bfa_survey_3_4_1_1_7_2_begin_repeat,  ##_3_4_1_1_7_2_begin_repeat: household members seasonal workers 1 
+                                           bfa_survey_3_4_1_2_7_2_1_begin_repeat,  ##_3_4_1_2_7_2_1_begin_repeat : household members seasonal workers 2 
+                                           bfa_survey_3_4_1_2_1_1_begin_repeat,  ##_3_4_1_2_1_1_begin_repeat: labour Hired/Free/Exchange Labourers permanent workers 
+                                           bfa_survey_3_4_1_2_1_2_begin_repeat, ##_3_4_1_2_1_2_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 1 
+                                           bfa_survey_3_4_1_2_1_2_1_begin_repeat,  ##_3_4_1_2_1_2_1_begin_repeat: labour Hired/Free/Exchange Labourers seasonal workers 2 
+                                           bfa_survey_3_3_3_2_begin_repeat) ##_3_3_3_2_begin_repeat:  area of land per agricultural practice 
+
+bfa_performance<-fun_performance(bfa_performance_data)
+write.csv(bfa_performance,paste0(bfa_data_path,"/bfa/bfa_performance_format.csv"),row.names=FALSE)

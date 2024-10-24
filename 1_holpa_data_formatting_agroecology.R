@@ -317,6 +317,35 @@ per_global_choices<-global_choices%>%
     stringsAsFactors = FALSE))
 names(per_global_choices)
 
+### BURKINA FASO ----
+#link to bfa data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace bfa_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
+bfa_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean/" #path andrea
+
+bfa_h_survey_file <- paste0(bfa_data_path, "bfa_holpa_household_survey_clean.xlsx")
+bfa_h_choices_file <- paste0(bfa_data_path, "bfa_holpa_household_form_clean.xlsx")
+
+bfa_survey_main <- read_and_process_survey_xlsx("HOLPA_global_household_survey", "_id", bfa_h_survey_file,"burkina_faso","_index")
+bfa_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: Farm production OTHER
+bfa_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: area of land per agricultural practice
+
+
+bfa_choices <- read_excel(bfa_h_choices_file, sheet = "choices")%>%
+  mutate(country= "burkina_faso")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+bfa_global_choices<-global_choices%>%
+  rbind(bfa_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
 
 #### AGROECOLOGY MODULE #### -----
 #INSTRUCTION: Continue running the code from here
