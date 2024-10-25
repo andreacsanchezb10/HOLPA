@@ -222,7 +222,7 @@ sen_global_choices<-global_choices%>%
 
 ### LAOS ----
 #link to lao data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean?csf=1&web=1&e=azqxKc
-#INSTRUCTION: Replace zwe_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
+#INSTRUCTION: Replace lao_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
 lao_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Laos/laos_data_clean/" #path andrea
 
 lao_h_survey_file <- paste0(lao_data_path, "lao_holpa_household_survey_clean.xlsx")
@@ -253,8 +253,8 @@ lao_global_choices<-global_choices%>%
   mutate(label_choice.country=NA)
 
 ### PERU ----
-#link to zwe data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Zimbabwe/zimbabwe_data_clean?csf=1&web=1&e=azqxKc
-#INSTRUCTION: Replace zwe_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
+#link to per data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace per_data_path path with your own path, run the code and then go #### AGROECOLOGY MODULE
 per_read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name, index) {
   survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
     mutate(country = country_name,
@@ -325,8 +325,9 @@ bfa_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HO
 bfa_h_survey_file <- paste0(bfa_data_path, "bfa_holpa_household_survey_clean.xlsx")
 bfa_h_choices_file <- paste0(bfa_data_path, "bfa_holpa_household_form_clean.xlsx")
 
+# Section: Farm production OTHER #Burkina Faso had this section, but removed because all the other products were crops.
+#I used the information in this section to complete the crop production section that is missing
 bfa_survey_main <- read_and_process_survey_xlsx("HOLPA_global_household_survey", "_id", bfa_h_survey_file,"burkina_faso","_index")
-bfa_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: Farm production OTHER
 bfa_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # Section: area of land per agricultural practice
 
 
@@ -462,7 +463,8 @@ fun_agroecology_left_join <- function(agroecology_choices, gathered_data ) {
     filter(country=="zimbabwe"|
              country=="kenya"|
              country=="laos"|
-             country=="peru")
+             country=="peru"|
+             country=="burkina_faso")
   
   # Left join for "select_one" for country== "tun" (that downloaded the database with label_choices)
   select_one2 <- gathered_data  %>%
@@ -631,7 +633,7 @@ fun_agroecology<- function(country_agroecology_data){
     #For the countries that translated the name of the crops, livestock and fish, agricultural to English separated with "//"
     mutate(name_choice= case_when(
       name_question_recla %in%c("_3_4_3_1_1_2", "_3_4_3_4_2","_3_3_3_1_calculate_2","_3_3_1_7_1",
-                                "_2_4_1_2") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
+                                "_2_4_1_2","_3_4_3_3_1") & grepl("//", name_choice)~ sub(".*//", "", name_choice),
       TRUE ~ name_choice))%>%
     
     mutate(label_choice= case_when(
@@ -658,7 +660,7 @@ fun_agroecology<- function(country_agroecology_data){
       name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
       name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
       name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in%c("zimbabwe","kenya")~"acres",
-      name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos","peru")~"hectares",
+      name_question%in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2","_3_4_2_3_2")& country %in% c("tunisia","senegal","laos","peru","burkina_faso")~"hectares",
       TRUE ~ label_choice))
   
   
@@ -742,3 +744,11 @@ per_agroecology_data<-rbind(
 per_agroecology<-fun_agroecology(per_agroecology_data) 
 
 write.csv(per_agroecology,paste0(per_data_path,"/per/per_agroecology_format.csv"),row.names=FALSE)
+
+# BURKINA FASO -----
+bfa_agroecology_data<-rbind(
+  fun_agroecology_main(bfa_global_choices, bfa_survey_main), ## Main survey 
+  fun_agroecology_begin_repeat(bfa_global_choices, bfa_survey_3_3_3_2_begin_repeat)) # Section: area of land per agricultural practice
+
+bfa_agroecology<-fun_agroecology(bfa_agroecology_data) 
+write.csv(bfa_agroecology,paste0(bfa_data_path,"/bfa/bfa_agroecology_format.csv"),row.names=FALSE)
