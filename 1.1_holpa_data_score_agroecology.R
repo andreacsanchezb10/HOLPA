@@ -23,6 +23,8 @@ library("summarytools")
 #Senegal = 29/29 questions 
 #Laos = 26/29 questions (missing: "_2_6_1_4_1", "_2_6_1_4_4", "_2_6_1_4_5")
 #Peru = 26/29 questions (missing:"_2_6_1_4_6","_3_3_1_2_4","_2_6_1_4_5" ) (extra questions: "_3_3_1_2_10","_3_3_1_2_11")
+#Burkina Faso =  25/29 questions (missing: "_2_8_5_1", "_2_6_1_4_3", "_2_6_1_4_5", "_2_6_1_4_6")
+
 
 ## type_question: select_multiple ----
 # 2_input_reduction:"_1_4_3_1", "_1_4_3_5",   "_2_8_5_3","_1_4_3_8", "_1_4_3_9" = 5/6
@@ -32,8 +34,9 @@ library("summarytools")
 #Tunisia = 10/17 questions (missing: "_2_8_5_3","_1_4_3_9","_2_7_1_1","_2_7_1_3","_1_4_2_4_3","_1_4_2_7_4","_2_7_1_6")
 #Kenya = 15/17 questions (missing:"_2_7_1_6", "_1_4_2_7_4")
 #Senegal= 16/17 questions (missing:"_1_4_2_7_4")
-#Laos = 11/17 questions ("_2_7_1_1","_2_7_1_4", "_2_7_1_5",_1_4_2_2_3", "_1_4_2_5_5", "_1_4_2_6_3")
-#Peru = 13/17 questions ("_2_7_1_6", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_7_4")
+#Laos = 11/17 questions (missing: "_2_7_1_1","_2_7_1_4", "_2_7_1_5",_1_4_2_2_3", "_1_4_2_5_5", "_1_4_2_6_3")
+#Peru = 13/17 questions (missing: "_2_7_1_6", "_1_4_2_4_3", "_1_4_2_5_5", "_1_4_2_7_4")
+#Burkina Faso =  11/17  (missing:"_2_8_5_3", "_1_4_3_9","_2_7_1_3","_2_7_1_5", "_1_4_2_4_3", "_1_4_2_7_4")
 
 
 ## type_question: integer ----
@@ -45,6 +48,8 @@ library("summarytools")
 #Senegal = 7/7 questions
 #Laos = 7/7 questions
 #Peru = 7/7 questions
+#Burkina Faso = 7/7 questions
+
 
 ## type_question: counting----
 # 3- soil_health: "_2_9_1_1" = 1/1
@@ -59,14 +64,7 @@ library("summarytools")
 #Senegal = 10/10 questions
 #Laos = 10/10 questions
 #Peru = 10/10 questions
-
-## type_question: counting----
-# 3- soil_health: "" = 1/1
-# 4_animal_health: "","" = 2/3
-# 5_biodiversity: "_3_4_3_3_1",_3_4_3_1_1_2,
-# 6- synergy: "","","","","","" = 6/6
-# 7- economic_diversification: "" = 1/1
-
+#Burkina Faso = (missing: "_3_3_3_4" )
 
 
 #### AGROECOLOGY: SCORING FUNCTION ------
@@ -180,7 +178,7 @@ fun_agroecology_data<- function(country_agroecology_data){
       grepl("Trader or supermarket.", label_score_agroecology_module) ~ 3,
       grepl("Aux détaillants tels que les supermarchés, les épiceries ou les restaurants.", label_score_agroecology_module) ~ 3,
       grepl("Local market", label_score_agroecology_module) ~ 3,
-      country=="peru" & name_choice=="retailers" ~ 3,
+      country=="peru" & grepl("retailers", label_score_agroecology_module) ~ 3,
       
       
       
@@ -492,3 +490,14 @@ sort(unique(per_agroecology$theme))
 view(dfSummary(per_agroecology))
 
 write.csv(per_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Peru/peru_data_clean/per/per_agroecology_score.csv',row.names=FALSE)
+
+
+#BURKINA FASO ----
+bfa.data.path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean/bfa/bfa_agroecology_format.csv" #andrea path
+bfa_agroecology_data <- read.csv(bfa.data.path)
+
+bfa_agroecology<- fun_agroecology_data(bfa_agroecology_data)
+sort(unique(bfa_agroecology$theme))
+view(dfSummary(bfa_agroecology))
+
+write.csv(bfa_agroecology,file='C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean/bfa/bfa_agroecology_score.csv',row.names=FALSE)

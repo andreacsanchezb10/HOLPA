@@ -1097,3 +1097,15 @@ bfa_performance_data<-fun_performance_data(bfa_global_choices,
 
 bfa_performance<-fun_performance(bfa_performance_data)
 write.csv(bfa_performance,paste0(bfa_data_path,"/bfa/bfa_performance_format.csv"),row.names=FALSE)
+
+
+
+###PENDIENTES######
+# Arreglar las preguntas how many of the total area is what is the planting density in agroforestry, crop rotation...
+# List all crops planted in agroforestry...
+# Abundance of trees in agroforesty, hedgerows..
+#Total crop production by practice
+
+### correcciones
+# hacer un cross-check entre crop and livestock production sections y Farm characteristics. A quien le venden. muchas veces se puso que no se vende nada
+#pero en las preguntas de production, dicen que vendieron.
