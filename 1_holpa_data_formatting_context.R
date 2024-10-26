@@ -80,7 +80,7 @@ zwe_h_choices_file <- paste0(zwe_data_path, "zwe_holpa_household_form_clean.xlsx
 
 zwe_survey_main <- read_and_process_survey_xlsx("Final HOLPA_Zimbabwe_Household", "_id", zwe_h_survey_file,"zimbabwe","_index")%>%
   filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
-zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", zwe_h_survey_file,"zimbabwe","_index")%>% # Section: Crop production
+zwe_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", zwe_h_survey_file,"zimbabwe","_index")%>% # production_end_use for OTHER NON-FARM PRODUCT
   filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
 
 zwe_choices <- read_excel(zwe_h_choices_file,sheet = "choices")%>%
@@ -130,7 +130,7 @@ tun_h_choices_file <- paste0(tun_data_path, "tun_holpa_household_form_clean.xlsx
 tun_survey_main <- read_and_process_survey_xlsx("HOLPA_Tunisia_household_surv", "_id", tun_h_survey_file,"tunisia","_index")%>%
   filter(consent_2!="No") #Remove respondents that did not wanted to complete the survey
 
-#does not exist for tunisia tun_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # Section: Crop production
+#does not exist for tunisia tun_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", tun.data.path,"tunisia","_index") # production_end_use for OTHER NON-FARM PRODUCT
 tun_choices <- read_excel(tun_h_choices_file, sheet = "choices")%>%
   mutate(country= "tunisia")%>%
   select("list_name","name","label::English ((en))","country")%>%
@@ -159,7 +159,7 @@ ken_h_choices_file <- paste0(ken_data_path, "ken_holpa_household_form_clean.xlsx
 ken_survey_main <- read_and_process_survey_xlsx("Holpa_global_household_surve", "_id", ken_h_survey_file,"kenya","_index")%>%
   filter(kobo_farmer_id!="274186917") #Remove respondents that are not farmers
 
-#does not exist for kenya ken_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", ken_h_survey_file,"tunisia","_index") # Section: Crop production
+#does not exist for kenya ken_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", ken_h_survey_file,"tunisia","_index") # production_end_use for OTHER NON-FARM PRODUCT
 ken_choices <- read_excel(ken_h_choices_file,sheet = "choices")%>%
   mutate(country= "kenya")%>%
   select("list_name","name","label::English ((en))","country")%>%
@@ -195,7 +195,7 @@ sen_survey_main <- read_and_process_survey_xlsx("HOLPA Senegal_version finale", 
          x_2_6_1_3= if_else(is.na(x_2_6_1_3),x_2_6_1_3_2,x_2_6_1_3))%>%
   rename("_2_6_1_3"="x_2_6_1_3")
 
-sen_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # Section: Crop production
+sen_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", sen_h_survey_file,"senegal","_index")%>% # production_end_use for OTHER NON-FARM PRODUCT
   slice(-1)
 
 sen_choices <- read_excel(sen_h_choices_file,sheet = "choices")%>%
@@ -244,7 +244,7 @@ lao_h_survey_file <- paste0(lao_data_path, "lao_holpa_household_survey_clean.xls
 lao_h_choices_file <- paste0(lao_data_path, "lao_holpa_household_form_clean.xlsx")
 
 lao_survey_main <- read_and_process_survey_xlsx("Final_HOLPA_Laos", "_id", lao_h_survey_file,"laos","_index")
-lao_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: Crop production
+#does not exist for lao lao_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # production_end_use for OTHER NON-FARM PRODUCT
 
 lao_choices <- read_excel(lao_h_choices_file,sheet = "choices")%>%
   mutate(country= "laos")%>%
@@ -357,6 +357,34 @@ per_global_choices<-global_choices%>%
   filter(!(name_question == "_1_2_1_1" & type == "text"))%>%
   filter(!(name_question == "_1_2_1_2" & type == "text"))
 
+### BURKINA FASO ----
+#link to ken data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean?csf=1&web=1&e=D7sIkb
+#INSTRUCTION: Replace lao_data_path path with your path, run the code and then go #### CONTEXT MODULE 
+bfa_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean/" #path andrea
+
+bfa_h_survey_file <- paste0(bfa_data_path, "bfa_holpa_household_survey_clean.xlsx")
+bfa_h_choices_file <- paste0(bfa_data_path, "bfa_holpa_household_form_clean.xlsx")
+
+bfa_survey_main <- read_and_process_survey_xlsx("HOLPA_global_household_survey", "_id", bfa_h_survey_file,"burkina_faso","_index")
+#does not exist for burkina_faso bfa_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", bfa_h_survey_file,"burkina_faso","_index") # production_end_use for OTHER NON-FARM PRODUCT
+
+bfa_choices <- read_excel(bfa_h_choices_file,sheet = "choices")%>%
+  mutate(country= "burkina_faso")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)
+
+#Add country choices to global choices
+bfa_global_choices<-global_choices%>%
+  rbind(bfa_choices)%>%
+  arrange(desc(country == "global")) %>%
+  #Removing duplicates
+  distinct(list_name,name_choice, .keep_all = TRUE) %>%
+  right_join(global_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)
+
+
 #### CONTEX MODULE ####
 #INSTRUCTION: Continue running the code from here
 fun_context_choices<- function(country_global_choices) {
@@ -456,7 +484,8 @@ fun_context_left_join <- function(context_choices, gathered_data ) {
     filter(country=="zimbabwe"|
              country=="kenya"|
              country=="laos"|
-             country=="peru")
+             country=="peru"|
+             country=="burkina_faso")
   
   # Left join for "select_one" for country== "tun"
   select_one2 <- gathered_data  %>%
@@ -680,14 +709,14 @@ fun_context<- function(country_context_data){
       name_question %in%c("_3_2_1_3_2_1","_3_2_1_2_1","_2_3_1_1_1","_1_2_1_15_1","_4_1_1_4_4_1","_1_4_3_3_1_calculate",
                                 "_1_4_3_6_4","_1_4_3_6_1_calculate","_1_4_3_7_1_calculate","_1_4_3_8_1","_1_4_2_3_7_1",
                                 "_1_4_2_7_calculate","_1_4_2_7_7_1","_1_2_1_6_1","_1_2_1_13_1_1","_1_2_1_13_2_2_1",
-                                "_4_1_1_6_1","_1_4_2_2_6_1")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
+                                "_4_1_1_6_1","_1_4_2_2_6_1","_1_4_3_7_4","_1_2_1_5_1","_1_2_1_10_1")& grepl("//", name_choice)~ sub(".*//", "", name_choice),
       TRUE ~ name_choice))%>%
   #Put the unit of area for all necessary questions
   mutate(label_choice= case_when(
     name_question %in% c("_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country== "kenya" & kobo_farmer_id == "286844609"~"hectares",
     name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country== "senegal" & kobo_farmer_id == "308802823"~"metres square",
     name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country %in%c("zimbabwe","kenya")~"acres",
-    name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country %in% c("tunisia","senegal")~"hectares",
+    name_question%in% c( "_1_4_1_1_1", "_1_4_1_1_2", "_1_4_1_1_3","_3_4_2_1_3", "_1_4_3_2_3","_1_4_3_3_3","_1_4_3_4_3","_1_4_3_6_3","_3_3_3_2_2","_1_4_4_4_1","_1_4_3_7_3")& country %in% c("tunisia","senegal","laos","peru","burkina_faso")~"hectares",
     TRUE ~ label_choice))%>%
   
   mutate(name_question_recla = case_when(
@@ -756,10 +785,8 @@ write.csv(sen_context,paste0(sen_data_path,"/sen/sen_context_format.csv"),row.na
 
 
 # LAOS-----
-lao_context_data<-fun_context_data(lao_global_choices, #country_global_choices
-                                   lao_survey_main,  #Main survey 
-                                   lao_survey_1_4_2_7_begin_repeat)  #production_end_use for OTHER NON-FARM PRODUCT
-
+lao_context_data<-    fun_context_main(lao_global_choices, #country_global_choices
+                                       lao_survey_main) # Main survey
 lao_context<-fun_context(lao_context_data)
 write.csv(lao_context,paste0(lao_data_path,"/lao/lao_context_format.csv"),row.names=FALSE)
 
@@ -791,3 +818,9 @@ per_context_data<-rbind(
   
 per_context<-fun_context(per_context_data)
 write.csv(per_context,paste0(per_data_path,"/per/per_context_format.csv"),row.names=FALSE)
+
+# BURKINA FASO-----
+bfa_context_data<-    fun_context_main(bfa_global_choices, #country_global_choices
+                                       bfa_survey_main) # Main survey
+bfa_context<-fun_context(bfa_context_data)
+write.csv(bfa_context,paste0(bfa_data_path,"/bfa/bfa_context_format.csv"),row.names=FALSE)
