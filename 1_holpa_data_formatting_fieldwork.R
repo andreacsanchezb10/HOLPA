@@ -514,3 +514,36 @@ per_fieldwork<-per_fun_fieldwork_main(per_fieldwork_global_choices,per_fieldwork
 
 
 write.csv(per_fieldwork,file=paste0(per_data_path,"per/per_fieldwork_format.csv"),row.names=FALSE)
+
+
+### BURKINA FASO ----
+bfa_data_path <-"C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/Burkina_Faso/burkina_faso_data_clean/" #path Andrea
+
+#Household survey
+bfa_household_survey <- read_and_process_survey_xlsx("HOLPA_global_household_survey", "_id", paste0(bfa_data_path,"bfa_holpa_household_survey_clean.xlsx"),"burkina_faso","_index")
+
+#Fieldwork survey
+bfa_fieldwork_survey <- read_and_process_survey_xlsx("HOLPA_Enquete_exploitation_B", "_id", paste0(bfa_data_path,"bfa_holpa_fieldwork_survey_clean.xlsx"),"burkina_faso","_index")
+
+names(bfa_fieldwork_survey)
+
+#Add household survey kobo_farmer_id to fieldwork survey
+bfa_fieldwork<- bfa_household_survey%>%
+  select(kobo_farmer_id, household_id )%>%
+  right_join(bfa_fieldwork_survey,by=c("household_id"))%>%
+  rename("kobo_farmer_id"="kobo_farmer_id.x",
+         "kobo_farmer_id.fieldwork"="kobo_farmer_id.y" )%>%
+  #Remove the farmers that do not match in the household survey
+  filter(!is.na(kobo_farmer_id))
+
+names(bfa_fieldwork)
+
+write.csv(bfa_fieldwork,file=paste0(bfa_data_path,"bfa/bfa_fieldwork_format.csv"),row.names=FALSE)
+
+#54 farmers do not match with the household survey
+bfa_error_fieldwork<- bfa_household_survey%>%
+  select(kobo_farmer_id, household_id )%>%
+  right_join(bfa_fieldwork_survey,by=c("household_id"))%>%
+  filter(is.na(kobo_farmer_id.x))
+
+write.csv(bfa_error_fieldwork,file=paste0(bfa_data_path,"bfa/bfa_error_fieldwork.csv"),row.names=FALSE)
