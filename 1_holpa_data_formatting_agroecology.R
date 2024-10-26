@@ -231,9 +231,6 @@ lao_h_choices_file <- paste0(lao_data_path, "lao_holpa_household_form_clean.xlsx
 lao_survey_main <- read_and_process_survey_xlsx("Final_HOLPA_Laos", "_id", lao_h_survey_file,"laos","_index")%>%
   #Remove respondents that are not farmers
   filter(kobo_farmer_id!="274186917")
-lao_survey_1_4_2_7_begin_repeat <- read_and_process_survey_xlsx("_1_4_2_7_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index")%>% # Section: Farm production OTHER
-  #Remove respondents that are not farmers
-  filter(kobo_farmer_id!="274186917")
 lao_survey_3_3_3_2_begin_repeat<- read_and_process_survey_xlsx("_3_3_3_2_begin_repeat", "_submission__id", lao_h_survey_file,"laos","_index") # Section: area of land per agricultural practice
 
 lao_choices <- read_excel(lao_h_choices_file, sheet = "choices")%>%
@@ -711,10 +708,9 @@ sen_agroecology<-fun_agroecology(sen_agroecology_data)
 write.csv(sen_agroecology,paste0(sen_data_path,"/sen/sen_agroecology_format.csv"),row.names=FALSE)
 
 # LAOS -----
-lao_agroecology_data<-fun_agroecology_data(lao_global_choices,
-                                           lao_survey_main,  ## Main survey 
-                                           lao_survey_1_4_2_7_begin_repeat, ## _1_4_2_7_begin_repeat: Other on-farm product Farm characteristics 
-                                           lao_survey_3_3_3_2_begin_repeat) # Section: area of land per agricultural practice
+lao_agroecology_data<-rbind(
+  fun_agroecology_main(lao_global_choices, lao_survey_main), ## Main survey 
+  fun_agroecology_begin_repeat(lao_global_choices, lao_survey_3_3_3_2_begin_repeat)) # Section: area of land per agricultural practice
 
 lao_agroecology<-fun_agroecology(lao_agroecology_data)
 write.csv(lao_agroecology,paste0(lao_data_path,"/lao/lao_agroecology_format.csv"),row.names=FALSE)
@@ -752,3 +748,4 @@ bfa_agroecology_data<-rbind(
 
 bfa_agroecology<-fun_agroecology(bfa_agroecology_data) 
 write.csv(bfa_agroecology,paste0(bfa_data_path,"/bfa/bfa_agroecology_format.csv"),row.names=FALSE)
+
