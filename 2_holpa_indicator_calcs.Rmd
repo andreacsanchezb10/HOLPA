@@ -33,9 +33,9 @@ library(ggforce) # for gauge plots
 #country <- "laos"
 #country <- "kenya"
 #country <- "peru"
-country <- "senegal" # formatted fieldwork csv needs saving to folder
+#country <- "senegal" # formatted fieldwork csv needs saving to folder
 #country <- "tunisia"
-#country <- "zimbabwe"
+country <- "zimbabwe"
 
 # for area unit conversions
 acre_to_hectare = 0.404686
@@ -73,8 +73,8 @@ ref_values_nut <- read_excel(paste0(ref.values.data.path,"HOLPA data post-proces
 
 # function to import cleaned data
 
-country_short = "sen"
-country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/sen/"
+#country_short = "sen"
+#country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/sen/"
 
 import.data <- function(country_short,country.data.path){
   cn <- read_csv(paste0(country.data.path,country_short,"_context_format.csv"),show_col_types = FALSE)
@@ -138,7 +138,7 @@ set_d <- function(country){
   ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("BUR","_inputs"))
   iso <- "BUR"
   
-  }
+  } 
   if(country=="india"){
     import.data("ind",ind.data.path)
     d <- ind_data
@@ -520,13 +520,16 @@ kpi_all_boxplot(kpi_scores)
 # default is -9999 meaning NO DATA, and in this case the MEDIAN fertilizer use in the country-specific HOLPA survey data is used
 
 # activate this only if information in ref_values_country on fertilizer recommendations covers enough crops to justify using an average across all crops
-#ref_nut_quantity_kg_ha <- ref_values_country %>%
-#  select(nut_ref_rainfed_clean,nut_ref_irr_clean) %>%
-#  summarise(nut_ref = mean(nut_ref_rainfed_clean,na.rm=TRUE)) %>%
-#  mutate(nut_ref = ifelse(is.na(nut_ref),-9999,nut_ref))
-#ref_nut_quantity_kg_ha <- ref_nut_quantity_kg_ha$nut_ref
-
-ref_nut_quantity_kg_ha <- -9999 
+if(iso %in% c("ZWE")){
+ref_nut_quantity_kg_ha <- ref_values_country %>%
+  select(nut_ref_rainfed_clean,nut_ref_irr_clean) %>%
+  summarise(nut_ref_med = median(nut_ref_rainfed_clean,na.rm=TRUE),
+            nut_ref_mean = mean(nut_ref_rainfed_clean,na.rm=TRUE)) %>%
+  mutate(nut_ref_med = ifelse(is.na(nut_ref_med),-9999,nut_ref_med))
+ref_nut_quantity_kg_ha <- ref_nut_quantity_kg_ha$nut_ref_med
+} else{
+  ref_nut_quantity_kg_ha <- -9999 
+}
 
 nut_conversion_factors <- ref_values_nut %>%
   filter(Region == iso) %>%
@@ -547,6 +550,12 @@ if(iso %in% c("SEN")){
   area_unit <- area_unit %>%
     mutate_at(c("nut_chem_area_unit","nut_org_area_unit","nut_orgF_area_unit"),
                ~ifelse(is.na(.),"hectares",as.character(.)))
+}
+
+if(iso %in% c("ZWE")){
+  area_unit <- area_unit %>%
+    mutate_at(c("nut_chem_area_unit","nut_org_area_unit","nut_orgF_area_unit"),
+               ~ifelse(is.na(.),"acres",as.character(.)))
 }
 
 d <- d %>% 
@@ -606,13 +615,13 @@ temp_kpi_calc <- temp_kpi_calc %>%
               "nut_orgF_quantity","nut_orgF_area"), 
               ~ifelse(is.na(.),0,as.numeric(.))) %>%
   ungroup() %>%
-    mutate_at(c("nut_chem_unit_conversion","nut_org_unit_conversion","nut_orgF_unit_conversion"), ~as.numeric())
+    mutate_at(c("nut_chem_unit_conversion","nut_org_unit_conversion","nut_orgF_unit_conversion"), ~ifelse(is.na(.),NA,as.numeric(.)))
 
 temp_kpi_calc <- temp_kpi_calc %>%
   # convert areas into hectares
-  mutate(nut_chem_area_ha = ifelse(nut_chem_area_unit %in% c("acres","in acres","Acres"), nut_chem_area * acre_to_hectare, nut_chem_area),
-         nut_orgF_area_ha = ifelse(nut_orgF_area_unit %in% c("acres","in acres","Acres"), nut_orgF_area * acre_to_hectare, nut_orgF_area),
-         nut_org_area_ha = ifelse(nut_org_area_unit %in% c("acres","in acres","Acres"), nut_org_area * acre_to_hectare, nut_org_area)) %>%
+  mutate(nut_chem_area_ha = ifelse(nut_chem_area_unit %in% c("acre", "acres","in acres","Acres"), nut_chem_area * acre_to_hectare, nut_chem_area),
+         nut_orgF_area_ha = ifelse(nut_orgF_area_unit %in% c("acre","acres","in acres","Acres"), nut_orgF_area * acre_to_hectare, nut_orgF_area),
+         nut_org_area_ha = ifelse(nut_org_area_unit %in% c("acre","acres","in acres","Acres"), nut_org_area * acre_to_hectare, nut_org_area)) %>%
   
   # convert quantities applied into kg
   mutate(nut_chem_kg_ha = ifelse(nut_chem_quantity>0, (nut_chem_quantity*nut_chem_unit_conversion) /nut_chem_area_ha, 0),
@@ -624,7 +633,7 @@ temp_kpi_calc <- temp_kpi_calc %>%
 
 # Calculate ratio of nutrient use to recommended (or median) nutrient use levels
 temp_kpi_calc <- temp_kpi_calc %>%
-  group_by(country) %>% mutate(med_nut_quantity_kg_ha = median(nut_quantity_kg_ha, na.rm=T)) %>% ungroup()  %>%
+  group_by(country) %>% mutate(med_nut_quantity_kg_ha = median(nut_quantity_kg_ha, na.rm=T), mean_nut_quantity_kg_ha = mean(nut_quantity_kg_ha, na.rm=T)) %>% ungroup()  %>%
   mutate(ref_nut_quantity_kg_ha = ref_nut_quantity_kg_ha) %>%
   mutate(score =  ifelse(ref_nut_quantity_kg_ha > 0 , nut_quantity_kg_ha/ref_nut_quantity_kg_ha, nut_quantity_kg_ha/med_nut_quantity_kg_ha)) 
 
@@ -1139,7 +1148,7 @@ temp_kpi_calc <- temp_kpi_calc %>%
   mutate(indicator = "kpi11_hh_income_v_mean",
        subindicator = "hh_income_compared_to_average",
        subindicator_label = "Ratio of household income compared to the average",
-       indicator_order = 11)
+       indicator_order = 11.1)
 
 kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
   mutate(module = ifelse(indicator %in% c("kpi11_hh_income_v_mean"),"performance kpi",module)) %>%
@@ -1149,12 +1158,90 @@ kpi_histogram(kpi_scores,"kpi11_hh_income_v_mean")
 kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI11b income stability ####
+temp_kpi_calc <- d %>% filter(subindicator =="income_stability") %>% select(-module,-index, -theme) %>%unique()
+
+table(temp_kpi_calc$label_choice,temp_kpi_calc$name_choice)
+
+temp_kpi_calc <- temp_kpi_calc %>%
+  mutate(score = ifelse(name_choice %in% c("9999","nd"),NA,name_choice)) %>%
+  mutate(score = as.numeric(score)) %>%
+  filter(!(is.na(score)))
+
+temp_kpi_calc <- temp_kpi_calc %>%
+  select(kobo_farmer_id,country,score) %>%
+  mutate(indicator = "kpi11b_hh_income_stability",
+       subindicator = "hh_income_stability",
+       subindicator_label = "Income stability from 1 (income declining) to 5 (income increasing)",
+       indicator_order = 11.2)
+
+kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
+  mutate(module = ifelse(indicator %in% c("kpi11b_hh_income_stability"),"performance kpi",module)) %>%
+  mutate(theme = ifelse(indicator %in% c("kpi11b_hh_income_stability"),"economic",theme)) 
+
+kpi_histogram(kpi_scores,"kpi11b_hh_income_stability")
+kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI11c income-expenditures ####
+temp_kpi_calc <- d %>% filter(subindicator =="income_versus_expenditures") %>% select(-module,-index, -theme) %>%unique()
+
+table(temp_kpi_calc$label_choice,temp_kpi_calc$name_choice)
+
+temp_kpi_calc <- temp_kpi_calc %>%
+  mutate(score = ifelse(name_choice %in% c("2","nd","-9999"),NA,name_choice)) %>%
+  mutate(score = as.numeric(score)) %>%
+  filter(!(is.na(score)))
+
+temp_kpi_calc <- temp_kpi_calc %>%
+  select(kobo_farmer_id,country,score) %>%
+  mutate(indicator = "kpi11c_hh_income_v_expenditures",
+       subindicator = "hh_income_v_expenditure",
+       subindicator_label = "Income higher than expenditures",
+       indicator_order = 11.3)
+
+kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
+  mutate(module = ifelse(indicator %in% c("kpi11c_hh_income_v_expenditures"),"performance kpi",module)) %>%
+  mutate(theme = ifelse(indicator %in% c("kpi11c_hh_income_v_expenditures"),"economic",theme)) 
+
+kpi_histogram(kpi_scores,"kpi11c_hh_income_v_expenditures")
+kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI11d income sufficiency ####
+temp_kpi_calc <- d %>% filter(subindicator =="income_sufficiency") %>% select(-module,-index, -theme) %>%unique()
+
+table(temp_kpi_calc$label_choice,temp_kpi_calc$name_choice)
+
+temp_kpi_calc <- temp_kpi_calc %>%
+  mutate(score = ifelse(name_choice %in% c("nd","-9999"),NA,name_choice)) %>%
+  mutate(score = as.numeric(score)) %>%
+  filter(!(is.na(score)))
+
+temp_kpi_calc <- temp_kpi_calc %>%
+  select(kobo_farmer_id,country,score) %>%
+  mutate(indicator = "kpi11d_hh_income_sufficiency",
+       subindicator = "hh_income_sufficiency",
+       subindicator_label = "Income sufficiency",
+       indicator_order = 11.4)
+
+kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
+  mutate(module = ifelse(indicator %in% c("kpi11d_hh_income_sufficiency"),"performance kpi",module)) %>%
+  mutate(theme = ifelse(indicator %in% c("kpi11d_hh_income_sufficiency"),"economic",theme)) 
+
+kpi_histogram(kpi_scores,"kpi11d_hh_income_sufficiency")
+kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI12 yield gap ####
+sort(unique(d$indicator))
+temp <- d %>% filter(indicator =="productivity_crops" | name_question %in% c("_3_4_3_1_3_calculate"))
+#sort(unique(temp$label_question))
+
+area_unit <- d %>% filter(name_question %in% c("_1_4_1_1_calculate")) %>% select(kobo_farmer_id,name_question,name_choice) %>% unique()
+
+temp_kpi_calc <- d %>%
+  filter(name_question %in% c("_3_4_3_1_3_calculate","_3_4_2_1_5_1_calculate","_3_4_2_1_5_2","_3_4_2_1_3")) %>%
+  dcast(kobo_farmer_id+index ~ name_question,value.var = "name_choice") %>%
+  left_join(area_unit) 
+
+# CONTINUE HERE
 
 ### Performance KPI13 labour productivity ####
 
@@ -1611,10 +1698,10 @@ ggsave(paste0(global.data.path,"figures/kpi_boxplots_by_village_",country,".tif"
 
 data <- kpi_scores_full %>%
      filter(!is.na(theme))  %>%
-  mutate(score_ae_overall_classes = case_when(score_ae_overall<2~"Mainly not AE",
-                                              score_ae_overall<3~"Weak AE",
-                                              score_ae_overall<4~"Moderate AE",
-                                              score_ae_overall<5~"Strong AE",
+  mutate(score_ae_overall_classes = case_when(score_ae_overall<=2~"Mainly not AE",
+                                              score_ae_overall<=3~"Weak AE",
+                                              score_ae_overall<=4~"Moderate AE",
+                                              score_ae_overall<=5~"Strong AE",
                                               .default="Check")) %>%
      group_by(theme,indicator,indicator_order,score_ae_overall_classes) %>%
      summarise(kpi_score_scaled_mean = mean(score_scaled,na.rm=TRUE),
