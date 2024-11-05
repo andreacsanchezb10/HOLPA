@@ -28,11 +28,11 @@ library(ggforce) # for gauge plots
 
 # Specify country being processed (specify ONE only. You will need to rerun the code to process each country)
 
-country <- "burkina"
+#country <- "burkina"
 #country <- "india"
 #country <- "laos"
 #country <- "kenya"
-#country <- "peru"
+country <- "peru"
 #country <- "senegal" # formatted fieldwork csv needs saving to folder
 #country <- "tunisia"
 #country <- "zimbabwe"
@@ -314,7 +314,7 @@ kpi_all_gauge <- function(data){
                score_scaled_sd = sd(score_scaled,na.rm=TRUE),
                score_scaled_med = median(score_scaled,na.rm=TRUE)) %>%
      mutate(score_scaled_mean_unattained = ifelse(between(score_scaled_mean,0,100), 100-score_scaled_mean,NA)) %>% 
-     arrange(kpi_order) %>%
+     #arrange(kpi_order) %>%
      mutate(indicator = factor(indicator, levels = unique(indicator[order(indicator_order)]))) %>%
      mutate(kpi_label_short = factor(str_wrap(kpi_label_short,20), levels=unique(str_wrap(kpi_label_short,20)[order(indicator_order)])))
      
@@ -370,7 +370,7 @@ ae_calc_temp <- ae_scores %>%
 
 ae_scores<- ae_scores %>% full_join(ae_calc_temp)
 
-#d <- d %>% full_join(ae_calc_temp,by=c(kobo_farmer_id))
+d <- d %>% full_join(ae_calc_temp)
 
 ggplot(ae_scores, aes(y=score, x=factor(indicator,levels=unique(indicator[order(indicator_order)])), fill=factor(indicator,levels=unique(indicator[order(indicator_order)]))))+ 
   geom_boxplot()+ geom_count()+ 
@@ -1221,7 +1221,7 @@ temp_kpi_calc <- temp_kpi_calc %>%
   select(kobo_farmer_id,country,score) %>%
   mutate(indicator = "kpi11c_hh_income_v_expenditures",
        subindicator = "hh_income_v_expenditure",
-       subindicator_label = "Income higher than expenditures",
+       subindicator_label = "Income higher than expenditures (yes=1,no=0)",
        indicator_order = 11.3)
 
 kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
@@ -1245,7 +1245,7 @@ temp_kpi_calc <- temp_kpi_calc %>%
   select(kobo_farmer_id,country,score) %>%
   mutate(indicator = "kpi11d_hh_income_sufficiency",
        subindicator = "hh_income_sufficiency",
-       subindicator_label = "Income sufficiency",
+       subindicator_label = "Income sufficiency from 1 (insufficient) to 5 (sufficient)",
        indicator_order = 11.4)
 
 kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
@@ -1344,9 +1344,9 @@ kpi_histogram(kpi_scores,"kpi16_farmer_agency")
 kpi_all_boxplot(kpi_scores)
 
 #### Performance KPI17a land tenure security and KPI17b land owned as share of total used ###
-#sort(unique(d$indicator))
-#temp <- d %>% filter(indicator =="land_tenure_security")
-#sort(unique(temp$label_question))
+sort(unique(d$indicator))
+temp <- d %>% filter(indicator =="land_tenure_security")
+sort(unique(temp$label_question))
 
 d <- d %>% 
   # total land
@@ -1383,9 +1383,9 @@ temp_kpi_calc <- d %>% filter(indicator =="land_tenure_security") %>%
 
 # Calculate indicators of interest
 
-temp_kpi_calc <- temp_kpi_calc %>%
+temp_kpi_calc <- temp_kpi_calc  %>%
+  mutate(land_vulnerable_area = ifelse(country=="peru",NA,land_vulnerable_area)) %>%
     mutate_at(c("land_leased_f" , "land_leased_hh"    ,   "land_leased_m" ,       "land_owned_f"     ,    "land_owned_hh"   ,  "land_owned_m"  ,       "land_rights_f",        "land_rights_hh" ,      "land_rights_m" ,  "land_vulnerable_area","land_security_perceived"), ~ifelse(is.na(.),0,as.numeric(.))) %>%
-  
   mutate(land_vulnerable_share = land_vulnerable_area/(land_owned_hh+land_leased_hh + land_rights_hh)*100) %>%
   mutate(land_vulnerable_share = ifelse(land_vulnerable_share>100,100,land_vulnerable_share)) %>%
   mutate(land_owned_share = land_owned_hh/(land_owned_hh+land_leased_hh + land_rights_hh)*100) %>%
