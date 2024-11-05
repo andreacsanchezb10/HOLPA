@@ -28,14 +28,14 @@ library(ggforce) # for gauge plots
 
 # Specify country being processed (specify ONE only. You will need to rerun the code to process each country)
 
-#country <- "burkina"
+country <- "burkina"
 #country <- "india"
 #country <- "laos"
 #country <- "kenya"
 #country <- "peru"
 #country <- "senegal" # formatted fieldwork csv needs saving to folder
 #country <- "tunisia"
-country <- "zimbabwe"
+#country <- "zimbabwe"
 
 # for area unit conversions
 acre_to_hectare = 0.404686
@@ -44,9 +44,12 @@ acre_to_hectare = 0.404686
 
 ref.values.data.path <- "C:/Users/sjones/CGIAR/One CGIAR - Agroecology Initiative Implementation Team - Documents/WP2 Coordination/Task2_Framework/HOLPA implementation/HOLPA_data_use/"
 
+fw_survey_mapping <- read_excel("C:/Users/sjones/CGIAR/One CGIAR - Agroecology Initiative Implementation Team - Documents/WP2 Coordination/Task2_Framework/HOLPA implementation/HOLPA_master/HOLPA_global_field_survey_20231106_mapped_to_indicators.xlsx",sheet="survey")
+fw_choices_mapping <- read_excel("C:/Users/sjones/CGIAR/One CGIAR - Agroecology Initiative Implementation Team - Documents/WP2 Coordination/Task2_Framework/HOLPA implementation/HOLPA_master/HOLPA_global_field_survey_20231106_mapped_to_indicators.xlsx",sheet="choices")
+
 global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
 
-bur.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Burkina/burkina_data_clean/bur/"
+bfa.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Burkina_Faso/burkina_faso_data_clean/bfa/"
 ind.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/India/india_data_clean/ind/"
 ken.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Kenya/kenya_data_clean/ken/"
 lao.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Laos/laos_data_clean/lao/"
@@ -73,8 +76,9 @@ ref_values_nut <- read_excel(paste0(ref.values.data.path,"HOLPA data post-proces
 
 # function to import cleaned data
 
-#country_short = "sen"
-#country.data.path = "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/sen/"
+
+#country_short = "bfa"
+#country.data.path = bfa.data.path
 
 import.data <- function(country_short,country.data.path){
   cn <- read_csv(paste0(country.data.path,country_short,"_context_format.csv"),show_col_types = FALSE)
@@ -89,54 +93,74 @@ import.data <- function(country_short,country.data.path){
     fw <- fw %>% mutate(country = country)
     fw <- melt(fw,id.vars=c("kobo_farmer_id","country"),variable.name="name_question",value.name="name_choice")
   } else{
-  fw <- melt(fw[,c(1,2,33:length(fw))],id.vars=c("kobo_farmer_id","country"),variable.name="name_question",value.name="name_choice")
-  }
-  fw <- fw %>%
-  mutate(indicator = case_when(
-    grepl("tree", name_question) ~ "biodiversity_trees_fw",
-    grepl("biodiv", name_question) ~ "biodiversity_fw",
-    grepl("1_201", name_question) ~ "biodiversity_landscape_fw", # landscape complexity
-    grepl("1_202", name_question) ~ "biodiversity_landscape_fw", # landscape complexity
-    grepl("1_203", name_question) ~ "biodiversity_landscape_fw", # landscape complexity
-    grepl("1_301", name_question) ~ "crop_health_fw",
-    grepl("1_302", name_question) ~ "crop_health_fw",
-    grepl("1_303", name_question) ~ "crop_health_fw",
-    grepl("1_111", name_question) ~ "soil_health_fw_prac", # practice
-    grepl("1_112", name_question) ~ "soil_health_fw",
-    grepl("1_113", name_question) ~ "soil_health_fw_prac", # practice
-    grepl("1_114", name_question) ~ "soil_health_fw",
-    grepl("1_115", name_question) ~ "soil_health_fw_prac", # practice
-    grepl("1_116", name_question) ~ "soil_health_fw",
-    .default = NA)) %>%
-    mutate(subindicator = case_when(
-      name_question %in% c("_1_202_1","_1_203_1","_1_204_1") ~ "landscape_pc_nat",
-      name_question %in% c("trees_count_1","trees_count_2","trees_count_3") ~ "tree_abundance",
-      name_question %in% c("trees_richness_1","trees_richness_2","trees_richness_3") ~ "tree_richness",
-      name_question %in% c("_1_111_2","_1_113_2","_1_115_3") ~ "fw_farm_practice",
-      name_question %in% c("_1_301_1","_1_302_1","_1_303_1") ~ "crop_appearance",
-      name_question %in% c("_1_301_2","_1_302_2","_1_303_2") ~ "crop_growth",
-      name_question %in% c("_1_301_3","_1_302_3","_1_303_3") ~ "crop_disease",
-      name_question %in% c("_1_301_4","_1_302_4","_1_303_4") ~ "crop_pest",
-      name_question %in% c("_1_301_5","_1_302_5","_1_303_5") ~ "crop_enemy",
-      name_question %in% c("_1_301_6","_1_302_6","_1_303_6") ~ "crop_weed",
-      name_question %in% c("_1_301_7","_1_302_7","_1_303_7") ~ "crop_natural",
-      name_question %in% c("_1_301_8","_1_302_8","_1_303_8") ~ "crop_management",
-      .default = NA))
+  fw <- melt(fw[,c(1,2,33:length(fw))],id.vars=c("kobo_farmer_id","country"),variable.name="name_question",value.name="name_choice")}
+  
+fw <- fw %>% left_join(fw_survey_mapping %>%
+                             select(-c("hint::English ((en))" , "appearance",
+                                       "relevant" , "constraint" , "choice_filter",
+                                       "calculation", "repeat_count",   
+                                       "media::image::English ((en))","required")) %>% rename(label_question  = "label::English ((en))"), by=c("name_question"="name_survey"))  %>%
+    left_join(fw_choices_mapping %>%
+                rename(label_choice  = "label::English ((en))") %>%
+                select(c("name_survey" ,"name_choice","label_choice")),
+              by=c("name_question"="name_survey","name_choice"="name_choice")) %>%
+    filter(!is.na(module)) %>%
+  filter(!(subindicator %in% c("respondent_first_name","respondent_last_name"))) %>%
+  select(kobo_farmer_id,country,module,theme,indicator,subindicator, fw_site,name_question,label_question, name_choice,label_choice, type) %>% unique()
 
-country_data <- ae %>% full_join(cn) %>% full_join(pf)  %>% full_join(fw) %>% full_join(ae_scores) %>% unique()
-
-assign(paste0(country_short,"_data"),country_data,envir=.GlobalEnv)
-assign(paste0(country_short,"_ae_scores"),ae_scores,envir=.GlobalEnv)
-assign(paste0(country_short,"_cn"),cn,envir=.GlobalEnv)
-assign(paste0(country_short,"_fw"),fw,envir=.GlobalEnv)
+  image_list <- fw %>% filter(type=="image") %>%
+    select(kobo_farmer_id,country,fw_site,name_question,label_question, name_choice)  %>% unique()
+  
+  country_data <- ae %>% full_join(cn) %>% full_join(pf)  %>% 
+    full_join(fw %>% select(-fw_site) %>% unique()) %>%
+  full_join(ae_scores) %>% unique() %>% 
+    mutate(across(where(is.character),str_trim)) %>% 
+    mutate(across(where(is.numeric),str_trim))
+  
+  assign(paste0(country_short,"_data"),country_data,envir=.GlobalEnv)
+  assign(paste0(country_short,"_ae_scores"),ae_scores,envir=.GlobalEnv)
+  assign(paste0(country_short,"_cn"),cn,envir=.GlobalEnv)
+  assign(paste0(country_short,"_fw"),fw,envir=.GlobalEnv)
+  
+  if(country == "burkina"){
+    write.csv(fw,paste0(bfa.data.path,"bfa_fieldwork_scores.csv"),row.names=FALSE)
+    write.csv(image_list,paste0(bfa.data.path,"bfa_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country=="india"){
+    write.csv(fw,paste0(ind.data.path,"ind_fieldwork_scores.csv"),row.names=FALSE)
+    write.csv(image_list,paste0(ind.data.path,"ind_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country=="laos"){
+  write.csv(fw,paste0(lao.data.path,"lao_fieldwork_scores.csv"),row.names=FALSE)
+  write.csv(image_list,paste0(lao.data.path,"lao_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country=="kenya"){
+    write.csv(fw,paste0(ken.data.path,"ken_fieldwork_scores.csv"),row.names=FALSE)
+    write.csv(image_list,paste0(ken.data.path,"ken_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country=="peru"){
+  write.csv(fw,paste0(per.data.path,"per_fieldwork_scores.csv"),row.names=FALSE)
+  write.csv(image_list,paste0(per.data.path,"per_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country=="senegal"){
+  write.csv(fw,paste0(sen.data.path,"sen_fieldwork_scores.csv"),row.names=FALSE)
+  write.csv(image_list,paste0(sen.data.path,"sen_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country=="tunisia"){
+  write.csv(fw,paste0(tun.data.path,"tun_fieldwork_scores.csv"),row.names=FALSE)
+  write.csv(image_list,paste0(tun.data.path,"tun_fieldwork_photo_list.csv"),row.names=FALSE)}
+  
+  if(country == "zimbabwe"){
+  write.csv(kpi_scores_final,paste0(zwe.data.path,"zwe_fieldwork_scores.csv"),row.names=FALSE)
+  write.csv(image_list,paste0(zwe.data.path,"zwe_fieldwork_photo_list.csv"),row.names=FALSE)}
 }
 
 set_d <- function(country){
   if(country == "burkina"){
-  import.data("bur",bur.data.path)
-  d <- bur_data
-  ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("BUR","_inputs"))
-  iso <- "BUR"
+  import.data("bfa",bfa.data.path)
+  d <- bfa_data
+  ref_values_country <- read_excel(paste0(ref.values.data.path,"HOLPA data post-processing.xlsx"),sheet=paste0("BFA","_inputs"))
+  iso <- "BFA"
   
   } 
   if(country=="india"){
@@ -345,7 +369,8 @@ ae_calc_temp <- ae_scores %>%
          indicator_order=14)
 
 ae_scores<- ae_scores %>% full_join(ae_calc_temp)
-#d <- d %>% full_join(ae_calc_temp)
+
+#d <- d %>% full_join(ae_calc_temp,by=c(kobo_farmer_id))
 
 ggplot(ae_scores, aes(y=score, x=factor(indicator,levels=unique(indicator[order(indicator_order)])), fill=factor(indicator,levels=unique(indicator[order(indicator_order)]))))+ 
   geom_boxplot()+ geom_count()+ 
@@ -410,13 +435,14 @@ temp_kpi_calc <- d %>% filter(indicator =="crop_health_fw") %>% filter(!is.na(na
   mutate(subindicator = gsub("\\_.*", "\\1", name_choice),
          score = as.numeric(gsub(".*_(*)", "\\1", name_choice)),
          label_question = gsub("^([^_]*_[^_]*_[^_]*)_.*$","\\1",name_question)) %>%
-  #select(kobo_farmer_id,country,subindicator,score) %>%
-  dcast(kobo_farmer_id+country+label_question~subindicator,value.var="score") %>%
+         #label_question = gsub(".*_.*_(.*)$","\\1",name_question)) %>%
+  mutate(subindicator = ifelse(subindicator == "apperance","appearance",subindicator )) %>% unique() %>%
+  dcast(kobo_farmer_id+country+label_question~subindicator,value.var="score",fun=median) %>%
   
-  # assign scores noting response 0 means "I am not sure, or the question is not applicable" 
-  mutate_at(c("appearance" ,    "apperance", "disease"  ,      "enemy"  ,        "growth" ,        "management"  ,   "natural", "pest"  , "weed"  ),~na_if(.,0))  %>%
+  # assign scores from 1 to 5 noting response 0 means "I am not sure, or the question is not applicable" 
+  mutate_at(c("appearance" ,    "appearance", "disease"  ,      "enemy"  ,        "growth" ,        "management"  ,   "natural", "pest"  , "weed"  ),~na_if(.,0))  %>%
   rowwise() %>%
-  mutate(score = median(c(appearance,    apperance, disease ,      enemy  ,   growth ,        management ,   natural, pest  , weed ),na.rm=T)) %>%
+  mutate(score = median(c(appearance , disease ,      enemy  ,   growth ,        management ,   natural, pest  , weed ),na.rm=T)) %>%
   group_by(kobo_farmer_id,country) %>%
   summarise(score = median(score,na.rm=T)) %>%
   
@@ -1454,6 +1480,12 @@ indicators_scaled <- data.frame(kobo_farmer_id=as.numeric(NA),
                       score_scaled=as.numeric(NA))
 indicators_scaled <- indicators_scaled[-1,]
 
+#data = kpi_scores
+#ind="kpi11_hh_income_v_mean"
+#method="set"
+#min=0.5
+#max=2 
+
 indicator_scaling <- function(data, ind, method, min=NA,max=NA){
   data_subset <- data %>% filter(indicator %in% c(ind))
   # no scaling needed (e.g. scores in %)
@@ -1476,7 +1508,7 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
   if(method =="set"){
   ind_min <- as.numeric(min)
   ind_max <- as.numeric(max)
-  data_subset <- data_subset %>% mutate(score = ifelse(score < ind_min,ind_min,ifelse(score>ind_max, ind_max, score)))
+  data_subset <- data_subset %>% mutate(score = ifelse(score <= ind_min,ind_min,ifelse(score>=ind_max, ind_max, score)))
   data_subset$score_scaled <- (data_subset$score - ind_min)/(ind_max - ind_min)*100
   }
   data_subset <- data_subset %>% select(c("kobo_farmer_id","theme", "indicator","indicator_order","subindicator","subindicator_label", "score", "score_scaled"))
@@ -1489,16 +1521,19 @@ indicator_scaling(kpi_scores, ind="kpi1_crop_health",method="none")
 indicator_scaling(kpi_scores, ind="kpi1b_crop_health_fieldwork",method="set", min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi2_animal_health", method="set", min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi3_soil_health",method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi4_nutrient_use",method="set",min=0,max=1) 
+indicator_scaling(kpi_scores, ind="kpi4_nutrient_use",method="set",min=0.5,max=2) 
 indicator_scaling(kpi_scores, ind="kpi5a_animal_diversity", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi5b_tree_diversity", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi6a_abd_crop_richness_index", method="none") 
 indicator_scaling(kpi_scores, ind="kpi6b_abd_variety_diversity", method="set" ,min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi7_landscape_complexity ", method="set" ,min=1,max=5)
+indicator_scaling(kpi_scores, ind="kpi7_landscape_complexity", method="set" ,min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi8_climate_mitigation", method="set" ,min=1,max=5) 
 indicator_scaling(kpi_scores, ind="kpi9_avoided_water_stress", method="none")
 indicator_scaling(kpi_scores, ind="kpi10_energy_use", method="set" ,min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi11_hh_income_v_mean",method="set",min=0,max=1) 
+indicator_scaling(kpi_scores, ind="kpi11_hh_income_v_mean", method="set", min=0.5, max=2) 
+indicator_scaling(kpi_scores, ind="kpi11b_hh_income_stability",method="set",min=1,max=5) 
+indicator_scaling(kpi_scores, ind="kpi11c_hh_income_v_expenditures",method="set",min=0,max=1) 
+indicator_scaling(kpi_scores, ind="kpi11d_hh_income_sufficiency",method="set",min=1,max=5) 
 #indicator_scaling(data = d, ind="kpi12", method="none") # CHECK
 #indicator_scaling(data = d, ind="kpi13", method="none") # CHECK
 #indicator_scaling(data = d, ind="kpi14", method="none") # CHECK
@@ -1509,7 +1544,7 @@ indicator_scaling(kpi_scores, ind="kpi17b_land_tenure", method="none")
 indicator_scaling(kpi_scores, ind="kpi18_human_wellbeing", method="set",min=1, max=5)
 
 # Add scaled scores to main dataset
-kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled)  %>%
+kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled %>% select(-score))  %>%
   mutate(kpi_order = gsub("(.+?)(\\_.*)","\\1", indicator)) %>%
   mutate(kpi_label= paste0(gsub("(.+?)(\\_.*)","\\1", indicator),": ",subindicator_label)) %>%
      mutate(kpi_label_short = case_when(
@@ -1527,31 +1562,44 @@ kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled)  %>%
         indicator %in% c("kpi9_avoided_water_stress" ) ~ "kpi9 avoided ag water stress (% months)",
         indicator %in% c("kpi10_energy_use" ) ~ "kpi10 energy sustainability (qual)",
         indicator %in% c("kpi11_hh_income_v_mean" ) ~ "kpi11a HH income (versus average)",
+       indicator %in% c("kpi11b_hh_income_stability" ) ~ "kpi11b HH income stability (qual)",
+       indicator %in% c("kpi11c_hh_income_v_expenditures" ) ~ "kpi11c HH income versus expenditures (binary)",
+       indicator %in% c("kpi11d_hh_income_sufficiency" ) ~ "kpi11d HH income sufficiency (qual)",
         indicator %in% c("kpi15_diet_diversity" ) ~ "kpi15 diet diversity (MFGD)",
         indicator %in% c("kpi16_farmer_agency" ) ~ "kpi16 farmer agency (qual)",
         indicator %in% c("kpi17a_land_tenure" ) ~ "kpi17a land security (qual)",
         indicator %in% c("kpi17b_land_tenure" ) ~ "kpi17b land security (% owned)",
         indicator %in% c("kpi18_human_wellbeing" ) ~ "kpi18 human wellbeing (qual)", .default=indicator))  %>%
      mutate(kpi_label = factor(kpi_label, levels=unique(kpi_label[order(indicator_order)]))) %>%
-  select(c("kobo_farmer_id","country","module", "theme", "indicator","indicator_order","kpi_order", "kpi_label","kpi_label_short", "subindicator","subindicator_label", "score", "score_scaled"))
+  select(c("kobo_farmer_id","country","module", "theme", "indicator","indicator_order","kpi_order", "kpi_label","kpi_label_short", "subindicator","subindicator_label", "score", "score_scaled")) %>% 
+  filter(!is.na(module))
 
 # Save data for re-use in next script
 export_kpi_scores <- function(country){
   if(country == "burkina"){
-  write.csv(kpi_scores_final,paste0(bur.data.path,"bur_kpi_scores.csv"),row.names=FALSE) }
+    write.csv(d,paste0(bfa.data.path,"bfa_data.csv"),row.names=FALSE)
+    write.csv(kpi_scores_final,paste0(bfa.data.path,"bfa_kpi_scores.csv"),row.names=FALSE) }
   if(country=="india"){
+    write.csv(d,paste0(ind.data.path,"ind_data.csv"),row.names=FALSE)
     write.csv(kpi_scores_final,paste0(ind.data.path,"ind_kpi_scores.csv"),row.names=FALSE)}
   if(country=="laos"){
+    write.csv(d,paste0(lao.data.path,"lao_data.csv"),row.names=FALSE)
     write.csv(kpi_scores_final,paste0(lao.data.path,"lao_kpi_scores.csv"),row.names=FALSE)}
   if(country=="kenya"){
-write.csv(kpi_scores_final,paste0(ken.data.path,"ken_kpi_scores.csv"),row.names=FALSE)}
+    write.csv(d,paste0(ken.data.path,"ken_data.csv"),row.names=FALSE)
+    write.csv(kpi_scores_final,paste0(ken.data.path,"ken_kpi_scores.csv"),row.names=FALSE)}
   if(country=="peru"){
-write.csv(kpi_scores_final,paste0(per.data.path,"per_kpi_scores.csv"),row.names=FALSE)}
+    write.csv(d,paste0(per.data.path,"per_data.csv"),row.names=FALSE)
+    write.csv(kpi_scores_final,paste0(per.data.path,"per_kpi_scores.csv"),row.names=FALSE)}
   if(country=="senegal"){
+    write.csv(d,paste0(sen.data.path,"sen_data.csv"),row.names=FALSE)
     write.csv(kpi_scores_final,paste0(sen.data.path,"sen_kpi_scores.csv"),row.names=FALSE)  }
-  if(country=="tunisia"){write.csv(kpi_scores_final,paste0(tun.data.path,"tun_kpi_scores.csv"),row.names=FALSE)
+  if(country=="tunisia"){
+    write.csv(d,paste0(tun.data.path,"tun_data.csv"),row.names=FALSE)
+    write.csv(kpi_scores_final,paste0(tun.data.path,"tun_kpi_scores.csv"),row.names=FALSE)
   }
   if(country == "zimbabwe"){
+    write.csv(d,paste0(zwe.data.path,"zwe_data.csv"),row.names=FALSE)
     write.csv(kpi_scores_final,paste0(zwe.data.path,"zwe_kpi_scores.csv"),row.names=FALSE)
   }
 }
@@ -1565,196 +1613,6 @@ kpi_all_gauge(kpi_scores_final)
 # Bar chart with errorbars with scaled indicator scores
 kpi_all_barchart(kpi_scores_final)
 ggsave(paste0(global.data.path,"figures/kpi_scaled_barplot_",country,".tif"),width=7,height=5.5,units="in")
-
-```
-
-## Extract and append context indicators of interest 
-
-HOLPA collects data on multiple context, agroecology, and performance themes. For the context module, there are several indicators per theme and several measurements per indicator. We need to separate and name the indicators and measurements to include them into the analysis.
-
-```{r context variables, include=TRUE, echo=FALSE}
-
-# ERRORS:
-#temp <- temp %>% filter(kobo_farmer_id == 274186917) # MISSING from context (no district information)
-# 	name_question == _4_1_1_6_1 is wrongly assigned to context section
-
-#### Location ####
-
-cn_info <- d %>% filter(module=="context") %>%
-  select(kobo_farmer_id, country, module, theme, indicator, indicator_order, subindicator, subindicator_label, name_question,name_question_recla, label_question, name_choice,label_choice, type, score ) %>%
-  mutate(subindicator = ifelse(label_question == "Please specify the COUNTRY","Country",subindicator),
-         subindicator = ifelse(label_question == "Please specify the LOCALITY or DISTRICT","District",subindicator),
-         subindicator = ifelse(label_question == "Please specify the VILLAGE","Village",subindicator),
-         subindicator = ifelse(label_question == "Please specify the GPS point","GPS",subindicator)) %>%
-  #mutate(score_cn_text = case_when(subindicator %in% c("Country","District","Village","GPS")~name_choice,.default=NA))
-  mutate(score_cn_text = case_when(type %in% c("text")~name_choice,.default=NA)) %>%
-  mutate(score_cn_num = case_when(type %in% c("integer","decimal")~name_choice,.default=NA))
-  
-cn_info_text <- cn_info %>%
-  filter(!is.na(score_cn_text)) %>%
-  group_by(kobo_farmer_id,subindicator) %>%
-  mutate(subindicator_count = n()) %>%
-  mutate(subindicator = ifelse(subindicator_count >1,label_question,subindicator)) %>%
-  dcast(kobo_farmer_id+country~subindicator,value.var="score_cn_text")
-
-# I NEED TO CONTINUE IMPROVING CODE HERE ####
-
-#### Access to markets and more ####
-# This is a select one question
-#temp <- d[d$indicator =="accessibility",] 
-#sort(unique(temp$label_question))
-
-#### Age community ####
-#temp <- d[d$indicator =="age_community",] 
-d <- d %>%
-  mutate(subindicator = ifelse(label_question == "For how many years have you lived in this community?","Time_in_community",subindicator)) %>%
-  mutate(score = ifelse(subindicator=="Time_in_community",as.numeric(name_choice),score))
-
-#### Age DOB ####
-#temp <- d[d$indicator =="age_dob",] 
-d <- d %>%
-  mutate(subindicator = ifelse(label_question == "Year of birth","Age_years",subindicator)) %>%
-  mutate(score = ifelse(subindicator=="Age_years",as.numeric(name_choice),score))
-
-#### Agroecology understanding ####
-#temp <- d_cn[d_cn$indicator =="agroecology_knowledge",] 
-d <- d %>%
-  mutate(subindicator = ifelse(label_question == "Do you know what Agroecology means?","Ae_understanding",subindicator)) %>%
-  mutate(subindicator_label = ifelse(name_choice=="0" & subindicator == "Ae_understanding","No",
-                                     ifelse(name_choice=="1" & subindicator == "Ae_understanding","Some",
-                                            ifelse(name_choice=="2" & subindicator == "Ae_understanding","Yes",subindicator_label)))) %>%
-    mutate(score = ifelse(subindicator=="Ae_understanding",as.numeric(name_choice), score)) 
-
-#### Insurance against losses ####
-#temp <- d[d$indicator =="climate_resilience",] 
-d <- d %>%
-  mutate(subindicator = ifelse(label_question == "Do you have insurance against agricultural losses?","Insurance_ag_losses",subindicator)) %>%
-  mutate(subindicator= ifelse(label_question=="What is covered, e.g. losses to crops/livestock/buildings from weather events, pest outbreaks, market shocks?","Insurance_ag_losses_detail",subindicator)) %>%
-  mutate(subindicator_label = ifelse(name_choice=="0" & subindicator == "Insurance_ag_losses","No",
-                                     ifelse(name_choice=="1" & subindicator == "Insurance_ag_losses","Some",
-                                            ifelse(name_choice=="2" & subindicator == "Insurance_ag_losses","Yes",subindicator_label)))) %>%
-    mutate(score = ifelse(subindicator=="Insurance_ag_losses",as.numeric(name_choice),score))
-           
-#### CONTINUE HERE to sort context variables as needed ####
-# credit_access
-# education
-# literacy
-# gender
-# household_labour
-# income (this is a performance indicator too)
-# training
-# membership
-# personal_factors
-# societal_factor
-# climate_rainfall_change
-# climate_temp
-
-
-```
-
-# Compare kpi scores across households in different contexts and different levels of agroecology adherence
-```{r kpi comparisons across content and ae, include=TRUE, echo=FALSE}
-
-# Merge kpi with cn and ae datasets in wide format for visualisation
-
-ae_scores_cn <- ae_scores %>% full_join(cn_info_text)
-
-ae_scores_wide <- ae_scores %>%
-  filter(!is.na(score)) %>%
-  dcast(kobo_farmer_id~indicator,value.var="score")
-
-kpi_scores_full <- kpi_scores_final %>% full_join(cn_info_text) %>% full_join(ae_scores_wide) 
-  
-# Make figures of ae and kpi scores split by village, district and other context variables
-
-ggplot(ae_scores_cn, aes(y=score, x=factor(indicator,levels=unique(indicator[order(indicator_order)])), fill=District))+ 
-  geom_boxplot()+ #geom_count()+ 
-  ggtitle(paste0("Agroecology scores for ",country," (n = ",length(unique(ae_scores$kobo_farmer_id)), ")")) + 
-  labs(x="")+ 
-  scale_fill_manual(values=terrain.colors(10))+
-  theme_bw()+ theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),plot.title=element_text(hjust=0.5))
-
-#ggsave(paste0(global.data.path,"figures/1_agroecology_scores_by_village_",country,".tif"),width=9,height=6,units="in")
-
-kpi_all_boxplot_context <- function(data,context_var,var_num_classes){
-   data <- data %>%
-    mutate(subindicator_label = factor(subindicator_label,levels=unique(subindicator_label[order(indicator_order)]))) %>%
-     mutate(kpi_label= paste0(gsub("(.+?)(\\_.*)","\\1", indicator),": ",subindicator_label)) %>%
-     mutate(kpi_label = factor(kpi_label, levels=unique(kpi_label[order(indicator_order)])))
-     
-  g <- ggplot(data %>% filter(module %in% c("performance kpi") & !is.na(score)), aes(y=score,x=factor(indicator,levels=unique(indicator[order(indicator_order)])), fill=Village))+ # geom_histogram()+  
-  ggtitle(paste0("KPIs for ",country," (n = ",length(unique(ae_scores$kobo_farmer_id)), ")"))+labs(x="")+
-  geom_boxplot()+  geom_count()+ scale_fill_manual(values=terrain.colors(var_num_classes))+
-  #facet_wrap(~indicator, scale="free")+
-    facet_wrap(~factor(indicator,levels=unique(indicator[order(indicator_order)])),scale="free",strip.position=c("bottom"))+
-    theme_classic()+ theme(plot.title = element_text(hjust=0.5), axis.text.x = element_blank(), strip.background = element_blank(),strip.placement = c("outside"))
-  print(g)
-}
-
-kpi_all_boxplot_context(kpi_scores_cn,"Village",7)
-ggsave(paste0(global.data.path,"figures/kpi_boxplots_by_village_",country,".tif"),width=12,height=7,units="in")
-
-# Compare kpi scores across HH with different AE adherence
-
-data <- kpi_scores_full %>%
-     filter(!is.na(theme))  %>%
-  mutate(score_ae_overall_classes = case_when(score_ae_overall<=2~"Mainly not AE",
-                                              score_ae_overall<=3~"Weak AE",
-                                              score_ae_overall<=4~"Moderate AE",
-                                              score_ae_overall<=5~"Strong AE",
-                                              .default="Check")) %>%
-     group_by(theme,indicator,indicator_order,score_ae_overall_classes) %>%
-     summarise(kpi_score_scaled_mean = mean(score_scaled,na.rm=TRUE),
-               kpi_score_scaled_sd = sd(score_scaled,na.rm=TRUE),
-               kpi_score_scaled_med = median(score_scaled,na.rm=TRUE),
-               n = n()) %>%
-     arrange(indicator_order) %>%
-     mutate(indicator = factor(indicator, levels = unique(indicator[order(as.numeric(indicator_order))])),
-            score_ae_overall_classes = factor(score_ae_overall_classes, levels = c("Mainly not AE","Weak AE","Moderate AE","Strong AE")))
-
-ggplot(data %>% filter(!is.na(kpi_score_scaled_mean)& !is.na(score_ae_overall_classes)), aes(x=kpi_score_scaled_mean,y=reorder(indicator,kpi_score_scaled_mean),fill=score_ae_overall_classes))+
-    geom_col(width=0.5,show.legend=TRUE, position=position_dodge()) + 
-    ggtitle(paste0("KPIs for ",country))+labs(x="KPI score (scaled from 0-100)")+
-    coord_cartesian(expand=c(0),clip="off")+
-    scale_x_continuous(breaks=seq(0,100,20),limits=c(0,110))+
-    scale_fill_manual(values=terrain.colors(5))+
-    scale_colour_manual(values=terrain.colors(5))+
-    theme_classic()+ 
-    theme(plot.title = element_text(hjust=0.5),
-          axis.title.y=element_blank(), 
-          legend.position="bottom",
-          legend.title=element_blank())
-
-ggplot(data %>% filter(!is.na(kpi_score_scaled_mean)& !is.na(score_ae_overall_classes)), aes(x=score_ae_overall_classes,y=reorder(indicator,kpi_score_scaled_mean),fill=kpi_score_scaled_mean ))+
-    geom_tile(show.legend=TRUE) + 
-    ggtitle(paste0("KPIs for ",country))+labs(x="KPI score (scaled from 0-100)")+
-    coord_cartesian(expand=c(0),clip="off")+
-    #scale_x_continuous(breaks=seq(0,100,20),limits=c(0,110))+
-    scale_fill_gradientn(breaks=seq(0,100,20),colours =c("steelblue", "gold", "forestgreen"))+ #low="purple",mid = "gold",high="forestgreen")+
-    theme_classic()+ 
-    theme(plot.title = element_text(hjust=0.5),
-          axis.title.y=element_blank(), 
-          legend.position="bottom",
-          legend.title=element_blank())
-
-ggsave(paste0(global.data.path,"figures/kpi_tile_by_ae_score_",country,".tif"),width=7,height=6,units="in")
-
-ggplot(data %>% filter(!is.na(kpi_score_scaled_mean) & !is.na(score_ae_overall_classes)), aes(x=kpi_score_scaled_mean,y=reorder(indicator,kpi_score_scaled_mean),fill=score_ae_overall_classes))+
-    geom_point(aes(colour=score_ae_overall_classes),alpha=0.7, size=4) + #size=n
-  #geom_errorbar(aes(xmin=kpi_score_scaled_mean - kpi_score_scaled_sd,xmax=kpi_score_scaled_mean + kpi_score_scaled_sd))+
-  #geom_smooth(aes(group=score_ae_overall_classes,colour=score_ae_overall_classes),method="loess",show.legend=FALSE)+
-    ggtitle(paste0("KPIs for ",country))+labs(x="KPI score (scaled from 0-100)")+
-    coord_cartesian(expand=c(0),clip="off")+
-    scale_x_continuous(breaks=seq(0,100,20),limits=c(0,110))+
-    scale_fill_manual(values=terrain.colors(5))+
-    scale_colour_manual(values=terrain.colors(5))+
-    theme_classic()+ 
-    theme(plot.title = element_text(hjust=0.5),
-          axis.title.y=element_blank(), 
-          legend.position="bottom",
-          legend.title=element_blank())
-
-
 
 ```
 
