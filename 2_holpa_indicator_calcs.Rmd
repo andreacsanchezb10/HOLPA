@@ -308,13 +308,14 @@ kpi_all_gauge <- function(data){
      filter(!is.na(theme)) %>%
     mutate(subindicator_label = factor(subindicator_label,levels=unique(subindicator_label[order(indicator_order)]))) %>%
      mutate(score_scaled = ifelse(between(score_scaled,0,100), score_scaled,NA)) %>%
-     group_by(theme,indicator,indicator_order,kpi_label, kpi_label_short) %>%
+     group_by(theme,indicator,indicator_order,kpi_order, kpi_label, kpi_label_short) %>%
      summarise(score_scaled_mean = mean(score_scaled,na.rm=TRUE),
                score_scaled_sd = sd(score_scaled,na.rm=TRUE),
                score_scaled_med = median(score_scaled,na.rm=TRUE)) %>%
      mutate(score_scaled_mean_unattained = ifelse(between(score_scaled_mean,0,100), 100-score_scaled_mean,NA)) %>% 
      #arrange(kpi_order) %>%
      mutate(indicator = factor(indicator, levels = unique(indicator[order(indicator_order)]))) %>%
+     mutate(kpi_order = factor(kpi_order,levels=unique(kpi_order[order(indicator_order)]))) %>%
      mutate(kpi_label_short = factor(str_wrap(kpi_label_short,20), levels=unique(str_wrap(kpi_label_short,20)[order(indicator_order)])))
      
   g <- ggplot(data %>% filter(!is.na(score_scaled_mean)))+
@@ -337,7 +338,8 @@ kpi_all_gauge <- function(data){
     scale_fill_manual(values=col.theme)+
     scale_colour_manual(values=col.theme)+
     # add labels in centre
-    facet_wrap(~kpi_label_short, strip.position=c("bottom"))+
+    facet_wrap(~factor(kpi_order,levels=unique(kpi_order[order(indicator_order)])), strip.position=c("bottom"))+
+    #facet_wrap(~factor(kpi_label_short, levels=unique(kpi_label_short[order(indicator_order)])), strip.position=c("bottom"))+
     theme_void()+ 
       theme(plot.title = element_text(hjust=0.5), strip.background = element_blank())
   print(g)
@@ -1351,11 +1353,11 @@ temp_kpi_calc3 <- temp_kpi_calc2 %>%
                             ifelse(yield_to_ref_ratio == 0, NA, (1- yield_to_ref_ratio)*100))) %>% filter(!is.na(yield_gap))
 
 temp_kpi_calc <- temp_kpi_calc3 %>%
-  mutate(score = yield_gap) %>%
-  select(kobo_farmer_id,country,score) %>%
+  group_by(kobo_farmer_id,country) %>%
+  summarise(score = mean(yield_gap, na.rm=TRUE)) %>%
   mutate(indicator = "kpi12_yield_gap",
        subindicator = "yield_gap",
-       subindicator_label = "Yield gap from 0% to 99%",
+       subindicator_label = "Yield gap from 0% (no gap) to 99% (yields at 1% of potential)",
        indicator_order = 12)
 
 kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
@@ -1471,6 +1473,217 @@ kpi_histogram(kpi_scores,"kpi13_labour_productivity")
 #kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI14 climate resilience ####
+sort(unique(d$indicator))
+temp <- d %>% filter(grepl("climate_resilience", indicator))
+sort(unique(temp$label_question))
+
+# %in% c( "climate_resilience_adaptative_capacity" , "climate_resilience_assets", "climate_resilience_basic_services" , "climate_resilience_shocks", "climate_resilience_social_network"  )
+
+temp_kpi_calc <- d %>% filter(grepl("climate_resilience", indicator)) %>%
+  
+                              # ABS - Access to basic services pillar
+  mutate(subindicator = case_when(grepl("Does your household have the following services", label_question) | name_question %in% c("_4_1_5_1_1","_4_1_5_1_2","_4_1_5_1_3", "_4_1_5_1_4", "_4_1_5_1_5", "_4_1_5_1_6") ~ "ABS_service_in_hh",
+                                  
+                                  grepl("How far (one way) is the household from", label_question) | name_question %in% c("_4_1_5_2_1" ,"_4_1_5_2_1_1", "_4_1_5_2_1_2", "_4_1_5_2_2","_4_1_5_2_2_1", "_4_1_5_2_2_2", "_4_1_5_2_3", "_4_1_5_2_3_1", "_4_1_5_2_3_2", "_4_1_5_2_4", "_4_1_5_2_4_1", "_4_1_5_2_4_2", "_4_1_5_2_5", "_4_1_5_2_5_1", "_4_1_5_2_5_2", "_4_1_5_2_6", "_4_1_5_2_6_1", "_4_1_5_2_6_2",  "_4_1_5_2_7", "_4_1_5_2_7_1", "_4_1_5_2_7_2") ~ "ABS_service_access",
+  
+                                  # AST - Assets pillar
+                                  grepl("How many of the following assets do household members own?", label_question) | grepl("Other asset (please specify)", label_question) | name_question %in% c("_4_1_4_1","_4_1_4_2","_4_1_4_3","_4_1_4_4", "_4_1_4_5", "_4_1_4_6", "_4_1_4_7", "_4_1_4_8", "_4_1_4_9", "_4_1_4_10", "_4_1_4_11", "_4_1_4_11", "_4_1_4_12", "_4_1_4_13", "_4_1_4_13_1") ~ "AST_assets",
+                                  
+                                  # SSN - Social safety nets pillar
+                                  #  Not used: 
+                                  #"Do any children in the household attend school?" 
+                                  # NOTE: No question about how many days attended in last 4 weeks...
+                                  grepl("On average, how many free schools meals were received per week over the last 4 weeks of schools attendance", label_question) | name_question %in% c("_4_1_6_1_1") ~ "SSN_school_meals",
+                                  grepl("Would any of the following individuals or organisations provide your household support", label_question) | name_question %in% c("_4_1_3_2_1","_4_1_3_2_2","_4_1_3_2_3","_4_1_3_2_4","_4_1_3_2_5","_4_1_3_2_6","_4_1_3_2_7", "_4_1_3_2_8","_4_1_3_2_9","_4_1_3_2_10","_4_1_3_2_11","_4_1_3_2_12","_4_1_3_2_13","_4_1_3_2_13_1") ~ "SSN_hh_support",
+                                    # AC - Adaptive capacity pillar
+                                  grepl("Can you read and write in any language?", label_question) | name_question %in% c("_4_1_1_1") ~ "AC_literacy",
+                                  #  Not used: "What is the highest level of school you attended?"
+                                  grepl("Please indicate the highest level of school attended by most" , label_question) | name_question %in% c("_4_1_1_2","_4_1_1_3") ~ "AC_highest_school_hh_working_age",
+                                   grepl("Training in" , label_question) | label_question == "Other training (please specify)" | name_question %in% c("_4_1_1_4_1","_4_1_1_4_3","_4_1_1_4_4") ~ "AC_training_hh",
+                                  label_question %in% c("Please select all the sources of income for your household?","Please specify other source of income"  ) | name_question %in% c("_2_4_1","_2_4_1_2") ~ "AC_income_sources",
+                                  label_question %in% c("In the past 7 days, what percentage of the household's income was used for buying food" ) | name_question %in% c("_4_1_2_2") ~ "AC_income_on_food",
+                                  label_question %in% c( "In the past 5 years, has your household needed credit to support investment in your farming business, but was unable to obtain it?" ) | name_question %in% c("_4_1_1_5") ~ "AC_access_to_credit",
+                                  # not used: "Have your farm/household fully paid off the credit?"  
+                                  # note, next question only asked if credit remains unpaid
+                                  label_question %in% c( "How do you feel about your farm/household's ability to meet credit repayments now and until the loans are fully repaid?" ) | name_question %in% c("_4_1_1_5_4") ~ "AC_credit_repayments",
+                                   label_question %in% c( "Do you have insurance against agricultural losses?"  ) | name_question %in% c("_4_1_1_6") ~ "AC_ag_insurance",
+                                   label_question %in% c( "Do you have access to subsidies for agricultural inputs?" , "Can you specify which subsidy?"   ) | name_question %in% c("_4_1_1_7") ~ "AC_ag_subsidies",
+                                  # Alternative to RIMA:
+                                  label_question %in% c(  "How would you rate the capacity of the household's income and agricultural production to recover from shocks/perturbations?" ) | name_question %in% c("_2_6_1_3") ~ "Climate_resilience_self_assessed",
+                                  label_question %in% c(  "In the last 12 months, what were the most severe shocks faced by the household","What did the household members do to cope with the shocks" ) | name_question %in% c("_4_1_3_1/1") | name_question_recla %in% c("_4_1_3_1", "_4_1_3_1_2") ~ "Shocks_last_12_months",.default=NA)) %>% filter(!is.na(subindicator)) 
+
+# RIMA ABS - Access pillar
+temp_kpi_calc <- temp_kpi_calc %>% 
+  mutate(subindicator = case_when(grepl("Please select the unit you would like to use", label_question)~"ABS_service_access_unit",
+                                 grepl("State the main mode of transport", label_question)~"ABS_service_access_transport",
+                                 .default=subindicator)) %>%
+  mutate(index = case_when(grepl("AGRICULTURAL/CROPS MARKET",label_question)~"crop_market",
+                           grepl("FRESHWATER SOURCE",label_question)~"freshwater",
+                           grepl("LIVESTOCK MARKET",label_question)~"livestock_market",
+                           grepl("PRIMARY SCHOOL",label_question)~"school",
+                           grepl("PUBLIC HOSPITAL",label_question)~"hospital",
+                           grepl("PUBLIC TRANSPORT",label_question)~"public_transport",
+                           grepl("WELL-MAINTAINED ROAD",label_question)~"road",
+                           .default=subindicator))
+
+ABS <- temp_kpi_calc  %>% filter(subindicator %in% c("ABS_service_access", "ABS_service_access_unit", "ABS_service_access_transport"))  %>%  
+  dcast(kobo_farmer_id+country+index~subindicator,value.var="name_choice") %>%
+  mutate(ABS_service_access = as.numeric(ABS_service_access)) %>%
+  mutate(ABS_service_access_walking = case_when(ABS_service_access_transport %in% c("motobike","car")~ABS_service_access*10, # assumes car speed of 50km/h and walking speed of 5 km/h  
+                                                ABS_service_access_transport %in% c("cycling")~ABS_service_access*3, # assumes bike speed of 15km/h and walking speed of 5 km/h
+                                                ABS_service_access_transport %in% c("horse","donkey")~ABS_service_access*2, # assumes horse speed of 10km/h and walking speed of 5 km/h
+                                                .default=ABS_service_access)) %>%
+    mutate(ABS_service_access_walking_score = case_when(ABS_service_access_walking < 5 ~ 5,
+                           ABS_service_access_walking < 20 ~ 2.5,
+                           ABS_service_access_walking >=20 ~ 0,
+                           .default=NA)) %>%
+  group_by(kobo_farmer_id,country) %>% 
+  mutate(ABS_service_access_walking_score = sum(ABS_service_access_walking_score)/7) %>%
+  select(kobo_farmer_id,country,ABS_service_access_walking_score) %>% unique() %>%
+  full_join(temp_kpi_calc  %>% filter(subindicator %in% c("ABS_service_in_hh"))  %>% 
+  mutate(name_choice = as.numeric(name_choice)) %>%
+  dcast(kobo_farmer_id~subindicator,value.var="name_choice",sum) %>%
+    mutate(ABS_service_in_hh_score = case_when(ABS_service_in_hh >=3~5,
+                                               ABS_service_in_hh >=1 & ABS_service_in_hh<3~2.5,
+                                               ABS_service_in_hh <1~0,
+                                               .default=NA)) %>% select(-ABS_service_in_hh), 
+  by=c("kobo_farmer_id")) %>%
+  group_by(kobo_farmer_id,country) %>%
+  summarise(score_ABS = sum(ABS_service_in_hh_score,ABS_service_access_walking_score)/2)
+
+# RIMA AST - Assets pillar
+
+temp_kpi_calc <- temp_kpi_calc %>% 
+  mutate(subindicator = case_when(grepl("Other asset (please specify)", label_question) | name_question == "_4_1_4_13" ~"ABS_assets_other",.default=subindicator))
+
+AST <- temp_kpi_calc  %>% filter(subindicator %in% c("AST_assets")) %>%
+  mutate(name_choice = as.numeric(name_choice)) %>%
+  dcast(kobo_farmer_id+country~subindicator,value.var="name_choice",sum) %>%
+  mutate(score_AST = case_when(AST_assets >=5~5,
+                                      AST_assets >=2 & AST_assets <5 ~ 2.5,
+                                      AST_assets <2 ~ 0, .default=NA)) %>% select(-AST_assets)
+  
+# RIMA SSN - Social safety nets pillar
+
+SSN <- temp_kpi_calc  %>% filter(subindicator %in% c("SSN_school_meals")) %>%
+    mutate(name_choice = as.numeric(name_choice)) %>%
+  dcast(kobo_farmer_id+country~subindicator,value.var="name_choice",mean) %>%
+  rename(SSN_school_meals_score = SSN_school_meals) %>%
+  full_join(temp_kpi_calc  %>% filter(subindicator %in% c("SSN_hh_support")) %>%
+  mutate(name_choice = ifelse(name_choice %in% c("Church","church"),"1",name_choice)) %>%
+  #sort(unique(SSN$name_choice)) #sort(unique(SSN$label_question))
+# "I don't know" and responses to "Other" are recoded as NA, which produces a warning - this can be ignored
+  mutate(name_choice = as.numeric(name_choice)) %>%
+  dcast(kobo_farmer_id+country~subindicator,value.var="name_choice",sum) %>%
+  mutate(SSN_hh_support_score = case_when(SSN_hh_support >=3~5,
+                                      SSN_hh_support >=1 & SSN_hh_support <3 ~ 2.5,
+                                      SSN_hh_support <1 ~ 0, .default=0)) %>% select(-SSN_hh_support),
+  by=c("kobo_farmer_id","country")) %>%
+  group_by(kobo_farmer_id,country) %>%
+  summarise(score_SSN = sum(SSN_hh_support_score,SSN_school_meals_score, na.rm=TRUE)/2)
+
+# RIMA AC - Adaptive capacity pillar
+
+AC <- temp_kpi_calc  %>% filter(subindicator %in% c("AC_literacy")) %>%
+  mutate(name_choice = ifelse(name_choice %in% c("777","999","5555","9999"),0,name_choice)) %>%
+  mutate(AC_literacy_score = case_when(name_choice %in% c("3")| label_choice %in% c("Can read and write") ~ 5,
+                                       name_choice %in% c("1","2")| label_choice %in% c("Can read only", "Can write only") ~ 2.5, 
+                                        name_choice %in% c("0","777","999","5555","9999")| label_choice %in% c("Cannot read or write", "Prefer not to say") ~ 0,.default=NA)) %>%
+  select(kobo_farmer_id, country, AC_literacy_score) %>% 
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_highest_school_hh_working_age")) %>%
+  mutate(AC_highest_school_score = case_when(label_choice %in% c("Secondary","Seconday", "Higher") ~ 5,
+                                       label_choice %in% c("Primary") ~ 2.5, 
+                                       label_choice %in% c("None") ~ 0,.default=NA)) %>%
+  group_by(kobo_farmer_id, country) %>%
+  summarise(AC_highest_school_score = mean(AC_highest_school_score)),
+  by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_training_hh")) %>%
+  mutate(name_choice= as.numeric(name_choice)) %>%
+  dcast(kobo_farmer_id+country~subindicator,value.var="name_choice",sum) %>%
+  mutate(AC_training_score = ifelse(AC_training_hh >=1,5,0)),
+  by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_income_sources")) %>%
+  dcast(kobo_farmer_id+country~subindicator,value.var="name_choice",length) %>%
+  mutate(AC_income_sources_score = case_when(AC_income_sources>=3 ~ 5,
+                                             AC_income_sources>1 & AC_income_sources<3~ 2.5,
+                                             .default=0)) %>%
+    select(-AC_income_sources),
+  by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_income_on_food")) %>%
+  mutate(AC_income_on_food_scores = case_when(name_choice == "1_25"~5,
+                                              name_choice == "26_50"~3.33,
+                                              name_choice == "51_75"~1.66,
+                                              name_choice == "76_100"~0,
+                                              .default=NA)) %>%
+  select(kobo_farmer_id,country,AC_income_on_food_scores),
+    by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_access_to_credit")) %>%
+  mutate(AC_access_to_credit_score = case_when(name_choice %in% c("2") | label_choice %in% c("Yes, we needed credit and were able to obtain it.")~5,
+                                               name_choice %in% c("1","0" ) | label_choice %in% c("No, we did not need credit during that period.", "Yes, we needed credit but could not obtain it.")~0,
+                                                name_choice %in% c("3") | label_choice %in% c("Don't know / Not sure")~NA,
+                                               .default=NA)) %>%
+  select(kobo_farmer_id,country,AC_access_to_credit_score),
+    by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_credit_repayments")) %>%
+   mutate(AC_credit_repayments_score = case_when(name_choice %in% c("4") | label_choice %in% c("We are currently able to meet our loan repayments and confident that we can meet our future repayments.")~5,
+                                                 name_choice %in% c("3") | label_choice %in% c("We are currently able to meet our loan repayments, but uncertain about meeting future repayments.")~3.33,
+                                                 name_choice %in% c("2") | label_choice %in% c("We are currently not able to meet our loan repayments, but confident about meeting future repayments.")~1.66,
+                                                 name_choice %in% c("1") | label_choice %in% c("We are currently not able to meet our loan repayments and uncertain about meeting future repayments.")~0, .default=NA)) %>%
+   select(kobo_farmer_id,country, AC_credit_repayments_score),
+    by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_ag_insurance") & module=="performance") %>%
+  mutate(AC_ag_insurance_score = case_when(name_choice %in% c("1","2") | label_choice %in% c("Yes, fully covered", "Yes, partially covered")~5,
+                                           name_choice %in% c("0") | label_choice %in% c("No")~0,
+                                           .default=NA)) %>%
+   select(kobo_farmer_id,country, AC_ag_insurance_score),
+    by=c("kobo_farmer_id","country")) %>%
+  full_join(
+    temp_kpi_calc  %>% filter(subindicator %in% c("AC_ag_subsidies")) %>%
+  filter(name_question %in% c("_4_1_1_7")) %>%
+  mutate(AC_ag_subsidies_score = case_when(name_choice %in% c("0")| label_choice %in% c("No") ~0, 
+                                           name_choice %in% c("1")| label_choice %in% c("Yes") ~5, 
+                                           .default=NA)) %>%
+    select(kobo_farmer_id,country, AC_ag_subsidies_score),
+  by=c("kobo_farmer_id","country"))   %>%
+  group_by(kobo_farmer_id,country) %>%
+  summarise(score_AC = sum(AC_literacy_score,AC_highest_school_score,AC_training_hh,AC_training_score, AC_income_sources_score, AC_income_on_food_scores, AC_access_to_credit_score, AC_credit_repayments_score, AC_ag_insurance_score, AC_ag_subsidies_score, na.rm=TRUE)/10)
+                                  
+# RIMA score
+temp_kpi_calc1 <- ABS %>% left_join(AST) %>% left_join(SSN) %>% left_join(AC) %>%
+    mutate(score = sum(score_ABS, score_AST, score_SSN, score_AC,na.rm=TRUE)) %>% 
+  #mutate(score_sum = sum(score_ABS, score_AST, score_SSN, score_AC,na.rm=TRUE),#score_mean = mean(score_ABS, score_AST, score_SSN, score_AC,na.rm=TRUE))
+  select(kobo_farmer_id, country, score) %>%
+    mutate(indicator = "kpi14a_climate_resilience",
+         subindicator = "Climate_resilience_RIMA",
+         subindicator_label = "Climate resilience score from 0 (no resilience) to 20 (high resilience), based on assets, access to services, support networks, and adaptive capacity",
+         indicator_order = 14.1)
+
+# Shocks_last_12_months
+temp_kpi_calc2 <- temp_kpi_calc %>% 
+  filter(subindicator %in% c("Climate_resilience_self_assessed")) %>%
+  mutate(score = as.numeric(name_choice)) %>%
+    select(kobo_farmer_id, country, score) %>%
+    mutate(indicator = "kpi14b_climate_resilience",
+         subindicator = "Climate_resilience_shock_recovery",
+         subindicator_label = "Climate resilience score from 1 (no capacity to recover) to 5 (full recovery) in terms of income and production recovery after shocks or perturbations",
+         indicator_order = 14.2)
+  
+#temp_kpi_calc2 %>% select(subindicator,name_choice,label_choice) %>% unique()
+
+kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc1, keep=NULL) %>% full_join(temp_kpi_calc2, keep=NULL) %>%
+  mutate(module = ifelse(indicator %in% c("kpi14a_climate_resilience","kpi14b_climate_resilience"), "performance kpi",module)) %>%
+  mutate(theme = ifelse(indicator %in% c("kpi14a_climate_resilience","kpi14b_climate_resilience"), "economic",theme)) 
+
+kpi_histogram(kpi_scores,"kpi14a_climate_resilience")
+kpi_histogram(kpi_scores,"kpi14b_climate_resilience")
+#kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI15 diet quality ####
 #sort(unique(d$indicator))
@@ -1506,7 +1719,7 @@ kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
   mutate(theme = ifelse(indicator %in% c("kpi15_diet_diversity"),"social",theme)) 
 
 kpi_histogram(kpi_scores,"kpi15_diet_diversity")
-kpi_all_boxplot(kpi_scores)
+#kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI16 farmer agency ####
 #sort(unique(d$indicator))
@@ -1525,25 +1738,22 @@ temp_kpi_calc <- d %>% filter(subindicator %in% c("agency_hh_f","agency_hh_m")) 
 # Calculate indicators of interest
 temp_kpi_calc <- temp_kpi_calc %>%
     mutate_at(c("agency_hh_f","agency_hh_m"), ~as.numeric(.)) %>%
-  mutate(agency_hh = median(c(agency_hh_f,agency_hh_m),na.rm=T)) %>%
+  group_by(kobo_farmer_id, country) %>%
+  summarise(score = mean(c(agency_hh_f,agency_hh_m),na.rm=T)) %>%
   mutate(indicator = "kpi16_farmer_agency",
+         indicator_order = 16,
          subindicator = "agency_hh",
-         score = agency_hh)
+         subindicator_label = "Perceived household agency to make decisions from 1 (no power or freedom) to 5 (total power and freedom)")
 
-temp_kpi_calc <-  temp_kpi_calc %>% 
-    select(kobo_farmer_id,country,indicator,subindicator,score)
-
-kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "country", "indicator", "subindicator", "score"), keep=NULL) %>%
+kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
   mutate(module = ifelse(indicator %in% c("kpi16_farmer_agency"),"performance kpi",module))  %>%
-  mutate(subindicator_label = ifelse(indicator %in% c("kpi16_farmer_agency"),"Perceived household agency (median for men and women) to make decisions from 1 (no power or freedom) to 5 (total power and freedom)",subindicator_label)) %>%
-  mutate(indicator_order = ifelse(indicator %in% c("kpi16_farmer_agency"),16,indicator_order)) %>%
   mutate(theme = ifelse(indicator %in% c("kpi16_farmer_agency"),"social",theme)) 
 
 kpi_histogram(kpi_scores,"kpi16_farmer_agency")
-kpi_all_boxplot(kpi_scores)
+#kpi_all_boxplot(kpi_scores)
 
 #### Performance KPI17a land tenure security and KPI17b land owned as share of total used ###
-sort(unique(d$indicator))
+#sort(unique(d$indicator))
 #temp <- d %>% filter(indicator =="land_tenure_security")
 #sort(unique(temp$label_question))
 
@@ -1599,6 +1809,7 @@ temp_kpi_calc <- temp_kpi_calc %>%
 # Add this back into the main dataset
 
 temp_kpi_calc <- temp_kpi_calc %>%
+  filter(!(subindicator=="land_security_perceived")) %>%
   select(kobo_farmer_id,country,indicator,subindicator,score) %>%
   mutate(indicator = ifelse(subindicator == "land_security_perceived_weighted", "kpi17a_land_tenure", indicator)) %>%
   mutate(indicator = ifelse(subindicator=="land_owned_share","kpi17b_land_tenure",indicator)) 
@@ -1613,7 +1824,7 @@ kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "
 
 kpi_histogram(kpi_scores,"kpi17a_land_tenure")
 kpi_histogram(kpi_scores,"kpi17b_land_tenure")
-kpi_all_boxplot(kpi_scores)
+#kpi_all_boxplot(kpi_scores)
   
 ### Performance KPI18 human wellbeing ####
 #sort(unique(d$indicator))
@@ -1644,7 +1855,7 @@ d <- d %>%
 temp_kpi_calc <- d %>% filter(indicator=="wellbeing") %>%
   mutate(score = as.numeric(score)) %>%
   group_by(kobo_farmer_id, country, indicator) %>%
-  summarise(score = median(score,na.rm=TRUE)) %>%
+  summarise(score = mean(score,na.rm=TRUE)) %>%
   mutate(indicator = "kpi18_human_wellbeing",
            subindicator = "wellbeing_average")
 
@@ -1655,9 +1866,12 @@ kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, by = c("kobo_farmer_id", "
     mutate(theme = ifelse(indicator %in% c("kpi18_human_wellbeing"),"social",theme)) 
 
 kpi_histogram(kpi_scores,"kpi18_human_wellbeing")
-kpi_all_boxplot(kpi_scores)
 
-ggsave(paste0(global.data.path,"figures/kpi boxplots ",country,".tif"),width=12,height=12,units="in")
+kpi_all_boxplot(kpi_scores %>% filter(theme %in% c("agricultural","economic")))
+ggsave(paste0(global.data.path,"figures/kpi boxplots agr-eco ",country,".tif"),width=12,height=12,units="in")
+
+kpi_all_boxplot(kpi_scores %>% filter(theme %in% c("environmental","social")))
+ggsave(paste0(global.data.path,"figures/kpi boxplots env-soc ",country,".tif"),width=12,height=12,units="in")
 
 ```
 
@@ -1716,6 +1930,8 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
   rm(data, ind, method, min,max)
 }
 
+print(kpi_scores %>% select(indicator, subindicator_label) %>% unique(), n=30)
+
 indicator_scaling(kpi_scores, ind="kpi1_crop_health",method="none") 
 indicator_scaling(kpi_scores, ind="kpi1b_crop_health_fieldwork",method="set", min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi2_animal_health", method="set", min=1,max=5)
@@ -1733,9 +1949,10 @@ indicator_scaling(kpi_scores, ind="kpi11_hh_income_v_mean", method="set", min=0.
 indicator_scaling(kpi_scores, ind="kpi11b_hh_income_stability",method="set",min=1,max=5) 
 indicator_scaling(kpi_scores, ind="kpi11c_hh_income_v_expenditures",method="set",min=0,max=1) 
 indicator_scaling(kpi_scores, ind="kpi11d_hh_income_sufficiency",method="set",min=1,max=5) 
-#indicator_scaling(data = d, ind="kpi12", method="none") # CHECK
-#indicator_scaling(data = d, ind="kpi13", method="none") # CHECK
-#indicator_scaling(data = d, ind="kpi14", method="none") # CHECK
+indicator_scaling(kpi_scores, ind="kpi12_yield_gap", method="set",min=0,max=99) 
+indicator_scaling(kpi_scores, ind="kpi13_labour_productivity", method="data_driven_inverse") # used inverse so higher values are better, i.e. less labour per ha. This is hrs/yr/ha, which is an input not an output...could instead use income from agriculture divided by labour. 
+indicator_scaling(kpi_scores, ind="kpi14a_climate_resilience", method="set",min=0,max=20)
+indicator_scaling(kpi_scores, ind="kpi14b_climate_resilience",  method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi15_diet_diversity", method="set",min=0,max=10) 
 indicator_scaling(kpi_scores, ind="kpi16_farmer_agency", method="set",min=1,max=5)
 indicator_scaling(kpi_scores, ind="kpi17a_land_tenure", method="set",min=1,max=5)
@@ -1764,6 +1981,10 @@ kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled %>% select(-score
        indicator %in% c("kpi11b_hh_income_stability" ) ~ "kpi11b HH income stability (qual)",
        indicator %in% c("kpi11c_hh_income_v_expenditures" ) ~ "kpi11c HH income versus expenditures (binary)",
        indicator %in% c("kpi11d_hh_income_sufficiency" ) ~ "kpi11d HH income sufficiency (qual)",
+       indicator %in% c("kpi12_yield_gap" ) ~ "kpi12 yield gap (%)",
+       indicator %in% c("kpi13_labour_productivity" ) ~ "kpi13 labour input (hrs/yr/ha)",
+       indicator %in% c("kpi14a_climate_resilience" ) ~ "kpi14a climate resilience (RIMA)", 
+       indicator %in% c("kpi14b_climate_resilience" ) ~ "kpi14b recovery after shocks (qual)", 
         indicator %in% c("kpi15_diet_diversity" ) ~ "kpi15 diet diversity (MFGD)",
         indicator %in% c("kpi16_farmer_agency" ) ~ "kpi16 farmer agency (qual)",
         indicator %in% c("kpi17a_land_tenure" ) ~ "kpi17a land security (qual)",
@@ -1777,29 +1998,29 @@ kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled %>% select(-score
 export_kpi_scores <- function(country){
   if(country == "burkina"){
     write.csv(d,paste0(bfa.data.path,"bfa_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(bfa.data.path,"bfa_kpi_scores.csv"),row.names=FALSE) }
+    write.csv(kpi_scores_final,paste0(bfa.data.path,"bfa_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE) }
   if(country=="india"){
     write.csv(d,paste0(ind.data.path,"ind_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(ind.data.path,"ind_kpi_scores.csv"),row.names=FALSE)}
+    write.csv(kpi_scores_final,paste0(ind.data.path,"ind_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)}
   if(country=="laos"){
     write.csv(d,paste0(lao.data.path,"lao_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(lao.data.path,"lao_kpi_scores.csv"),row.names=FALSE)}
+    write.csv(kpi_scores_final,paste0(lao.data.path,"lao_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)}
   if(country=="kenya"){
     write.csv(d,paste0(ken.data.path,"ken_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(ken.data.path,"ken_kpi_scores.csv"),row.names=FALSE)}
+    write.csv(kpi_scores_final,paste0(ken.data.path,"ken_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)}
   if(country=="peru"){
     write.csv(d,paste0(per.data.path,"per_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(per.data.path,"per_kpi_scores.csv"),row.names=FALSE)}
+    write.csv(kpi_scores_final,paste0(per.data.path,"per_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)}
   if(country=="senegal"){
     write.csv(d,paste0(sen.data.path,"sen_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(sen.data.path,"sen_kpi_scores.csv"),row.names=FALSE)  }
+    write.csv(kpi_scores_final,paste0(sen.data.path,"sen_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)  }
   if(country=="tunisia"){
     write.csv(d,paste0(tun.data.path,"tun_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(tun.data.path,"tun_kpi_scores.csv"),row.names=FALSE)
+    write.csv(kpi_scores_final,paste0(tun.data.path,"tun_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)
   }
   if(country == "zimbabwe"){
     write.csv(d,paste0(zwe.data.path,"zwe_data.csv"),row.names=FALSE)
-    write.csv(kpi_scores_final,paste0(zwe.data.path,"zwe_kpi_scores.csv"),row.names=FALSE)
+    write.csv(kpi_scores_final,paste0(zwe.data.path,"zwe_kpi_scores_",format(Sys.Date(), "%Y%m%d"),".csv"),row.names=FALSE)
   }
 }
 
