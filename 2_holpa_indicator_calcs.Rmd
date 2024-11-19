@@ -13,6 +13,9 @@ editor_options:
 In this section, the user needs to specify which country to analyse, where the cleaned HOLPA survey data are stored on their computer, and any country/landscape specific conversion parameters. This is the only section of the script that needs user input. Subsequent code chunks can be run without making changes.
 
 ```{r set user parameters, include=FALSE}
+
+#----------------------- I NEED TO ADD A COLUMN WITH THE 18 performance theme names, separate from the list of indicators used to measure each theme, to be consistent with our framework figure. Replace 'theme' column with this? Add dimension column? We have 25 indicators not 18. Make some complementary not KPIs? ------------------
+
 knitr::opts_chunk$set(echo = TRUE)
 library(magrittr) # for piping
 library(tidyverse) #for formatting data
@@ -32,10 +35,10 @@ library(ggforce) # for gauge plots
 #country <- "india"
 #country <- "laos"
 #country <- "kenya"
-country <- "peru"
+#country <- "peru"
 #country <- "senegal" # formatted fieldwork csv needs saving to folder
 #country <- "tunisia"
-#country <- "zimbabwe"
+country <- "zimbabwe"
 
 # for area unit conversions
 acre_to_hectare = 0.404686
@@ -150,7 +153,7 @@ fw <- fw %>% left_join(fw_survey_mapping %>%
   write.csv(image_list,paste0(tun.data.path,"tun_fieldwork_photo_list.csv"),row.names=FALSE)}
   
   if(country == "zimbabwe"){
-  write.csv(kpi_scores_final,paste0(zwe.data.path,"zwe_fieldwork_scores.csv"),row.names=FALSE)
+  write.csv(fw,paste0(zwe.data.path,"zwe_fieldwork_scores.csv"),row.names=FALSE)
   write.csv(image_list,paste0(zwe.data.path,"zwe_fieldwork_photo_list.csv"),row.names=FALSE)}
 }
 
@@ -417,7 +420,7 @@ temp_kpi_calc <- d %>%
   mutate(score = as.numeric(score)) %>%
   # Compute 100 - % loss, so that higher values are better ('Avoided crop loss')
   mutate(score = ifelse(indicator %in%  c("kpi1_crop_health") & score>100,0,100-score)) %>%
-  mutate(module = ifelse(indicator %in%  c("kpi1_crop_health"),"performance kpi",module))
+  mutate(module = ifelse(indicator %in%  c("kpi1_crop_health"),"performance kpi",module)) 
 
 kpi_scores <- temp_kpi_calc %>% 
   select(kobo_farmer_id,country, module, theme, indicator, indicator_order, subindicator, subindicator_label, name_question,label_question, name_choice,label_choice,score,score_label)
@@ -642,7 +645,8 @@ temp_kpi_calc <- temp_kpi_calc %>%
               "nut_orgF_quantity","nut_orgF_area"), 
               ~ifelse(is.na(.),0,as.numeric(.))) %>%
   ungroup() %>%
-    mutate_at(c("nut_chem_unit_conversion","nut_org_unit_conversion","nut_orgF_unit_conversion"), ~ifelse(is.na(.),NA,as.numeric(.)))
+    mutate_at(c("nut_chem_unit_conversion","nut_org_unit_conversion","nut_orgF_unit_conversion"), ~ifelse(is.na(.),NA,as.numeric(.))) %>%
+  mutate_at(c("nut_chem_unit_conversion","nut_org_unit_conversion","nut_orgF_unit_conversion"), ~ifelse((.)==-9999,NA,(.))) 
 
 temp_kpi_calc <- temp_kpi_calc %>%
   # convert areas into hectares
@@ -1146,7 +1150,7 @@ kpi_histogram(kpi_scores,"kpi10_energy_use")
 #sort(unique(temp$label_question))
 
 # set reference national annual income (local currency per year) used as the benchmark to determine how household incomes compare to this
-# default is to use the MEDIAN income recorded in the country-specific HOLPA survey data 
+# default is to use the MEAN income recorded in the country-specific HOLPA survey data 
 # alternative is to use country-sourced data: activate this option only if information on income is provided in ref_values_country
 ref_income <- ref_values_country %>%
   select(income_ref_clean) 
@@ -1159,13 +1163,13 @@ d <- d %>%
          grepl("How would you rate the stability of the household income?",label_question) ~ "income_stability",
          grepl("In the last 12 months, did the household spend more",label_question)~"income_versus_expenditures",
                                   .default=subindicator)) 
-  
+
 temp_kpi_calc <- d %>% filter(subindicator =="income_amount") %>%
   mutate(score = ifelse(name_choice %in% c("9999","nd"),NA,name_choice)) %>%
   mutate(score = as.numeric(score)) %>%
-  filter(!(is.na(score))) %>%
+  filter(!(is.na(score)))  %>%
   group_by(kobo_farmer_id,country) %>%
-  summarise(income=sum(score),
+  summarise(income=sum(score,na.rm=TRUE),
             income_sources = n()) %>%
   group_by(country) %>%
   mutate(mean_income = mean(income,na.rm=T)) %>%
@@ -1189,8 +1193,7 @@ kpi_histogram(kpi_scores,"kpi11_hh_income_v_mean")
 ### Performance KPI11b income stability ####
 temp_kpi_calc <- d %>% filter(subindicator =="income_stability") %>% select(-module,-index, -theme) %>%unique()
 
-table(temp_kpi_calc$label_choice,temp_kpi_calc$name_choice)
-
+#table(temp_kpi_calc$label_choice,temp_kpi_calc$name_choice)
 temp_kpi_calc <- temp_kpi_calc %>%
   mutate(score = ifelse(name_choice %in% c("9999","nd"),NA,name_choice)) %>%
   mutate(score = as.numeric(score)) %>%
@@ -1216,7 +1219,9 @@ temp_kpi_calc <- d %>% filter(subindicator =="income_versus_expenditures") %>% s
 #table(temp_kpi_calc$label_choice,temp_kpi_calc$name_choice)
 
 temp_kpi_calc <- temp_kpi_calc %>%
-  mutate(score = ifelse(name_choice %in% c("2","nd","-9999"),NA,name_choice)) %>%
+  mutate(score = ifelse(name_choice %in% c("2","nd","-9999"),NA,
+                        ifelse(name_choice %in% c("0"), "1", # no, did not spend more money than earned
+                               ifelse(name_choice %in% ("1"), "0", name_choice)))) %>% # yes, spent more money than earned
   mutate(score = as.numeric(score)) %>%
   filter(!(is.na(score)))
 
@@ -1299,6 +1304,20 @@ temp_kpi_calc <- d %>% filter(indicator %in%c("productivity_crops") | name_quest
                      name_question %in% c("_3_4_2_1_6_1_1")~ "production_use_other",
                      .default = subindicator)) 
 
+# format crop names and production units
+if(country %in% c("laos","kenya","senegal","zimbabwe")){
+  ref_values_country <- ref_values_country %>%
+    rename(crops_names = main_crops_common_names)
+}
+
+ref_values_country <- ref_values_country %>% mutate(crops_names = ifelse(crops_names == "Maize","Corn",crops_names))
+
+if(country=="peru"){
+  ref_values_country <- ref_values_country %>%
+    # remove spanish// in production unit column
+    mutate(`production unit` = sub("(.*)//*","",`production unit`))
+}
+
 # total cropland area
 temp_kpi_calc1 <- temp_kpi_calc %>%
   filter(subindicator %in% c("abd_crop_area")) %>%
@@ -1316,22 +1335,33 @@ temp_kpi_calc2 <- temp_kpi_calc  %>%
 
 #temp_kpi_calc2 %>% select(abd_crop_name, production_unit) %>% unique()
 
-if(country=="peru"){
-  ref_values_country <- ref_values_country %>%
-    # remove spanish// in production unit column
-    mutate(`production unit` = sub("(.*)//*","",`production unit`)) %>%
-    mutate(crops_names = ifelse(crops_names == "Maize","Corn",crops_names))
-}
 temp_kpi_calc2 <- temp_kpi_calc2 %>% 
   mutate(abd_crop_name = str_to_sentence(abd_crop_name)) %>%
+  mutate(abd_crop_name = ifelse(abd_crop_name == "Maize","Corn",abd_crop_name)) %>%
   mutate(abd_crop_name= ifelse(kobo_farmer_id == 273955054 & abd_crop_name=="None", "Groundnut", abd_crop_name)) %>%
   left_join(ref_values_country %>% rename(production_unit =`production unit`) %>%
               mutate(crops_names = str_to_sentence(crops_names)) %>%
-              select(crops_names, production_unit,yield_conversion_unit_to_kg),by=c("abd_crop_name"="crops_names","production_unit" = "production_unit"))
+              select(crops_names, production_unit, yield_conversion_unit_to_kg) %>% unique(),by=c("abd_crop_name"="crops_names","production_unit" = "production_unit")) %>%
+  mutate_at(c("abd_area_per_crop","production_total","abd_crop_area", "yield_conversion_unit_to_kg"),~as.numeric(.)) %>%
+  mutate(yield_conversion_unit_to_kg = case_when(production_unit %in% c("Kilograms","kilograms", "kg","Kg", "Kgs","kgs", "Kilogrammes","kilogrammes")~1,
+                                                 production_unit %in% c("Lorry 6tonnes" )~6000,
+                                                 production_unit %in% c("tonnes", "Tonnes","tons","Tons")~1000,
+                                                 production_unit %in% c("150kg bags" )~150,
+                                                 production_unit %in% c("120kg bag")~120,
+                                                 production_unit %in% c("110Kg bag")~110,
+                                                 production_unit %in% c("100Kg bag","100Kg bag" ,"100th bag")~100,
+                                                 production_unit %in% c("90kg bag")~90,
+                                                 production_unit %in% c("70kg bag")~70,
+                                                 production_unit %in% c("60kg bag")~60,
+                                                production_unit %in% c("50kg bag")~50,
+                                                production_unit %in% c("25kg bag")~25,
+                                                production_unit %in% c("20kg bucket")~20,
+                                                production_unit %in% c("10kg bucket")~10,
+                                                .default=yield_conversion_unit_to_kg))
+
 
 temp_kpi_calc2 <- temp_kpi_calc2 %>%
   mutate_at(vars(abd_area_per_crop, production_total,yield_conversion_unit_to_kg ),as.numeric) %>%
-  
   # check if the area for the three main crops is > total farm cropland area
   # don't remove these but note that these farms must have multicrop systems, or area errors
   group_by(kobo_farmer_id) %>% mutate(abd_area_per_crop_summed = sum(abd_area_per_crop)) %>% ungroup() %>%
@@ -1344,12 +1374,14 @@ temp_kpi_calc2 <- temp_kpi_calc2 %>%
 
 # Now calculate yield gap, based on locally attainable yields
 
-temp_kpi_calc3 <- temp_kpi_calc2 %>%
+temp_kpi_calc3 <- temp_kpi_calc2 %>% select(-index) %>%
   left_join(ref_values_country %>%
               mutate(crops_names = str_to_sentence(crops_names)) %>%
-              select(crops_names, yield_ref_rainfed_clean) %>% unique(),by=c("abd_crop_name" = "crops_names")) %>%
+              select(crops_names, yield_ref_rainfed_clean) %>% filter(!is.na(yield_ref_rainfed_clean)) %>%  unique(), by=c("abd_crop_name" = "crops_names"), relationship = "many-to-many") %>%
+  mutate(production_kg_ha = ifelse(is.infinite(production_kg_ha),0, production_kg_ha)) %>%
+  mutate(yield_ref_rainfed_clean = as.numeric(yield_ref_rainfed_clean)) %>%
   mutate(yield_to_ref_ratio = production_kg_ha/yield_ref_rainfed_clean) %>%
-  mutate(yield_gap = ifelse(yield_to_ref_ratio>1, 0, 
+  mutate(yield_gap = ifelse(yield_to_ref_ratio>1 , 0, 
                             ifelse(yield_to_ref_ratio == 0, NA, (1- yield_to_ref_ratio)*100))) %>% filter(!is.na(yield_gap))
 
 temp_kpi_calc <- temp_kpi_calc3 %>%
@@ -1369,7 +1401,7 @@ kpi_histogram(kpi_scores,"kpi12_yield_gap")
 
 ### Performance KPI13 labour productivity ####
 #sort(unique(d$indicator))
-#temp <- d %>% filter(indicator =="labour_productivity")
+temp <- d %>% filter(indicator =="labour_productivity")
 #sort(unique(temp$label_question))
 #table(temp$label_question,temp$name_question_recla)
 
@@ -1394,27 +1426,29 @@ temp_kpi_calc <- d %>% filter(indicator =="labour_productivity") %>%
                                   
                                      label_question %in% c("Select the months worked per year for SEASON ${_3_4_1_2_7_2_1_calculate} by household members working SEASONALY")  | name_question_recla == "_3_4_1_2_7_2_2" ~ "labour_work_months_hh_member_seas", # name_choice has months in integer, label_choice has month names (3 letter)
                                   
+                                  # the following question is missing for ZIMBABWE:
                                   label_question %in% c("Select the months worked per year for SEASON ${_3_4_1_2_1_2_1_calculate} by SEASONAL hired/free/exchange laborers on your farm:")  | name_question_recla == "_3_4_1_2_1_2_1_2" ~ "labour_work_months_workers_seas", # name_choice has months in integer, label_choice has month names (3 letter)
                                   .default = subindicator))
                                                       
-print(arrange(temp_kpi_calc %>% select(subindicator,name_choice, label_choice,type_question, kobo_farmer_id),kobo_farmer_id),n=80)
+#print(arrange(temp_kpi_calc %>% select(subindicator,name_choice, label_choice,type_question, kobo_farmer_id),kobo_farmer_id),n=80)
+#d %>% filter(grepl("Select the months worked per year for SEASON",label_question)) %>% select(label_question) %>% unique()
 
 # Number of PERMANENT workers and hours of activity
 temp_kpi_calc1 <- temp_kpi_calc %>% filter(subindicator %in% c("labour_number_workers_perm", "labour_hours_worker_perm", "labour_hours_hh_member_perm")) %>%
-  dcast(kobo_farmer_id+index ~subindicator,value.var="name_choice") %>%
+  dcast(kobo_farmer_id+country+index ~subindicator,value.var="name_choice") %>%
   # add in number of workers from hh based on calculated data
   left_join(temp_kpi_calc %>% filter(subindicator %in% c("labour_number_workers_hh_perm")) %>%
-  dcast(kobo_farmer_id+index ~subindicator,value.var="name_choice") %>%
+  dcast(kobo_farmer_id+country+index ~subindicator,value.var="name_choice") %>%
   mutate(labour_number_workers_hh_perm_clean =sub("^(\\d+).*", "\\1", labour_number_workers_hh_perm)) %>% select(-labour_number_workers_hh_perm), 
-  by=c("kobo_farmer_id","index")) %>%
-  mutate(across(-c(kobo_farmer_id,index),as.numeric)) %>%
-  mutate(across(-c(kobo_farmer_id,index), ~ if_else(.x %in% c(9999, 999,-9999,-999,5555), NA_real_, .x)))
+  by=c("kobo_farmer_id","country", "index")) %>%
+  mutate(across(-c(kobo_farmer_id,country,index),as.numeric)) %>%
+  mutate(across(-c(kobo_farmer_id,country,index), ~ if_else(.x %in% c(9999, 999,-9999,-999,5555), NA_real_, .x)))
 
 temp_kpi_calc1 <- temp_kpi_calc1 %>%
    # assume no days off since we have no infomation on number of unworked days
     mutate(labour_hours_per_year_workers_perm = labour_number_workers_perm * labour_hours_worker_perm * 365,
          labour_hours_per_year_hh_perm = labour_number_workers_hh_perm_clean * labour_hours_hh_member_perm * 365) %>%
-  group_by(kobo_farmer_id) %>%
+  group_by(kobo_farmer_id, country) %>%
   mutate(total_labour_hours_per_year_workers_perm = sum(labour_hours_per_year_workers_perm, na.rm=TRUE),
   total_labour_hours_per_year_hh_perm = sum(labour_hours_per_year_hh_perm, na.rm=TRUE))
 
@@ -1424,28 +1458,34 @@ temp_kpi_calc2 <- temp_kpi_calc %>% filter(subindicator %in% c("labour_number_wo
   # now need to match season to response....
   left_join(temp_kpi_calc %>% 
               filter(subindicator %in% c("labour_work_months_hh_member_seas","labour_work_months_workers_seas")) %>%
-  dcast(kobo_farmer_id+index~subindicator,value.var="name_choice", length),
+  dcast(kobo_farmer_id+country+index~subindicator,value.var="name_choice", length),
   # %>%rename(labour_number_of_months = "."),
   by=c("kobo_farmer_id","index")) %>%
-  mutate(across(-c(kobo_farmer_id,index),as.numeric)) %>%
-  mutate(across(-c(kobo_farmer_id,index), ~ if_else(.x %in% c(9999, 999,-9999,-999,5555), NA_real_, .x)))
+  mutate(across(-c(kobo_farmer_id,country,index),as.numeric)) %>%
+  mutate(across(-c(kobo_farmer_id,country, index), ~ if_else(.x %in% c(9999, 999,-9999,-999,5555), NA_real_, .x)))
+
+if(country %in% c("zimbabwe")){
+  temp_kpi_calc2 <- temp_kpi_calc2 %>% 
+    mutate(labour_work_months_workers_seas = NA)
+}
 
 temp_kpi_calc2 <- temp_kpi_calc2 %>%
   # assume 30 days in every month and no days off since we have no infomation on number of unworked days
   mutate(labour_hours_per_year_workers_seas = labour_number_workers_seas * labour_hours_worker_seas * labour_work_months_workers_seas * 30,
          labour_hours_per_year_hh_seas = labour_number_workers_hh_seas * labour_hours_hh_member_seas * labour_work_months_hh_member_seas * 30) %>%
-  group_by(kobo_farmer_id) %>%
+  group_by(kobo_farmer_id, country) %>%
   mutate(total_labour_hours_per_year_workers_seas = sum(labour_hours_per_year_workers_seas, na.rm=TRUE),
   total_labour_hours_per_year_hh_seas = sum(labour_hours_per_year_hh_seas, na.rm=TRUE))
 
 # combine permanent and seasonal labour hours 
-temp_kpi_calc3 <- temp_kpi_calc1 %>% select(kobo_farmer_id,total_labour_hours_per_year_workers_perm, total_labour_hours_per_year_hh_perm) %>% unique() %>%
+temp_kpi_calc3 <- temp_kpi_calc1 %>% 
+  select(kobo_farmer_id,country, total_labour_hours_per_year_workers_perm, total_labour_hours_per_year_hh_perm) %>% unique() %>%
   left_join(temp_kpi_calc2 %>% 
               select(kobo_farmer_id, total_labour_hours_per_year_workers_seas, total_labour_hours_per_year_hh_seas) %>% unique(), 
-            by=c("kobo_farmer_id")) %>%
+            by=c("kobo_farmer_id","country")) %>%
   mutate(total_labour_hours_per_year = sum(total_labour_hours_per_year_workers_perm, total_labour_hours_per_year_workers_seas, total_labour_hours_per_year_hh_perm, total_labour_hours_per_year_hh_seas, na.rm=TRUE))
 
-# standardise by agricultural land area
+# standardise by agricultural land area 
 temp_kpi_calc4 <- d %>% filter(name_question %in% c("_3_4_2_1_1","_3_4_2_2_1_1","_3_4_2_2_1_2", "_3_4_2_3_2" ) | label_question %in% c("What is the total area of land used for growing crops in ${_1_4_1_1_calculate}?", "What is the area of land used for livestock production in ${_1_4_1_1_calculate}: Land you own:", "What is the area of land used for livestock production in ${_1_4_1_1_calculate}: Share grazing land:" , "What is the total surface area in ${_1_4_1_1_calculate} of water bodies, wetlands, paddy fields or other aquaculture systems used for producing fish?" ))  %>% 
   select(kobo_farmer_id, subindicator,name_question, label_question,name_choice)
 
@@ -1455,27 +1495,45 @@ temp_kpi_calc4 <- temp_kpi_calc4 %>% left_join(area_unit_land,by=c("kobo_farmer_
   mutate(name_choice  = as.numeric(name_choice)) %>%
   mutate(area_ha = ifelse(area_unit %in% c("acre","acres","Acre","Acres"), name_choice*acre_to_hectare, name_choice)) %>%
   group_by(kobo_farmer_id) %>% mutate(ag_land_area_ha = sum(area_ha,na.rm=TRUE))
-  
-temp_kpi_calc <- temp_kpi_calc3 %>% select(kobo_farmer_id, total_labour_hours_per_year) %>%
-  left_join(temp_kpi_calc4 %>% select(kobo_farmer_id, ag_land_area_ha) %>% unique()) %>%
+
+temp_kpi_calc <- temp_kpi_calc3 %>% select(kobo_farmer_id, country, total_labour_hours_per_year) %>%
+  full_join(temp_kpi_calc4 %>% select(kobo_farmer_id, ag_land_area_ha) %>% unique()) %>%
     mutate(score = total_labour_hours_per_year/ag_land_area_ha, na.rm=TRUE) %>%
-  select(kobo_farmer_id,score) %>%
-  mutate(indicator = "kpi13_labour_productivity",
-       subindicator = "labour_productivity",
+  select(kobo_farmer_id,country,score) %>%
+  mutate(indicator = "kpi13a_labour_input",
+       subindicator = "labour_input",
        subindicator_label = "Labour in hours/yr/ha agricultural land",
-       indicator_order = 13)
+       indicator_order = 13.1)
 
+# calculate agricultural income output per labour input
+temp_kpi_calc5 <- d %>% filter(subindicator =="income_amount") %>%
+  mutate(score = ifelse(name_choice %in% c("9999","nd"),NA,name_choice)) %>%
+  mutate(score = as.numeric(score)) %>%
+  filter(!(is.na(score))) %>%
+  filter(label_question %in% c("In the past 12 months, approximately how much income in [local currency] did the household make from: Crop production" ,"In the past 12 months, approximately how much income in [local currency] did the household make from: Livestock production"  ))  %>% group_by(kobo_farmer_id) %>% 
+  summarise(income_ag_production = sum(score, na.rm=TRUE)) %>%
+  full_join(temp_kpi_calc3 %>% select(kobo_farmer_id, country, total_labour_hours_per_year)) %>%
+      mutate(score = income_ag_production/total_labour_hours_per_year) %>%
+  select(kobo_farmer_id,country,score) %>%
+  mutate(indicator = "kpi13b_labour_productivity",
+       subindicator = "income_per_hour_of_labour",
+       subindicator_label = "Annual income from agricultural sources per hour of labour",
+       indicator_order = 13.2)
+
+# Add into kpi score dataset
 kpi_scores <- kpi_scores %>% full_join(temp_kpi_calc, keep=NULL) %>%
-  mutate(module = ifelse(indicator %in% c("kpi13_labour_productivity"),"performance kpi",module)) %>%
-  mutate(theme = ifelse(indicator %in% c("kpi13_labour_productivity"),"economic",theme)) 
+  full_join(temp_kpi_calc5, keep=NULL) %>%
+  mutate(module = ifelse(indicator %in% c("kpi13a_labour_input", "kpi13b_labour_productivity"),"performance kpi",module)) %>%
+  mutate(theme = ifelse(indicator %in% c("kpi13a_labour_input", "kpi13b_labour_productivity"),"economic",theme)) 
 
-kpi_histogram(kpi_scores,"kpi13_labour_productivity")
+kpi_histogram(kpi_scores,"kpi13a_labour_input")
+kpi_histogram(kpi_scores,"kpi13b_labour_productivity")
 #kpi_all_boxplot(kpi_scores)
 
 ### Performance KPI14 climate resilience ####
-sort(unique(d$indicator))
-temp <- d %>% filter(grepl("climate_resilience", indicator))
-sort(unique(temp$label_question))
+#sort(unique(d$indicator))
+#temp <- d %>% filter(grepl("climate_resilience", indicator))
+#sort(unique(temp$label_question))
 
 # %in% c( "climate_resilience_adaptative_capacity" , "climate_resilience_assets", "climate_resilience_basic_services" , "climate_resilience_shocks", "climate_resilience_social_network"  )
 
@@ -1875,16 +1933,13 @@ ggsave(paste0(global.data.path,"figures/kpi boxplots env-soc ",country,".tif"),w
 
 ```
 
-
 ## Transfrom KPIs to unform 1 to 100 scale
 ```{r KPI scaling, include=TRUE, echo=FALSE}
 
-#table(d$indicator)
-
 # Make function to transform KPI scores from 0 to 100 scale
-#indicators_scaled <- d[0,]
 indicators_scaled <- data.frame(kobo_farmer_id=as.numeric(NA),
                       theme=as.character(NA),
+                      ind_group=as.character(NA),
                       indicator=as.character(NA),
                       indicator_order=as.numeric(NA),
                       subindicator = as.character(NA), 
@@ -1893,13 +1948,7 @@ indicators_scaled <- data.frame(kobo_farmer_id=as.numeric(NA),
                       score_scaled=as.numeric(NA))
 indicators_scaled <- indicators_scaled[-1,]
 
-#data = kpi_scores
-#ind="kpi11_hh_income_v_mean"
-#method="set"
-#min=0.5
-#max=2 
-
-indicator_scaling <- function(data, ind, method, min=NA,max=NA){
+indicator_scaling <- function(data, ind, method, min=NA,max=NA,ind_group){
   data_subset <- data %>% filter(indicator %in% c(ind))
   # no scaling needed (e.g. scores in %)
   if(method =="none"){
@@ -1924,7 +1973,8 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
   data_subset <- data_subset %>% mutate(score = ifelse(score <= ind_min,ind_min,ifelse(score>=ind_max, ind_max, score)))
   data_subset$score_scaled <- (data_subset$score - ind_min)/(ind_max - ind_min)*100
   }
-  data_subset <- data_subset %>% select(c("kobo_farmer_id","theme", "indicator","indicator_order","subindicator","subindicator_label", "score", "score_scaled"))
+  data_subset <- data_subset %>% mutate(ind_group = ind_group) %>%
+    select(c("kobo_farmer_id","theme","ind_group", "indicator","indicator_order","subindicator","subindicator_label", "score", "score_scaled"))
   indicators_scaled <- indicators_scaled %>% rbind(data_subset)
   assign("indicators_scaled",indicators_scaled,envir = globalenv())
   rm(data, ind, method, min,max)
@@ -1932,35 +1982,36 @@ indicator_scaling <- function(data, ind, method, min=NA,max=NA){
 
 print(kpi_scores %>% select(indicator, subindicator_label) %>% unique(), n=30)
 
-indicator_scaling(kpi_scores, ind="kpi1_crop_health",method="none") 
-indicator_scaling(kpi_scores, ind="kpi1b_crop_health_fieldwork",method="set", min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi2_animal_health", method="set", min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi3_soil_health",method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi4_nutrient_use",method="set",min=0.5,max=2) 
-indicator_scaling(kpi_scores, ind="kpi5a_animal_diversity", method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi5b_tree_diversity", method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi6a_abd_crop_richness_index", method="none") 
-indicator_scaling(kpi_scores, ind="kpi6b_abd_variety_diversity", method="set" ,min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi7_landscape_complexity", method="set" ,min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi8_climate_mitigation", method="set" ,min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi9_avoided_water_stress", method="none")
-indicator_scaling(kpi_scores, ind="kpi10_energy_use", method="set" ,min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi11_hh_income_v_mean", method="set", min=0.5, max=2) 
-indicator_scaling(kpi_scores, ind="kpi11b_hh_income_stability",method="set",min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi11c_hh_income_v_expenditures",method="set",min=0,max=1) 
-indicator_scaling(kpi_scores, ind="kpi11d_hh_income_sufficiency",method="set",min=1,max=5) 
-indicator_scaling(kpi_scores, ind="kpi12_yield_gap", method="set",min=0,max=99) 
-indicator_scaling(kpi_scores, ind="kpi13_labour_productivity", method="data_driven_inverse") # used inverse so higher values are better, i.e. less labour per ha. This is hrs/yr/ha, which is an input not an output...could instead use income from agriculture divided by labour. 
-indicator_scaling(kpi_scores, ind="kpi14a_climate_resilience", method="set",min=0,max=20)
-indicator_scaling(kpi_scores, ind="kpi14b_climate_resilience",  method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi15_diet_diversity", method="set",min=0,max=10) 
-indicator_scaling(kpi_scores, ind="kpi16_farmer_agency", method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi17a_land_tenure", method="set",min=1,max=5)
-indicator_scaling(kpi_scores, ind="kpi17b_land_tenure", method="none")
-indicator_scaling(kpi_scores, ind="kpi18_human_wellbeing", method="set",min=1, max=5)
+indicator_scaling(kpi_scores, ind="kpi1_crop_health",method="none", ind_group="Crop health")
+indicator_scaling(kpi_scores, ind="kpi1b_crop_health_fieldwork",method="set", min=1,max=5, ind_group="Crop health")
+indicator_scaling(kpi_scores, ind="kpi2_animal_health", method="set", min=1,max=5, ind_group="Animal health")
+indicator_scaling(kpi_scores, ind="kpi3_soil_health",method="set",min=1,max=5, ind_group="Soil health")
+indicator_scaling(kpi_scores, ind="kpi4_nutrient_use",method="set",min=0.5,max=2, ind_group="Nutrient use")
+indicator_scaling(kpi_scores, ind="kpi5a_animal_diversity", method="set",min=1,max=5, ind_group="Biodiversity")
+indicator_scaling(kpi_scores, ind="kpi5b_tree_diversity", method="set",min=1,max=5, ind_group="Biodiversity")
+indicator_scaling(kpi_scores, ind="kpi6a_abd_crop_richness_index", method="none", ind_group="Agrobiodiversity") 
+indicator_scaling(kpi_scores, ind="kpi6b_abd_variety_diversity", method="set" ,min=1,max=5, ind_group="Agrobiodiversity") 
+indicator_scaling(kpi_scores, ind="kpi7_landscape_complexity", method="set" ,min=1,max=5, ind_group="Landscape complexity")
+indicator_scaling(kpi_scores, ind="kpi8_climate_mitigation", method="set" ,min=1,max=5, ind_group="Climate mitigation") 
+indicator_scaling(kpi_scores, ind="kpi9_avoided_water_stress", method="none", ind_group="Water use")
+indicator_scaling(kpi_scores, ind="kpi10_energy_use", method="set" ,min=1,max=5, ind_group="Energy use")
+indicator_scaling(kpi_scores, ind="kpi11_hh_income_v_mean", method="set", min=0.5, max=2, ind_group="Income")
+indicator_scaling(kpi_scores, ind="kpi11b_hh_income_stability",method="set",min=1,max=5, ind_group="Income") 
+indicator_scaling(kpi_scores, ind="kpi11c_hh_income_v_expenditures", method="set",min=0,max=1, ind_group="Income") 
+indicator_scaling(kpi_scores, ind="kpi11d_hh_income_sufficiency",method="set",min=1,max=5, ind_group="Income")  
+indicator_scaling(kpi_scores, ind="kpi12_yield_gap", method="set",min=0,max=99, ind_group="Agricultural productivity")  
+indicator_scaling(kpi_scores, ind="kpi13a_labour_input", method="data_driven_inverse", ind_group="Labour") # used inverse so higher values are better, i.e. less labour per ha. Need to get min and max across all countries to allow for better comparisons.
+indicator_scaling(kpi_scores, ind="kpi13b_labour_productivity", method="data_driven", ind_group="Labour") # this is local currency/hrs of labour. Need to convert currency to USD and then set min and max productivity based on this, to allow for better comparisons across all countries. 
+indicator_scaling(kpi_scores, ind="kpi14a_climate_resilience", method="set",min=0,max=20, ind_group="Climate resilience")
+indicator_scaling(kpi_scores, ind="kpi14b_climate_resilience",  method="set",min=1,max=5, ind_group="Climate resilience")
+indicator_scaling(kpi_scores, ind="kpi15_diet_diversity", method="set",min=0,max=10, ind_group="Diet diversity")
+indicator_scaling(kpi_scores, ind="kpi16_farmer_agency", method="set",min=1,max=5, ind_group="Farmer agency")
+indicator_scaling(kpi_scores, ind="kpi17a_land_tenure", method="set",min=1,max=5, ind_group="Land tenure")
+indicator_scaling(kpi_scores, ind="kpi17b_land_tenure", method="none", ind_group="Land tenure")
+indicator_scaling(kpi_scores, ind="kpi18_human_wellbeing", method="set",min=1, max=5, ind_group="Human wellbeing")
 
 # Add scaled scores to main dataset
-kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled %>% select(-score))  %>%
+kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled %>% select(-score), relationship="many-to-many")  %>%
   mutate(kpi_order = gsub("(.+?)(\\_.*)","\\1", indicator)) %>%
   mutate(kpi_label= paste0(gsub("(.+?)(\\_.*)","\\1", indicator),": ",subindicator_label)) %>%
      mutate(kpi_label_short = case_when(
@@ -1991,8 +2042,8 @@ kpi_scores_final <- kpi_scores %>% left_join(indicators_scaled %>% select(-score
         indicator %in% c("kpi17b_land_tenure" ) ~ "kpi17b land security (% owned)",
         indicator %in% c("kpi18_human_wellbeing" ) ~ "kpi18 human wellbeing (qual)", .default=indicator))  %>%
      mutate(kpi_label = factor(kpi_label, levels=unique(kpi_label[order(indicator_order)]))) %>%
-  select(c("kobo_farmer_id","country","module", "theme", "indicator","indicator_order","kpi_order", "kpi_label","kpi_label_short", "subindicator","subindicator_label", "score", "score_scaled")) %>% 
-  filter(!is.na(module))
+  select(c("kobo_farmer_id","country","module", "theme","ind_group", "indicator","indicator_order","kpi_order", "kpi_label","kpi_label_short", "subindicator","subindicator_label", "score", "score_scaled")) %>% 
+  filter(!is.na(module)) 
 
 # Save data for re-use in next script
 export_kpi_scores <- function(country){
@@ -2028,7 +2079,7 @@ export_kpi_scores(country)
 
 # Gauge plots showing scaled indicator scores
 kpi_all_gauge(kpi_scores_final)
-#ggsave(paste0(global.data.path,"figures/kpi_scaled_gauge_plots_",country,".tif"),width=7,height=12,units="in")
+ggsave(paste0(global.data.path,"figures/kpi_scaled_gauge_plots_",country,".tif"),width=7,height=12,units="in")
 
 # Bar chart with errorbars with scaled indicator scores
 kpi_all_barchart(kpi_scores_final)
