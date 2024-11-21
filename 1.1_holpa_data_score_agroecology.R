@@ -80,7 +80,7 @@ fun_agroecology_data<- function(country_agroecology_data){
       name_question_recla %in% c(
         "_2_9_1_1", #3_soil_health
         "_2_10_1_2","_3_3_3_4", #4_animal_health
-        "_3_4_3_1_1_2", "_3_4_3_3_1",#5_biodiversity
+        "_3_4_3_1_1_2", "_3_4_3_3_1","_3_4_3_4_2",#5_biodiversity
         "_3_3_3_1_calculate_2","_2_9_1_1","_3_3_1_7","_3_3_3_3","_3_3_3_4","_2_12_1", #6_synergy
         "_2_4_1" #7_economic_diversification
       ) ~ "counting",
@@ -417,13 +417,15 @@ fun_agroecology_data<- function(country_agroecology_data){
     summarise(multiple_responses_label_choice = paste(label_choice, collapse = "//"),
               label_score_agroecology_module = n_distinct(name_choice))%>%
     ungroup()%>%
+    group_by(country, name_question_recla) %>%
     mutate(
       # Calculate the percentile cutoffs
       richness_20th = quantile(label_score_agroecology_module, 0.20, na.rm = TRUE),
       richness_40th = quantile(label_score_agroecology_module, 0.40, na.rm = TRUE),
       richness_60th = quantile(label_score_agroecology_module, 0.60, na.rm = TRUE),
-      richness_80th = quantile(label_score_agroecology_module, 0.80, na.rm = TRUE),
-      
+      richness_80th = quantile(label_score_agroecology_module, 0.80, na.rm = TRUE))%>%
+    ungroup()%>%
+    mutate(
       # Assign scores based on where each crop and livestock richness falls relative to the cutoffs
       score_agroecology_module = case_when(
         label_score_agroecology_module <= richness_20th ~ 1,
