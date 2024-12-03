@@ -453,6 +453,218 @@ bfa_global_choices<-global_choices%>%
   right_join(global_survey,by="list_name",relationship="many-to-many")%>%
   mutate(label_choice.country=NA)
 
+### INDIA ----
+#link to bfa data: https://cgiar-my.sharepoint.com/:f:/r/personal/andrea_sanchez_cgiar_org/Documents/Bioversity/AI/HOLPA/HOLPA_data/India/india_data_clean?csf=1&web=1&e=azqxKc
+#INSTRUCTION: Replace bfa_data_path path with your path, run the code and then go #### PERFORMANCE MODULE 
+# Read excel files----
+ind.read_and_process_survey_xlsx <- function(sheet_name, column_id_rename, data_path, country_name, index) {
+  survey_data <- read_excel(path = data_path, sheet = sheet_name) %>%
+    mutate(country = country_name,
+           sheet_id = sheet_name) %>%
+    rename("kobo_farmer_id" := !!column_id_rename) %>%#,
+           #"index" := !!index) %>%
+    slice(-1)
+  
+  return(survey_data)
+}
+
+ind_data_path <- "C:/Users/andreasanchez/OneDrive - CGIAR/Bioversity/AI/HOLPA/HOLPA_data/India/india_data_clean/" #path andrea
+
+ind_h_survey_file <- paste0(ind_data_path, "ind_holpa_household_survey_clean.xlsx")
+ind_h_choices_file <- paste0(ind_data_path, "ind_holpa_household_form_clean.xlsx")
+
+# Step 1: Read and filter relevant columns
+ind.col_names <- read_excel(ind_h_choices_file, sheet = "survey") %>%
+  select(name, name_global_survey) %>%
+  filter(!is.na(name))
+
+# Step 2: Transform column names and remove NA columns
+ind.col_names.transformed <- as.data.frame(t(ind.col_names$name_global_survey))
+colnames(ind.col_names.transformed) <- ind.col_names$name
+
+# Step 1: Replace NA values with column names in ind.col_names.transformed
+ind.col_names.transformed[] <- lapply(seq_along(ind.col_names.transformed), function(i) {
+  replace(ind.col_names.transformed[[i]], is.na(ind.col_names.transformed[[i]]), colnames(ind.col_names.transformed)[i])
+})
+
+# Step 2: Read and process survey data
+ind_survey_main <- ind.read_and_process_survey_xlsx("Data with labels", "capi_id", ind_h_survey_file, "india", "_index")%>%
+  rename("_4_1_1_5_2_2_fert"= "_4_1_1_5_2_2",
+         "_4_1_1_5_2_3_storage"= "_4_1_1_5_2_3")
+
+# Step 3: Intersect columns, but retain all columns from ind_survey_main
+ind_columns <- colnames(ind_survey_main) # Keep all columns from ind_survey_main
+
+# Step 4: Update column names in survey data based on the match
+# If a column name doesn't match, retain the original column name
+colnames(ind_survey_main) <- ifelse(
+  colnames(ind_survey_main) %in% ind.col_names$name,
+  ind.col_names$name_global_survey[match(colnames(ind_survey_main), ind.col_names$name)],
+  colnames(ind_survey_main)
+)
+
+# Replace any NA or empty column names with a valid name (e.g., "placeholder")
+colnames(ind_survey_main)[is.na(colnames(ind_survey_main)) | colnames(ind_survey_main) == ""] <- paste0("placeholder_", seq_along(colnames(ind_survey_main))[is.na(colnames(ind_survey_main)) | colnames(ind_survey_main) == ""])
+
+# Remove columns with the name "NA" after replacing invalid names
+ind_survey_main <- ind_survey_main[, colnames(ind_survey_main) != "NA"]
+names(ind_survey_main)
+
+# Proceed with mutate operation
+ind_survey_main <- ind_survey_main %>%
+  mutate(index = kobo_farmer_id,
+         "_1_2_1_17"="km",
+         "_4_1_5_2_1"="km",
+         "_4_1_5_2_2"="km",
+         "_4_1_5_2_3"="km",
+         "_4_1_5_2_4"="km",
+         "_4_1_5_2_5"="km",
+         "_4_1_5_2_6"="km",
+         "_4_1_5_2_7"="km" )%>%
+  rename("_4_1_3_1/Cyclones"="_2_3_1_4_1_1",
+        "_4_1_3_1/Drought" ="_4_1_3_1_2",
+        "_4_1_3_1/Dust_storm" =	"_4_1_3_1_3",
+        "_4_1_3_1/Excess_rainfall"	="_4_1_3_1_4",
+        "_4_1_3_1/Flooding"=	"_4_1_3_1_5",
+        "_4_1_3_1/Frost"=	"_4_1_3_1_6",
+        "_4_1_3_1/Hailstorm"="_4_1_3_1_7",
+        "_4_1_3_1/High_temperatures"= "_4_1_3_1_8",
+        "_4_1_3_1/High_winds"="_4_1_3_1_9",
+        "_4_1_3_1/Insufficient_rainfall"="_4_1_3_1_10",
+        "_4_1_3_1/Untimely_rainfall"="_4_1_3_1_11",
+        "_4_1_3_1/Wildlife_conflict"="_4_1_3_1_12",
+        "_4_1_3_1/2" ="_4_1_3_1_13",
+        "_4_1_3_1/3" ="_4_1_3_1_14",
+        "_4_1_3_1/4" ="_4_1_3_1_15",
+        "_4_1_3_1/5" ="_4_1_3_1_16",
+        "_4_1_3_1/6" ="_4_1_3_1_17",
+        "_4_1_3_1/7" ="_4_1_3_1_18",
+        "_4_1_3_1/Plant_disease" ="_4_1_3_1_19",
+        "_4_1_3_1/8" ="_4_1_3_1_20",
+        "_4_1_3_1/9" ="_4_1_3_1_21",
+        "_4_1_3_1/10" ="_4_1_3_1_22",
+        "_4_1_3_1/11" ="_4_1_3_1_23",
+        "_4_1_3_1/99" ="_4_1_3_1_99",
+        "_4_1_3_1/777" ="_4_1_3_1_777",
+        "_4_1_3_1/95" ="_4_1_3_1_95",
+        "_4_1_3_1_2/1"= "_4_1_3_1_2_1",
+        "_4_1_3_1_2/2"="_4_1_3_1_2_2",
+        "_4_1_3_1_2/3"="_4_1_3_1_2_3",
+        "_4_1_3_1_2/4"="_4_1_3_1_2_4",
+        "_4_1_3_1_2/5"="_4_1_3_1_2_5",
+        "_4_1_3_1_2/6"="_4_1_3_1_2_6",
+        "_4_1_3_1_2/7"="_4_1_3_1_2_7",
+        "_4_1_3_1_2/8"="_4_1_3_1_2_8",
+        "_4_1_3_1_2/9"="_4_1_3_1_2_9",
+        "_4_1_3_1_2/10"="_4_1_3_1_2_10",
+        "_4_1_3_1_2/11"="_4_1_3_1_2_11",
+        "_4_1_3_1_2/12"="_4_1_3_1_2_12",
+        "_4_1_3_1_2/13"="_4_1_3_1_2_13",
+        "_4_1_3_1_2/99"="_4_1_3_1_2_99",
+        "_4_1_3_1_2/777"="_4_1_3_1_2_777",
+        "_4_1_3_1_2/95"="_4_1_3_1_2_95",
+        "_2_4_1_1_ownland"="_2_4_1_1",
+        "_2_4_1_2_cattle"=	"_2_4_1_2",
+        "_4_1_1_5_1_1_commertialbank"= "_4_1_1_5_1_1",
+       "_4_1_1_5_1_1"="_4_1_1_5_1_oth",
+       "_4_1_1_5_2_1_mach"="_4_1_1_5_2_1",
+       "_4_1_1_5_2_1"=	"_4_1_1_5_2_other")
+       
+       "_4_1_1_5_2/4"= "_4_1_1_5_2_4",
+       "_4_1_1_5_2/5"= "_4_1_1_5_2_5",
+       "_4_1_1_5_2/6"= "_4_1_1_5_2_6",
+       "_4_1_1_5_2/7"=	"_4_1_1_5_2_7",
+       "_4_1_1_5_2/8"=	"_4_1_1_5_2_8",
+       "_4_1_1_5_2/9"=	"_4_1_1_5_2_9",
+       "_4_1_1_5_2/10"=	"_4_1_1_5_2_10",
+       "_4_1_1_5_2/11"=	"_4_1_1_5_2_11",
+       "_4_1_1_5_2/12"=	"_4_1_1_5_2_12",
+       "_4_1_1_5_2/95"=	"_4_1_1_5_2_95",
+       ,
+       "_2_4_1/1"="_2_4_1_1",
+       "_2_4_1/2"=	"_2_4_1_2",
+       "_2_4_1/3"=	"_2_4_1_3",
+       "_2_4_1/4"=	"_2_4_1_4",
+       "_2_4_1/5"=	"_2_4_1_5",
+       "_2_4_1/6"=	"_2_4_1_6",
+       "_2_4_1/7"=	"_2_4_1_7",
+       "_2_4_1/8"=	"_2_4_1_8",
+       "_2_4_1/9"=	"_2_4_1_9",
+       "_2_4_1/10"=	"_2_4_1_10",
+       "_2_4_1/11"=	"_2_4_1_11",
+       "_2_4_1/12"=	"_2_4_1_12",
+       "_2_4_1/13"=	"_2_4_1_13",
+       "_2_4_1/15"=	"_2_4_1_15",
+       "_2_4_1/16"=	"_2_4_1_16",
+       "_2_4_1/17"=	"_2_4_1_17",
+       "_2_4_1/18"=	"_2_4_1_18",
+       "_2_4_1/19"=	"_2_4_1_19",
+       "_2_4_1/95"=	"_2_4_1_95",
+       "_2_4_1_2"=	"_2_4_1_oth",
+       "_2_4_1_1"=	"_2_4_1_subsidy")
+       
+       "_2_8_4_2_electricity"	"_2_8_4_2_gas"	"_2_8_4_2_petrol_or_diesel"	"_2_8_4_2_animal_traction"	"_2_8_4_2_human",
+       "_2_8_4_2_hired"	"_2_8_4_2_other"
+  )
+
+names(ind_survey_main)
+
+name_codes_distance <- c( "_1_2_1_17","_4_1_5_2_1","_4_1_5_2_2","_4_1_5_2_3",
+                          "_4_1_5_2_4","_4_1_5_2_5","_4_1_5_2_6","_4_1_5_2_7")
+ind_choices <- read_excel(ind_h_choices_file, sheet = "choices")%>%
+  mutate(country= "india")%>%
+  select("list_name","name","label::English ((en))","country")%>%
+  rename("label_choice" = "label::English ((en))")%>%
+  rename("name_choice" = "name")%>%
+  distinct(list_name,name_choice,label_choice, .keep_all = TRUE)%>%
+  filter(!is.na(list_name))%>%
+  bind_rows(tibble(
+    list_name = "1_2_1_17",                        
+    name_choice = "km",                   
+    label_choice = "Kilometers",     
+    country = "india" ))
+  
+names(ind_choices)
+
+
+india_survey <- read_excel(paste0(ind_data_path,"ind_holpa_household_form_clean.xlsx"),sheet = "survey")%>%
+  #select only the necessary columns
+  select("type", "name","name_global_survey","label::English ((en))")%>%
+  bind_rows(tibble(
+    type = "select_one 1_2_1_17",                        
+    name = name_codes_distance,                   
+    name_global_survey = name_codes_distance,     
+    `label::English ((en))` = "Distance" ))%>%
+  #rename columns names
+  rename("label_question" = "label::English ((en))")%>%
+  rename("name_question" = "name",
+         "name_question_global" ="name_global_survey")%>%
+  #remove rows without questions
+  filter(type!="begin_group")%>%
+  filter(type!="begin_repeat")%>%
+  filter(type!="end_repeat")%>%
+  #separate question type components
+  mutate(type_question = ifelse(substr(type,1,10)=="select_one","select_one",
+                                ifelse(substr(type,1,10)=="select_mul","select_multiple",type)))%>%
+  #create column with list_name codes matching the choices worksheet
+  mutate(list_name = if_else(type_question== "select_one"|type_question== "select_multiple", 
+                             str_replace(.$type, paste0(".*", .$type_question), ""),NA))%>%
+  mutate(list_name = str_replace_all(list_name, " ", ""))  
+
+
+#Add country choices to global choices
+ind_global_choices<-ind_choices%>%
+  right_join(india_survey,by="list_name",relationship="many-to-many")%>%
+  mutate(label_choice.country=NA)%>%
+  right_join(global_survey,by=c("name_question_global"="name_question"),relationship="many-to-many")%>%
+  rename_with(~ gsub("\\.y$", "", .), ends_with(".y"))%>%
+  rename("name_question_india"="name_question",
+         "name_question"="name_question_global")%>%
+  mutate(country=="india")
+  
+names(ind_global_choices)
+
+
 #### PERFORMANCE MODULE ####
 #INSTRUCTION: Continue running the code from here
 fun_performance_choices<- function(country_global_choices) {
@@ -635,8 +847,18 @@ fun_perform_left_join <- function(performance_choices, gathered_data ) {
     dplyr::rename("name_choice"="name_choice.y")%>%
     filter(type_question=="select_one")%>%
     filter(country== "senegal")
+  
+  # Left join for "select_one" for India (country== "ind")
+  select_one4<- gathered_data  %>%
+    mutate(name_choice= name_choice,
+           name_choice = gsub("\\..*$", "", name_choice))%>%
+    left_join(select(performance_choices,
+                     c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name)), 
+              by = c("name_question"="name_question", "name_choice"="name_choice"))%>%
+    filter(type_question=="select_one")%>%
+    filter(country=="india")
 
-  result<- rbind(continuous,select_multiple,select_one1,select_one2,select_one3)
+  result<- rbind(continuous,select_multiple,select_one1,select_one2,select_one3,select_one4)
   
   return(result)
 }
@@ -762,6 +984,87 @@ per_fun_performance_main<- function(country_global_choices, country_survey_main)
     
   }
  
+  # Return the final binary matrix
+  return(per_result_main_survey)
+}
+
+ind_fun_performance_main<- function(country_global_choices, country_survey_main) {
+  
+  # Step 1: Apply per_fun_performance_main logic
+  per_country_performance_choices <- fun_performance_choices(country_global_choices)
+  per_country_performance_question_columns <- per_fun_performance_questions_columns(per_country_performance_choices)
+  
+  per_country_performance_columns <- intersect(per_country_performance_question_columns, colnames(country_survey_main))
+  mismatched_columns <- setdiff(per_country_performance_question_columns, per_country_performance_columns)
+  
+  per_country_performance <- country_survey_main %>%
+    select(all_of(per_country_performance_columns)) %>%
+    mutate_all(as.character)
+  
+  # Remove columns with only NA values
+  na_columns <- colSums(is.na(per_country_performance)) == nrow(per_country_performance)
+  per_country_performance <- per_country_performance[, !na_columns]
+  
+  # Step 2: Apply generate_binary_matrix logic
+  # Initialize the result dataframe with kobo_farmer_id
+  result <- country_survey_main %>% select(kobo_farmer_id,"country", "sheet_id", "index")
+  
+  if (grepl("begin_group|begin_repeat", tolower(country_survey_main$sheet_id[1]))) {
+    result <- country_survey_main %>% select(kobo_farmer_id,"country", "sheet_id", "index","parent_table_name","parent_index")
+  }
+  
+  cols_to_process <- names(per_country_performance)[!names(per_country_performance) %in% c("kobo_farmer_id", "country", "sheet_id", "index")]
+  
+  for (col in cols_to_process) {
+    
+    # Separate rows based on space-separated values
+    data_long <- per_country_performance %>%
+      select(kobo_farmer_id,index, all_of(col)) %>%
+      separate_rows(all_of(col), sep = " ") %>%  # Updated separator to space
+      mutate(!!col := paste0(col, "/", !!sym(col)))  # Append the column name
+    
+    # Create binary columns for each value
+    data_wide <- data_long %>%
+      mutate(value = 1) %>%
+      pivot_wider(names_from = all_of(col), values_from = value, values_fill = 0)
+    
+    # Merge the result with the wide data (binary columns)
+    result <- result %>%
+      left_join(data_wide, by = c("kobo_farmer_id","index"))
+  }
+  
+  country_performance_choices<-  fun_performance_choices(country_global_choices)
+  
+  per_result_main_survey <- result%>%
+    gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index)%>%
+    left_join(select(country_performance_choices,
+                     c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name,name_question_choice)), 
+              by = c("name_question"="name_question_choice"))%>%
+    select(-name_choice.y,-name_question.y)%>%
+    rename("name_choice"="name_choice.x")%>%
+    #Remove answers == "0" or NA
+    filter(type_question == "select_multiple" & !is.na(name_choice))%>%
+    mutate(name_question_recla= name_question)%>%
+    filter(name_choice!=0)%>%
+    mutate(parent_table_name= NA,
+           parent_index=NA)
+  
+  # Automatically rename columns for begin_groups groups
+  if (grepl("begin_group|begin_repeat", tolower(result$sheet_id[1]))) {
+    per_result_main_survey <- result%>%
+      gather(key = "name_question", value = "name_choice", -kobo_farmer_id, -country,-sheet_id,-index,-parent_table_name,-parent_index)%>%
+      left_join(select(country_performance_choices,
+                       c(name_question, name_choice, module, theme, indicator, label_choice, label_question, type, type_question, list_name,name_question_choice)), 
+                by = c("name_question"="name_question_choice"))%>%
+      select(-name_choice.y,-name_question.y)%>%
+      rename("name_choice"="name_choice.x")%>%
+      #Remove answers == "0" or NA
+      filter(type_question == "select_multiple" & !is.na(name_choice))%>%
+      mutate(name_question_recla= name_question)%>%
+      filter(name_choice!=0)
+    
+  }
+  
   # Return the final binary matrix
   return(per_result_main_survey)
 }
@@ -1098,6 +1401,12 @@ bfa_performance_data<-fun_performance_data(bfa_global_choices,
 bfa_performance<-fun_performance(bfa_performance_data)
 write.csv(bfa_performance,paste0(bfa_data_path,"/bfa/bfa_performance_format.csv"),row.names=FALSE)
 
+# INDIA -----
+ind_performance_data<- rbind(
+  fun_performance_main(ind_global_choices, ind_survey_main),
+  ind_fun_performance_main(ind_global_choices,ind_survey_main))
+  
+  
 
 
 ###PENDIENTES######
