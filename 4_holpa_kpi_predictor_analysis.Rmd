@@ -1,7 +1,8 @@
 ---
 title: "HOLPA farm-household performance predictor analysis"
 output:word_document
-date: "2024-04-18"
+date: "2024-12-11"
+author: "Sarah Jones (s.jones@cgiar.org)"
 editor_options:
   chunk_output_type: console
 ---
@@ -21,7 +22,7 @@ library(readxl) # for reading and writing excel files
 library(ggsci) # ggplot colours for scientific journals
 library(ggforce) # for gauge plots
 library(lme4) # for linear modelling
-library(GGalley)
+library(GGally)
 library(ggcorrplot)
 library(corrgram)
 library(ellipse) # correlograms
@@ -31,8 +32,6 @@ library(ggpmisc)
 library(ggpubr) # scatterplots
 
 ### Set parameters ####
-
-# Specify country being processed (specify ONE only. You will need to rerun the code to process each country)
 
 global.data.path <- "C:/Users/sjones/OneDrive - CGIAR/Documents/HOLPA/"
 
@@ -44,6 +43,17 @@ per.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Biover
 sen.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Senegal/senegal_data_clean/sen/"
 tun.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Tunisia/tunisia_data_clean/tun/"
 zwe.data.path <- "C:/Users/sjones/CGIAR/Sanchez, Andrea Cecilia (Alliance Bioversity-CIAT) - HOLPA_data/Zimbabwe/zimbabwe_data_clean/zwe/"
+
+# plotting colours
+col.ae.class <- c("Not AE"="navy", "Weak AE" = "purple","Moderate AE" = "gold","Strong AE" = "green3","Very strong AE" = "forestgreen")
+
+col.theme <- c("agricultural"="#305127", "environmental"= "#699E5C", "social" = "#511F47" , "economic"= "#B36971")
+
+col.ae.principle = c("lightyellow","yellow","gold", "yellow3","tan", "orange","orange3","brown3", "brown","violet", "purple","purple4","navy")
+col.ae.principle = c("darkgreen", "forestgreen","green3","lightgreen", "lightblue","steelblue","navy", "grey90","grey80","grey70","grey60","grey50","grey40" )
+
+col.country = c("yellow","tan", "orange", "brown","violet", "purple","steelblue")
+col.country = c("yellow","gold", "orange", "brown","grey80" , "grey50","grey20")
 
 ```
 
@@ -64,17 +74,27 @@ import.data <- function(country_short,country.data.path, scores_date){
   assign(paste0(country_short,"_kpi_scores"),kpi_scores,envir=.GlobalEnv)
 }
 
-import.data("bfa",bfa.data.path, "20241119")
+import.data("bfa",bfa.data.path, "20241211")
 #import.data("ind",ind.data.path)
-import.data("ken",ken.data.path, "20241119")
-import.data("lao",lao.data.path, "20241119")
-import.data("per",per.data.path, "20241119")
-import.data("sen",sen.data.path, "20241119")
-import.data("tun",tun.data.path, "20241119")
-import.data("zwe",zwe.data.path, "20241119")
+import.data("ken",ken.data.path, "20241211")
+import.data("lao",lao.data.path, "20241211")
+import.data("per",per.data.path, "20241211")
+import.data("sen",sen.data.path, "20241211")
+import.data("tun",tun.data.path, "20241211")
+import.data("zwe",zwe.data.path, "20241211")
   
 d <- rbind(bfa_d, ken_d, lao_d, per_d, sen_d, tun_d, zwe_d)
+
 kpi_scores <- rbind(bfa_kpi_scores, ken_kpi_scores, lao_kpi_scores, per_kpi_scores, sen_kpi_scores, tun_kpi_scores, zwe_kpi_scores)
+
+rm(list=ls(pattern="bfa_*"))
+#rm(list=ls(pattern="ind_*"))
+rm(list=ls(pattern="ken_*"))
+rm(list=ls(pattern="lao_*"))
+rm(list=ls(pattern="per_*"))
+rm(list=ls(pattern="sen_*"))
+rm(list=ls(pattern="tun_*"))
+rm(list=ls(pattern="zwe_*"))
 
 ```
 
@@ -184,6 +204,21 @@ ae_calc_temp <- ae_scores %>%
 
 ae_scores<- ae_scores %>% full_join(ae_calc_temp)
 
+ae_scores <-   ae_scores %>% mutate(indicator_label = case_when(grepl("13_*", indicator)~"13.Participation",
+                                     grepl("12_*",indicator)~"12.Governance",
+                                     grepl("11_*",indicator)~"11.Connectivity",
+                                     grepl("10_*",indicator)~"10.Fairness",
+                                     grepl("9_*",indicator)~"9.Social\nvalues",
+                                     grepl("8_*",indicator)~"8.Knowledge",
+                                     grepl("7_*",indicator)~"7.Economic\ndiversification",
+                                     grepl("6_*",indicator)~"6.Synergy",
+                                     grepl("5_*",indicator)~"5.Biodiversity",
+                                     grepl("4_*",indicator)~"4.Animal\nhealth",
+                                     grepl("1_*", indicator)~"1.Recycling",
+                                     grepl("2_*",indicator)~"2.Input\nreduction",
+                                     grepl("3_*",indicator)~"3.Soil\nhealth",
+                                     .default=indicator)) 
+
 ae_scores_cn <- ae_scores %>% full_join(cn_info_text)
 
 ae_scores_wide <- ae_scores %>%
@@ -192,30 +227,21 @@ ae_scores_wide <- ae_scores %>%
 
 kpi_scores_full <- kpi_scores %>% full_join(cn_info_text) %>% full_join(ae_scores_wide) 
   
-# Clean up script
-rm(list=ls(pattern ="bfa"))
-rm(list=ls(pattern = "ken"))
-rm(list=ls(pattern = "lao"))
-rm(list=ls(pattern = "per"))
-rm(list=ls(pattern = "sen"))
-rm(list=ls(pattern = "tun"))
-rm(list=ls(pattern = "zwe"))
-
 # Make figures of ae and kpi scores split by village, district and other context variables
 
 country = "tunisia" # change this to view results for other countries
 
-ggplot(ae_scores_cn %>% filter(country==country), aes(y=score, x=factor(indicator,levels=unique(indicator[order(indicator_order)])), fill=Village))+ 
+ggplot(ae_scores_cn %>% filter(country==country), aes(y=score, x=factor(indicator,levels=unique(indicator[order(indicator_order)])),fill=as.character(District)))+ 
   geom_boxplot()+ #geom_count()+ 
-  ggtitle(paste0("Agroecology scores for ",country," (n = ",length(unique(ae_scores$kobo_farmer_id)), ")")) + 
+  ggtitle(paste0("Agroecology scores for ",country)) + 
   labs(x="")+ 
-  scale_fill_manual(values=terrain.colors(10))+
-  facet_wrap(~country)+
+  #scale_fill_manual(values=terrain.colors(10))+
+  #facet_wrap(~District)+
   theme_bw()+ theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),plot.title=element_text(hjust=0.5))
 
 #ggsave(paste0(global.data.path,"figures/1_agroecology_scores_by_village_",country,".tif"),width=9,height=6,units="in")
 
-# Compare kpi scores across HH with different AE adherence
+#### ----------Compare kpi scores across HH with different AE adherence ----------#### 
 
 kpi_scores_full <- kpi_scores_full  %>%
   mutate(score_ae_overall_classes = case_when(score_ae_overall<=1~"Not AE",
@@ -227,7 +253,7 @@ kpi_scores_full <- kpi_scores_full  %>%
 
 landscape_kpi_scores_full <- kpi_scores_full %>%
      #filter(!is.na(theme)) %>%
-     group_by(country,theme,indicator,indicator_order,kpi_label,kpi_label_short, score_ae_overall_classes) %>%
+     group_by(country,theme,indicator,indicator_order,kpi_label,kpi_label_short, score_ae_overall, score_ae_overall_classes) %>%
      summarise(kpi_score_scaled_mean = mean(score_scaled,na.rm=TRUE),
                kpi_score_scaled_sd = sd(score_scaled,na.rm=TRUE),
                kpi_score_scaled_med = median(score_scaled,na.rm=TRUE),
@@ -236,11 +262,8 @@ landscape_kpi_scores_full <- kpi_scores_full %>%
      mutate(indicator = factor(indicator, levels = unique(indicator[order(as.numeric(indicator_order))])),
             score_ae_overall_classes = factor(score_ae_overall_classes, levels = c("Not AE","Weak AE","Moderate AE","Strong AE", "Very strong AE")))
 
-col.ae.class <- c("Not AE"=="navy", "Weak AE" = "purple","Moderate AE" = "gold","Strong AE" = "green3","Very strong AE" = "forestgreen")
 
-col.theme <- c("agricultural"="#305127", "environmental"= "#699E5C", "social" = "#511F47" , "economic"= "#B36971")
-
-####------------------ HOUSEHOLD LEVEL---------------------------
+####------------------ HOUSEHOLD LEVEL---------------------------#####
 
 ggplot(kpi_scores_full %>% filter(!is.na(score_scaled) & !is.na(score_ae_overall_classes)), aes(y=score_scaled,x=score_ae_overall))+
     geom_point(alpha=0.7, size=3) +
@@ -260,9 +283,9 @@ ggplot(kpi_scores_full %>% filter(!is.na(score_scaled) & !is.na(score_ae_overall
   facet_wrap(~factor(kpi_label_short,levels=unique(kpi_label_short[order(indicator_order)])))
 
 
-plot_scatter("kpi5b_tree_diversity", "Tree diversity (from 1 to 5)")
-ind = "kpi5b_tree_diversity"
-label ="Tree diversity (from 1 to 5)"
+#plot_scatter("kpi5b_tree_diversity", "Tree diversity (from 1 to 5)")
+#ind = "kpi5b_tree_diversity"
+#label ="Tree diversity (from 1 to 5)"
 
 plot_scatter <- function(ind, label){
   plot_data <- kpi_scores_full %>% filter(indicator == ind & !is.na(score_ae_overall))
@@ -351,7 +374,7 @@ plot_violin <- function(ind, label){
   plot_data <- kpi_scores_full %>% filter(indicator == ind & !is.na(score_ae_overall))
   
    g <- ggplot(plot_data , aes(y=score,x=factor(score_ae_overall_classes,levels=c("Not AE"  , "Weak AE","Moderate AE", "Strong AE", "Very strong AE")),fill=factor(score_ae_overall_classes,levels=c("Not AE"  , "Weak AE","Moderate AE", "Strong AE", "Very strong AE"))))+
-    geom_violin(show.legend=FALSE) +
+  geom_violin(show.legend=FALSE) +
   labs(y=paste0(label), 
          x="AE score (from 1 to 5)")+
   scale_fill_manual(values=col.ae.class)+
@@ -365,25 +388,146 @@ plot_violin <- function(ind, label){
 
 plot_violin("kpi5b_tree_diversity", "Tree diversity (from 1 to 5)")
 plot_violin("kpi8_climate_mitigation", "Climate mitigation (from 1 to 5)")
+plot_violin("kpi14a_climate_resilience", "Climate resilience (from 0 to 20)")
 plot_violin("kpi12_yield_gap", "Yield gap (%)")
 plot_violin("kpi16_farmer_agency", "Farmer agency (from 1 to 5)")
 plot_violin("kpi18_human_wellbeing", "Human wellbeing (from 1 to 5)")
 
-  
-ggplot(kpi_scores_full %>% filter(indicator == ind & !is.na(score_ae_overall)), aes(y=score_ae_overall,x=country))+
-    geom_boxplot(show.legend=FALSE) +
+#### Boxplot of agroecology scores ####
+
+g <- ggplot(ae_scores %>% filter(indicator=="score_ae_overall"), aes(y=score,x=country,fill=country))+
+    geom_boxplot(notch=FALSE,staplewidth=0.1, show.legend=FALSE) +
   labs(y="Overall AE score (from 1 to 5)", 
          x="")+
-  #scale_fill_manual(values=col.ae.class)+
-    coord_cartesian(expand=c(0),clip="off")+
-    theme_classic()+ 
-    theme(plot.title = element_text(hjust=0.5),
+  scale_fill_manual(values=col.country)+
+  coord_cartesian(expand=c(0),clip="off")+
+  theme_classic()+ 
+  theme(plot.title = element_text(hjust=0.5),
+          axis.text=element_text(size=10,colour="black"),
           legend.position="bottom",
           legend.title=element_blank())
+g
+
+tiff(paste0(global.data.path,"figures/ae_boxplot_global.png"),width=6,height=3.5,units="in", res=300)
+g
+dev.off()
+
+#### Spider or bar chart showing ae scores per principle ####
+
+ae_scores_country <-  ae_scores %>% 
+  filter(!indicator == "score_ae_overall") %>%
+  group_by(country,indicator,indicator_label,indicator_order) %>% 
+  summarise(score = mean(score,na.rm=TRUE)) %>%
+  ungroup() %>%
+  rbind(ae_scores %>% filter(!indicator=="score_ae_overall") %>%
+              group_by(indicator,indicator_label,indicator_order) %>%
+              summarise(score = mean(score,na.rm=TRUE)) %>%
+              ungroup() %>%
+              mutate(country="All")) %>%
+    mutate(indicator_label = factor(indicator_label,levels=unique(indicator_label[order(indicator_order)]))) %>%
+  mutate(indicator = factor(indicator,levels=unique(indicator[order(indicator_order)])))
+  
+g <- ggplot(ae_scores_country %>% filter(!(country=="All")), aes(y=score,x=indicator_label,fill=country,group=country,colour=country))+
+  geom_point(size=3,alpha=0.7,show.legend=FALSE)+
+  geom_line(linejoin="mitre",linewidth=1,alpha=0.7) + 
+  labs(y="",  x="")+
+  coord_radial(clip="off",start=0,end=2*pi, expand=TRUE, r.axis.inside=TRUE,inner.radius=0.1)+
+  scale_fill_manual(values=col.country)+
+  scale_colour_manual(values=col.country)+
+  scale_y_continuous(limits=c(1,5),breaks=seq(1,5,1))+
+    theme_minimal()+ 
+    theme(plot.title = element_text(hjust=0.5),
+          axis.text=element_text(size=10,colour="black"),
+          #axis.text.y=element_blank(),
+          legend.text=element_text(size=10,colour="black"),
+          legend.position="none", legend.location="plot",
+          #legend.box.spacing=(unit(2,"cm")),
+          #plot.margin=(unit(c(0.5,0.5,0.5,1.5),"cm")),
+          legend.title=element_blank())
+g
+
+tiff(paste0(global.data.path,"figures/ae_spider_diagram_global.png"),width=5.5,height=5,units="in", res=300)
+g
+dev.off()
+
+g <- ggplot(ae_scores, aes(y=score,x=country))+
+  geom_boxplot(notch=TRUE, staplewidth=0.1)+
+  geom_point(data=ae_scores_country,aes(colour=factor(indicator_label, levels=unique(indicator_label[order(indicator_order)]))),size=3.8)+
+  labs(y="Agroecology score (1 to 5)",  x="")+
+  coord_cartesian(clip="off")+
+  #scale_fill_manual(values=col.ae.principle)+
+  scale_colour_manual(values=col.ae.principle)+
+  #scale_y_continuous(limits=c(1,5),breaks=seq(1,5,1))+
+    theme_minimal()+ 
+    theme(plot.title = element_text(hjust=0.5),
+          axis.text=element_text(size=10,colour="black"),         
+          legend.position="right",
+          legend.title=element_blank())
+
+g
+
+tiff(paste0(global.data.path,"figures/ae_boxplot_w_points_global.png"),width=7,height=4.5,units="in", res=300)
+g
+dev.off()
+
+#### Tile plot of agroecology scores v kpi scores ####
+
+kpi_scores_full <- kpi_scores_full %>% mutate(score_ae_overall_classes = factor(score_ae_overall_classes,levels=c("Not AE","Weak AE","Moderate AE","Strong AE","Very strong AE")))
+
+check <- kpi_scores_full %>% filter(score_ae_overall_classes == "Check")
+# These are missing ind_group, score_scaled, kpi_label_short:
+#check <- kpi_scores_full %>% filter(indicator =="kpi8_climate_mitigation")
+#check <- kpi_scores_full %>% filter(indicator =="kpi7_landscape_complexity")
+
+ggplot(kpi_scores_full %>% filter(!(score_ae_overall_classes == "Check")),aes(y=score_scaled,x=score_ae_overall_classes,fill=theme))+ 
+  geom_boxplot(outlier.colour="red",notch=TRUE)+
+  labs(y="Performance score (0 to 100)",
+       x="Agroecology adherence")+
+  scale_fill_manual(values=col.theme)+
+  theme_classic()
+
+g <- ggplot(kpi_scores_full %>% filter(!(score_ae_overall_classes == "Check")),aes(y=score_scaled,x=theme,fill=score_ae_overall_classes))+ 
+  geom_boxplot(notch=TRUE, staplewidth=0.3, linewidth=0.5)+
+  labs(y="Performance score (0 to 100)",
+       x="Performance dimension")+
+  scale_fill_manual(values=col.ae.class,name="Adherence to\nagroecology (AE)")+
+  theme_classic()+theme(text = element_text(size=10,colour="black"))
+g
+
+tiff(paste0(global.data.path,"figures/kpi_by_ae_boxplot_global.png"),width=6,height=3.5,units="in", res=300)
+g
+dev.off()
+
+g <- kpi_scores_full %>% filter(!(score_ae_overall_classes == "Check")) %>% filter(!is.na(score_scaled)) %>%
+group_by(country,indicator, kpi_label_short,theme,score_ae_overall_classes) %>% summarise(score_scaled=mean(score_scaled,na.rm=TRUE)) %>% ungroup() %>% 
+  rbind(kpi_scores_full %>%
+  filter(!(score_ae_overall_classes == "Check")) %>% filter(!is.na(score_scaled)) %>%
+  group_by(indicator,kpi_label_short,theme,score_ae_overall_classes) %>%
+    summarise(score_scaled=mean(score_scaled,na.rm=TRUE)) %>%
+    mutate(country="All") %>% ungroup()) %>%
+  ggplot(aes(y=factor(kpi_label_short,levels=unique(kpi_label_short[order(theme, indicator)])),x=score_ae_overall_classes,fill=score_scaled),colour="grey80")+ 
+  geom_tile()+
+  scale_fill_binned(breaks=c(0,20,40,60,80,100),low="pink", high="forestgreen", name="Mean\nperformance\nscores (0 to 100)")+
+  labs(x="",y="")+
+  theme_classic()+
+  facet_wrap(~country,nrow=1)+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        axis.text.y=element_text(colour=c(rep("#305127",5),rep("#B36971",9),rep("#699E5C",9),rep("#511F47",5))),
+        strip.background = element_blank(), strip.placement = "outside")
+g
+
+tiff(paste0(global.data.path,"figures/kpi_by_ae_geomtile_global.png"),width=10,height=5,units="in", res=300)
+g
+dev.off()
 
 
+#### Compute correlation between overall ae score and each KPI #####
 
-cor <- kpi_scores_full %>%
+kpi_scores_full <- kpi_scores_full %>%
+  mutate(indicator_label = sub("^kpi[0-9]+[a-z]?_", "",indicator)) %>%
+  mutate(indicator_label = gsub("_"," ",indicator_label))
+
+cor.basic <- kpi_scores_full %>%
   group_by(country,theme,indicator) %>%
   summarize(correlation = cor(score_ae_overall, score, method = "pearson", use = "pairwise.complete.obs"))%>% 
   filter(!is.na(correlation)) %>%
@@ -395,24 +539,104 @@ cor <- kpi_scores_full %>%
   mutate(order_all = ifelse(country=="All",correlation,NA)) %>%
   left_join(data.frame(col.theme) %>% mutate(theme = row.names(.))) 
 
+cor.vars <- kpi_scores_full %>% 
+  select(country,kobo_farmer_id,indicator,score) %>% unique() %>%
+  filter(!(score ==Inf)) %>%
+  pivot_wider(id_cols=c(country,kobo_farmer_id),names_from=indicator,values_from=score, values_fn = ~ mean(.x, na.rm = TRUE)) %>%
+  left_join(kpi_scores_full %>% select(kobo_farmer_id, country, score_ae_overall, score_ae_overall_classes) %>% unique())
+
+#data = cor.vars
+#var1=names(cor.vars)[31]
+#var2=names(cor.vars)[23]
+
+cor.func <- function(var1, var2,data) {
+  #data <- data %>% mutate_at(vars(-country,-kobo_farmer_id,-score_ae_overall_classes),~ifelse(is.na(.),0,.))
+    data <- na.omit(data[c(var1, var2)])
+    #data <- data %>% filter(!(is.infinite(c(var2))==TRUE)) #not working...labour has one infinite value
+  # Check if there are enough data points (at least 3 for correlation to be meaningful)
+  if (nrow(data) < 6) {
+    # Return a placeholder result if insufficient data
+    return(data.frame(
+      var1 = var1, 
+      var2 = var2, 
+      estimate = NA, 
+      p.value = NA, 
+      statistic = NA, 
+      method = "Not enough data", 
+      stringsAsFactors = FALSE
+    ))
+  }
+      result = cor.test(data[[var1]], data[[var2]])
+      data.frame(var1, var2, result[c("estimate","p.value","statistic","method")], 
+             stringsAsFactors=FALSE)
+}
+
+names(cor.vars) # set v1 to column with agroecology score, v2 to columns which should be excluded form correlation analysis
+vars = data.frame(v1=names(cor.vars)[31], v2=names(cor.vars)[-c(1,2,31,32)])
+
+cor = do.call(rbind, mapply(cor.func, var1=vars[,1], var2=vars[,2], MoreArgs=list(data=cor.vars), SIMPLIFY=FALSE))
+rownames(cor) <- NULL
+
+# by country
+cor.vars.split <- split(cor.vars,cor.vars$country) 
+
+cor.country = do.call(rbind, lapply(names(cor.vars.split), function(country){
+  country_data <- cor.vars.split[[country]]
+  results <- do.call(rbind, mapply(
+    cor.func, 
+    var1=vars[,1], 
+    var2=vars[,2],
+    MoreArgs=list(data=country_data), SIMPLIFY=FALSE))
+   results$country <- country
+  return(results)
+}))
+
+rownames(cor.country) <- NULL
+#cor.test(cor.vars$kpi1_crop_health, cor.vars$score_ae_overall)
+#cor.test(cor.vars[["kpi1_crop_health"]], cor.vars[["score_ae_overall"]])
+
+cor <- cor %>% mutate(country = "All") %>% rbind(cor.country) %>%
+  rename(indicator = var2) %>%
+  mutate(order_all = ifelse(country=="All",estimate,NA)) %>%
+  left_join(kpi_scores_full %>% select (theme, indicator, indicator_label) %>% unique()) %>%
+  left_join(data.frame(col.theme) %>% mutate(theme = row.names(.))) 
+
+cor <- cor %>% mutate(p.value.label = ifelse(p.value < 0.01, "**",ifelse(p.value<0.05,"*",""))) %>%
+  mutate(estimate.label = ifelse(is.na(estimate),"",paste0(round(estimate,1),p.value.label)))
+
+cor <- cor %>% left_join(kpi_scores_full %>%select(indicator,kpi_label_short) %>% unique()) 
+cor <- cor %>% 
+  mutate(kpi_label_short = case_when(indicator =="kpi7_landscape_complexity"~"Landscape complexity (qual)",
+                                     indicator =="kpi8_climate_mitigation"~"Climate mitigation (qual)", .default=kpi_label_short))
+
 #print(cor, n=25)  
-ggplot(cor, aes(x=country,y=factor(indicator, levels=unique(indicator[order(order_all)])), fill=correlation))+geom_tile() + scale_fill_gradientn(colours=c("darkblue", "lightyellow","forestgreen"))+
+
+g <- ggplot(cor, aes(x=country,y=factor(kpi_label_short, levels=unique(kpi_label_short[order(theme,indicator)])), fill=estimate))+
+  #ggplot(cor, aes(x=country,y=factor(indicator, levels=unique(indicator[order(order_all)])), fill=estimate))+
+  geom_tile() + scale_fill_gradientn(colours=c("red", "lightyellow","steelblue"),name="Correlation")+
+  geom_text(aes(label=estimate.label))+
   theme_minimal()+
-  theme(axis.title = element_blank())# axis.text.y = element_text(colour=setNames(cor$col.theme, cor$indicator)[levels(factor(cor$indicator[order(cor$order_all)]))]))
-  
-kpi_scores_cor <- kpi_scores_full %>% 
-  dcast(country+kobo_farmer_id+score_ae_overall_classes+score_ae_overall ~indicator,value.var="score",mean) %>%
-  mutate(across(everything(), ~ifelse(is.na(.x), 0, .x))) 
+  theme(axis.title = element_blank(), text=element_text(size=10,colour="black"),
+        axis.text.x = element_text(size=10,colour="black"),
+        #axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        axis.text.y=element_text(size=10, colour=c(rep("#305127",5),rep("#B36971",9),rep("#699E5C",9),rep("#511F47",5))))
+g 
 
-# exclude laboru for now, because it's creating empty values
-cor <- cor(kpi_scores_cor[,c(4:11,14:31)], use = "pairwise.complete.obs")
+tiff(paste0(global.data.path,"figures/kpi_and_ae_correlation_geomtile_global.png"),width=10,height=6,units="in", res=300)
+g
+dev.off()
 
-corrplot(cor, tl.cex=0.5)
+#### ANOVA to see if performance differences between ae groups is significant ####
 
-ggcorrplot(cor, method="square",type="full", ggtheme=theme_minimal, colors= c("navy","lightyellow","orange"), tl.cex=9)+#scale_fill_continuous(brewer.pal(5,"Spectral"))+ 
-  theme(axis.text=element_text(size=8))
+anova
 
-ggpairs(kpi_scores_cor, columns = 4:31, ggplot2::aes(colour=score_ae_overall_classes))
+#kpi_scores_cor <- kpi_scores_full %>% dcast(country+kobo_farmer_id+score_ae_overall_classes+score_ae_overall ~indicator,value.var="score",mean) %>% mutate(across(everything(), ~ifelse(is.na(.x), 0, .x))) 
+
+# exclude labour for now, because it's creating empty values
+#cor <- cor(kpi_scores_cor[,c(4:11,14:31)], use = "pairwise.complete.obs")
+#corrplot(cor, tl.cex=0.5)
+#ggcorrplot(cor, method="square",type="full", ggtheme=theme_minimal, colors= c("navy","lightyellow","orange"), tl.cex=9)+#scale_fill_continuous(brewer.pal(5,"Spectral"))+ theme(axis.text=element_text(size=8))
+#ggpairs(kpi_scores_cor, columns = 4:31, ggplot2::aes(colour=score_ae_overall_classes))
  
 #cor_cols <- brewer.pal(5, "Spectral")
 #cor_cols <- colorRampPalette(cor_cols)(100)
@@ -441,6 +665,16 @@ summary(model)
 # Extract random effects
 groupwise_effects <- ranef(model)$indicator
 print(groupwise_effects)
+
+# Future analyses to do: 
+
+# PCA to explore how agroecology score and context collectively relate to indicator scores...
+
+# Check correlations when splitting by other variables, like farm size, ALL, income
+
+# Partial correlations, to check the relationship between two variables while controlling confounding effects of a third variable (third variable is held constant)
+partial_corr <- pcor.test(cor.vars$indicator, cor.vars$agroecology_score, cor.vars$confounding_variable)
+print(partial_corr)
 
 ####--------------- LANDSCAPE LEVEL ---------------------
 ggplot(ALL_kpi_scores_full %>% filter(!is.na(kpi_score_scaled_mean)& !is.na(score_ae_overall_classes)), aes(x=kpi_score_scaled_mean,y=reorder(indicator,kpi_score_scaled_mean),fill=score_ae_overall_classes))+
