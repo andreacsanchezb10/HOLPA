@@ -84,8 +84,10 @@ import.data("tun",tun.data.path, "20241211")
 import.data("zwe",zwe.data.path, "20241211")
   
 d <- rbind(bfa_d, ken_d, lao_d, per_d, sen_d, tun_d, zwe_d)
+#d <- rbind( ken_d, sen_d)
 
 kpi_scores <- rbind(bfa_kpi_scores, ken_kpi_scores, lao_kpi_scores, per_kpi_scores, sen_kpi_scores, tun_kpi_scores, zwe_kpi_scores)
+#kpi_scores <- rbind(ken_kpi_scores,  sen_kpi_scores)
 
 rm(list=ls(pattern="bfa_*"))
 #rm(list=ls(pattern="ind_*"))
@@ -107,20 +109,84 @@ HOLPA collects data on multiple context, agroecology, and performance themes. Fo
 #### Location ####
 
 cn_info <- d %>% filter(module=="context") %>%
-  select(kobo_farmer_id, country, module, theme, indicator, indicator_order, subindicator, subindicator_label, name_question,name_question_recla, label_question, name_choice,label_choice, type, score ) %>%
-  mutate(subindicator = ifelse(label_question == "Please specify the COUNTRY","Country",subindicator),
-         subindicator = ifelse(label_question == "Please specify the LOCALITY or DISTRICT","District",subindicator),
-         subindicator = ifelse(label_question == "Please specify the VILLAGE","Village",subindicator),
-         subindicator = ifelse(label_question == "Please specify the GPS point","GPS",subindicator)) %>%
-  #mutate(score_cn_text = case_when(subindicator %in% c("Country","District","Village","GPS")~name_choice,.default=NA))
-  mutate(score_cn_text = case_when(type %in% c("text")~name_choice,.default=NA)) %>%
-  mutate(score_cn_num = case_when(type %in% c("integer","decimal")~name_choice,.default=NA))
+  select(kobo_farmer_id, country, module, theme, indicator, indicator_order, subindicator, subindicator_label, name_question,name_question_recla, label_question, name_choice,label_choice, type, score ) %>% 
+  filter(!(subindicator %in% c( "accessibility","consent",  "income", "income_stability", "income_sufficiency", "income_versus_expenditures","inputs", "nut_chem_area","nut_org_area","nut_orgF_area","nut_chem_quantity","nut_org_quantity","nut_orgF_quantity","nut_chem_unit","nut_org_unit","nut_orgF_unit","photo","practice_3")))
+
+cn_info <- cn_info %>%
+  mutate(score_cn_text = case_when(type %in% c("text")~name_choice,
+                                   grepl("select_one*",type)~label_choice,
+                                   grepl("select_multiple*",type)~label_choice, .default=NA)) %>%
+  mutate(score_cn_num = case_when(type %in% c("integer", "decimal", "geopoint")~name_choice,.default=NA)) %>%
   
+  mutate(subindicator = case_when(subindicator =="climate_rainfall_timing" ~ paste0(subindicator,"_",name_choice),
+                                  subindicator =="education" ~ paste0(subindicator,"_",name_choice),
+                                  
+                                  subindicator %in% c("structure") & grepl("How many Male adults of working age",label_question) ~ "hh_structure_male_working_age",
+                                  subindicator %in% c("structure") & grepl("How many Female adults of working age",label_question) ~ "hh_structure_female_working_age",
+                                  subindicator %in% c("structure") & grepl("How many Male adults not of working age",label_question) ~ "hh_structure_male_not_working_age",
+                                  subindicator %in% c("structure") & grepl("How many Female adults not of working age",label_question) ~ "hh_structure_female_not_working_age",
+                                  subindicator %in% c("structure") & grepl("How many Male children",label_question) ~ "hh_structure_male_children",
+                                  subindicator %in% c("structure") & grepl("How many Female children",label_question) ~ "hh_structure_female_children",
+                                  
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_1_1_1")~"hh_labour_male_adult_permanent",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_1_1_2")~"hh_labour_male_adult_seasonal",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_1_2_1")~"hh_labour_female_adult_permanent",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_1_2_2")~"hh_labour_female_adult_seasonal",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_1_5_1")~"hh_labour_male_child_permanent",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_1_5_2")~"hh_labour_male_child_seasonal",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_2_1")~"hh_labour_hired",
+                                  subindicator %in% c("household_labour") & name_question_recla %in% c("_3_4_1_2_1_2")~paste0("hh_labour_hired_groups",name_choice),
+                                  
+                                  subindicator %in% c("housing") & name_question_recla %in% c("_3_2_1_3_1")~"hh_roof",
+                                          subindicator %in% c("housing") & name_question_recla %in% c("_3_2_1_3_2")~"hh_walls",
+                                  subindicator %in% c("location") & grepl("COUNTRY",label_question)~"country",
+                                  subindicator %in% c("location") & grepl("DISTRICT",label_question)~"district",
+                                  subindicator %in% c("location") & grepl("VILLAGE",label_question)~"village",
+                                  subindicator %in% c("location") & grepl("GPS",label_question)~"gps",
+                                  
+                                  subindicator %in% c("name") & grepl("first name",label_question)~"respondent_first_name",
+                                  subindicator %in% c("name") & grepl("last name",label_question)~"respondent_last_name",
+                                  
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_1" ~"motivations_personal_nature_care",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_10" ~"motivations_personal_worker_conditions",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_2" ~"motivations_personal_nature_benefits",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_4" ~"motivations_personal_land_care",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_5" ~"motivations_personal_agroecological_farmer",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_6" ~"motivations_personal_farm_agency",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_1_1_7" ~"motivations_personal_system_agency",
+                                   subindicator %in% c("personal_factors") & name_question_recla =="_1_3_2_1_3" ~"motivations_personal_business_sense",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_2_1_5" ~"motivations_personal_food_price",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_2_1_6" ~"motivations_personal_food_no_chem_pref",
+                                  subindicator %in% c("personal_factors") & name_question_recla =="_1_3_2_1_7" ~"motivations_personal_food_local",
+                                  subindicator %in% c("societal_factor") & name_question_recla =="_1_3_1_1_3" ~"motivations_societal_land_care",
+                                  subindicator %in% c("societal_factor") & name_question_recla =="_1_3_2_1_4" ~"motivations_societal_system_working_well",
+                                  
+                                  subindicator %in% c("production_end_use") & name_question_recla =="_1_4_2_2_1" ~"production_end_use_hh_consumption",
+                                  subindicator %in% c("production_end_use") & name_question_recla =="_1_4_2_2_2" ~"production_end_use_hh_livestock_consumption",
+                                  subindicator %in% c("production_end_use") & name_question_recla =="_1_4_2_2_3" ~"production_end_use_sales",
+                                  subindicator %in% c("production_end_use") & name_question_recla =="_1_4_2_2_4" ~"production_end_use_gifts",
+                                  subindicator %in% c("production_end_use") & name_question_recla =="_1_4_2_2_5" ~"production_end_use_waste_loss",
+                                  subindicator %in% c("production_end_use") & name_question_recla =="_1_4_2_2_6" ~"production_end_use_other",
+                          subindicator %in% c("production_systems") & name_question_recla =="_4_1_7_1" ~"production_system_slope",
+                          subindicator %in% c("production_systems") & name_question_recla =="_3_3_4_1" ~"production_system_irrigation",
+                          subindicator %in% c("production_systems") & name_question_recla =="_1_4_2_1" ~"production_system_produce",
+                          
+                           subindicator %in% c("training") & name_question_recla =="_4_1_1_4_1" ~"training_best_practices",
+                          subindicator %in% c("training") & name_question_recla =="_4_1_1_4_3" ~"training_agribusiness",
+                          subindicator %in% c("training") & name_question_recla =="_4_1_1_4_4" ~"training_other",
+                                  .default=subindicator))
+
+unique(cn_info$label_question)
+unique(cn_info$subindicator)
+  
+temp <- cn_info_text %>% filter( subindicator_count>1) %>% select(subindicator,label_question,name_question) %>% unique()
+sort(unique(cn_info$subindicator))
+
 cn_info_text <- cn_info %>%
-  filter(!is.na(score_cn_text)) %>%
+  filter(!is.na(score_cn_text)) %>% filter(!is.na(name_question_recla)) %>%
   group_by(kobo_farmer_id,subindicator) %>%
-  mutate(subindicator_count = n()) %>%
-  mutate(subindicator = ifelse(subindicator_count >1,label_question,subindicator)) %>%
+  mutate(subindicator_count = n()) %>% ungroup() %>%
+  mutate(subindicator = ifelse(subindicator_count >1,paste0(subindicator,"_",name_choice),subindicator)) %>%
   dcast(kobo_farmer_id+country~subindicator,value.var="score_cn_text")
 
 # I NEED TO CONTINUE IMPROVING CODE HERE ####
@@ -204,7 +270,8 @@ ae_calc_temp <- ae_scores %>%
 
 ae_scores<- ae_scores %>% full_join(ae_calc_temp)
 
-ae_scores <-   ae_scores %>% mutate(indicator_label = case_when(grepl("13_*", indicator)~"13.Participation",
+ae_scores <-   ae_scores %>% mutate(indicator_label = case_when(indicator=="score_ae_overall"~"Overall score", 
+                                     grepl("13_*", indicator)~"13.Participation",
                                      grepl("12_*",indicator)~"12.Governance",
                                      grepl("11_*",indicator)~"11.Connectivity",
                                      grepl("10_*",indicator)~"10.Fairness",
@@ -229,17 +296,66 @@ kpi_scores_full <- kpi_scores %>% full_join(cn_info_text) %>% full_join(ae_score
   
 # Make figures of ae and kpi scores split by village, district and other context variables
 
-country = "tunisia" # change this to view results for other countries
+country = "kenya" # change this to view results for other countries
 
-ggplot(ae_scores_cn %>% filter(country==country), aes(y=score, x=factor(indicator,levels=unique(indicator[order(indicator_order)])),fill=as.character(District)))+ 
-  geom_boxplot()+ #geom_count()+ 
-  ggtitle(paste0("Agroecology scores for ",country)) + 
+indicator_levels <- ae_scores %>% ungroup() %>%
+  distinct(indicator_label, indicator_order) %>% unique() %>%
+  arrange(indicator_order) %>%
+  pull(indicator_label)
+
+ae_scores_nat <- filter(ae_scores, .data$country == !!country) %>%
+  arrange(indicator_order) %>%
+  mutate(indicator_order = as.numeric(indicator_order)) %>%
+  mutate(indicator_label = factor(indicator_label, levels=indicator_levels))
+n_kobo_id <- ae_scores_nat %>% ungroup() %>% summarise(n = n_distinct(kobo_farmer_id)) %>% pull(n)
+
+g_ken <- ae_scores_nat %>%
+  ggplot(aes(y=score, x=indicator_label))+
+  geom_boxplot(aes(fill=indicator_label))+
+  ggtitle(paste0("Agroecology scores for ",country,"\n(n=",n_kobo_id,")")) + 
   labs(x="")+ 
-  #scale_fill_manual(values=terrain.colors(10))+
+  scale_fill_manual(values=c(terrain.colors(13),"purple"),name="")+
   #facet_wrap(~District)+
-  theme_bw()+ theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),plot.title=element_text(hjust=0.5))
+  theme_bw()+ 
+  theme(plot.title=element_text(hjust=0.5),
+        #axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())#+theme(legend.position="none")
+g_ken
 
-#ggsave(paste0(global.data.path,"figures/1_agroecology_scores_by_village_",country,".tif"),width=9,height=6,units="in")
+ggsave(paste0(global.data.path,"figures/1_agroecology_scores_",country,".tif"),width=7,height=4,units="in")
+
+country = "senegal" 
+ae_scores_nat <- filter(ae_scores, .data$country == !!country)
+n_kobo_id <- ae_scores_nat %>% ungroup() %>% summarise(n = n_distinct(kobo_farmer_id)) %>% pull(n)
+
+g_sen <-  ae_scores_nat %>%
+  mutate(indicator_label = factor(indicator_label,levels=indicator_levels)) %>%
+  ggplot(aes(y=score, x=indicator_label))+ 
+  geom_boxplot(aes(fill=indicator_label))+ 
+  ggtitle(paste0("Agroecology scores for ", country,"\n(n=",n_kobo_id ,")")) +
+  labs(x="")+ 
+  scale_fill_manual(values=c(terrain.colors(13),"purple"),name="")+
+  theme_bw()+ 
+  theme(plot.title=element_text(hjust=0.5),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())#+theme(legend.position="none")
+g_sen
+
+ggsave(paste0(global.data.path,"figures/1_agroecology_scores_",country,".tif"),width=7,height=4,units="in")
+
+plot_legend <-ae_scores %>%
+  mutate(indicator_label = factor(indicator_label,levels=indicator_levels)) %>%
+  ggplot(aes(y=score, x=indicator_label))+ 
+  geom_boxplot(aes(fill=indicator_label))+
+  scale_fill_manual(values=c(terrain.colors(13),"purple"),name="")+
+   theme_void() + 
+  theme(legend.position = "right")
+
+plot_legend <- get_legend(plot_legend)
+plot_grid(plot_legend)
+
+ggsave(paste0(global.data.path,"figures/1_agroecology_scores_plot_legend.tif"),width=2,height=4,units="in")
 
 #### ----------Compare kpi scores across HH with different AE adherence ----------#### 
 
@@ -262,6 +378,31 @@ landscape_kpi_scores_full <- kpi_scores_full %>%
      mutate(indicator = factor(indicator, levels = unique(indicator[order(as.numeric(indicator_order))])),
             score_ae_overall_classes = factor(score_ae_overall_classes, levels = c("Not AE","Weak AE","Moderate AE","Strong AE", "Very strong AE")))
 
+####--------- Cluster households by context ---------------------#####
+
+library(cluster)
+library(FactoMineR)
+library(factoextra)
+
+
+### Factorial Analysis of Mixed Data (FAMD) + HCPC
+
+d_clust <- kpi_scores_full[,c(1,2,15:461)] %>% unique()
+d_clust <- na.omit(d_clust)
+
+famd_d <- FAMD(d_clust, graph = FALSE)
+
+# Hierarchical clustering on principal components
+hcpc_d <- HCPC(famd_d, nb.clust = 4)
+
+# View clusters
+hcpc_d$data.clust$clust
+
+# Plot individuals with clusters on FAMD dimensions
+plot(hcpc_d, choice = "map")  # Individuals with cluster colors
+
+# Plot with clusters on FAMD dimensions 1 & 2
+fviz_cluster(hcpc_d, geom = "point", repel = TRUE)+theme_bw()
 
 ####------------------ HOUSEHOLD LEVEL---------------------------#####
 

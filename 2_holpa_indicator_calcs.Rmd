@@ -1986,7 +1986,7 @@ This section puts all performance indicators on a consistent scale, from 0 (wors
 #country <- "laos"
 #kpi_scores <- read.csv(paste0(lao.data.path,"lao_kpi_scores_20241209.csv"),header=TRUE) %>% select(-score_scaled)
 #country <- "kenya"
-#kpi_scores <- read.csv(paste0(ken.data.path,"ken_kpi_scores_20241209.csv"),header=TRUE) %>% select(-score_scaled)
+#kpi_scores <- read.csv(paste0(ken.data.path,"ken_kpi_scores_20241211.csv"),header=TRUE) %>% select(-score_scaled)
 #country <- "peru"
 #kpi_scores <- read.csv(paste0(per.data.path,"per_kpi_scores_20241211.csv"),header=TRUE) %>% select(-score_scaled)
 #country <- "senegal" 
