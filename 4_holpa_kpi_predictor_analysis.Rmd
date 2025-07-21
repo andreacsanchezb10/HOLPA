@@ -106,7 +106,7 @@ HOLPA collects data on multiple context, agroecology, and performance themes. Fo
 
 ```{r context variables, include=TRUE, echo=FALSE}
 
-#### Location ####
+####-------------- Select and format required context variables -----------####
 
 cn_info <- d %>% filter(module=="context") %>%
   select(kobo_farmer_id, country, module, theme, indicator, indicator_order, subindicator, subindicator_label, name_question,name_question_recla, label_question, name_choice,label_choice, type, score ) %>% 
@@ -116,8 +116,19 @@ cn_info <- cn_info %>%
   mutate(score_cn_text = case_when(type %in% c("text")~name_choice,
                                    grepl("select_one*",type)~label_choice,
                                    grepl("select_multiple*",type)~label_choice, .default=NA)) %>%
-  mutate(score_cn_num = case_when(type %in% c("integer", "decimal", "geopoint")~name_choice,.default=NA)) %>%
+  mutate(score_cn_num = case_when(type %in% c("integer", "decimal", "geopoint")~name_choice,.default=NA)) 
+
+### Climate change perceptions ###
+
+temp_cn_var_calc <- cn_info %>% filter(subindicator =="climate_rainfall_timing")# %>% filter(!is.na(name_choice)) %>%
+  mutate(subindicator = gsub("\\_.*", "\\1", name_choice),
+         score = as.numeric(gsub(".*_(*)", "\\1", name_choice)),
+         label_question = gsub("^([^_]*_[^_]*_[^_]*)_.*$","\\1",name_question)) %>%
+         #label_question = gsub(".*_.*_(.*)$","\\1",name_question)) %>%
+  mutate(subindicator = ifelse(subindicator == "apperance","appearance",subindicator )) %>% unique() %>%
+  dcast(kobo_farmer_id+country+label_question~subindicator,value.var="score",fun=median) 
   
+cn_info <- cn_info %>%
   mutate(subindicator = case_when(subindicator =="climate_rainfall_timing" ~ paste0(subindicator,"_",name_choice),
                                   subindicator =="education" ~ paste0(subindicator,"_",name_choice),
                                   
@@ -387,6 +398,9 @@ library(factoextra)
 
 ### Factorial Analysis of Mixed Data (FAMD) + HCPC
 
+names(kpi_scores_full[,c(1,2,15:50)])
+
+
 d_clust <- kpi_scores_full[,c(1,2,15:461)] %>% unique()
 d_clust <- na.omit(d_clust)
 
@@ -403,6 +417,41 @@ plot(hcpc_d, choice = "map")  # Individuals with cluster colors
 
 # Plot with clusters on FAMD dimensions 1 & 2
 fviz_cluster(hcpc_d, geom = "point", repel = TRUE)+theme_bw()
+
+#to see which variables explain the axes:
+fviz_famd_var(famd_res, repel = TRUE)
+
+# For Dimension 1
+fviz_contrib(famd_res, "var", axes = 1, top = 10)
+
+# For Dimension 2
+fviz_contrib(famd_res, "var", axes = 2, top = 10)
+
+# View summary of cluster description
+print(hcpc_res$desc.var)
+
+# Plot categories contributing to clusters
+plot(hcpc_res, choice = "bar")  # Barplot of significant variables by cluster
+
+# Individuals + Variables Biplot
+fviz_famd_biplot(famd_res, repel = TRUE, habillage = hcpc_res$data.clust$clust)
+
+# Scree plot to check if variance is spread across many dimensions 
+# Often with mixed data, you need 5–10 dimensions to capture meaningful variance
+fviz_screeplot(famd_res)
+
+### Methods to select fewer variables for use in clustering
+library(ClustOfVar)
+
+# For mixed data, automatic clustering of variables
+tree <- hclustvar(X.quali = data[, quali_vars], X.quanti = data[, quanti_vars])
+
+# Plot dendrogram of variables
+plot(tree)
+
+# Select variables (e.g., top 10 clusters)
+stab <- stability(tree, B = 50)
+cutreevar(tree, k = 10)$var
 
 ####------------------ HOUSEHOLD LEVEL---------------------------#####
 
